@@ -262,16 +262,97 @@ function load() {
     : { collections: [], stores: [], cards: [], prices: {}, thumbs: {}, active: null, theme: null };
 }
 let S = load();
-let storageOk = true;
-function save() {
-  S.edits = (S.edits || 0) + 1;   // edits since the last backup (drives the reminder)
-  try { localStorage.setItem(KEY, JSON.stringify(S)); storageOk = true; }
+let storageOk = true, thumbsOk = true;
+// Added scans (S.thumbs) live in IndexedDB: localStorage holds ~5 MB and 460 scans alone were 6.7 MB.
+// Everything else stays in localStorage. S.thumbs is still the in-memory copy the rest of the code uses.
+const IDB = new Promise((ok, no) => {
+  try {
+    const r = indexedDB.open('cpt', 2);
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+      if (!db.objectStoreNames.contains('snaps')) db.createObjectStore('snaps', { keyPath: 'id', autoIncrement: true });
+    };
+    r.onsuccess = () => ok(r.result);
+    r.onerror = () => no(r.error);
+  } catch (e) { no(e); }
+});
+const idb = (mode, fn, store = 'kv') => IDB.then(db => new Promise((ok, no) => {
+  const tx = db.transaction(store, mode), req = fn(tx.objectStore(store));
+  tx.oncomplete = () => ok(req && req.result);
+  tx.onerror = tx.onabort = () => no(tx.error);
+}));
+// ponytail: scans are rewritten as one record when count or total size changes; per-scan records if it gets slow
+const sigOf = t => Object.keys(t).length + ':' + Object.values(t).reduce((n, v) => n + v.length, 0);
+let thumbsSig = null;   // null until the saved scans are loaded, so an early save cannot wipe them
+function persist() {
+  const { thumbs, ...rest } = S;
+  try { localStorage.setItem(KEY, JSON.stringify(rest)); storageOk = true; }
   catch (e) { storageOk = false; }
+  const sig = sigOf(thumbs || {});
+  if (thumbsSig !== null && sig !== thumbsSig) {
+    thumbsSig = sig;
+    idb('readwrite', st => st.put(thumbs || {}, 'thumbs'))
+      .then(() => { thumbsOk = true; notice(); }, () => { thumbsOk = false; thumbsSig = ''; notice(); });
+  }
   notice();
 }
+function save() {
+  S.edits = (S.edits || 0) + 1;   // edits since the last backup (drives the reminder)
+  persist();
+}
+// Startup: bring back the saved scans. Scans an older version kept in localStorage move to IndexedDB.
+idb('readonly', st => st.get('thumbs')).then(t => {
+  const legacy = Object.keys(S.thumbs || {}).length > 0;
+  S.thumbs = { ...(t || {}), ...(S.thumbs || {}) };
+  thumbsSig = sigOf(t || {});
+  if (legacy) persist();
+  render();
+  idb('readonly', st => st.getAll(), 'snaps').then(all => { if (!all.some(x => x.day === today())) snapshot('Daily'); });
+}, () => { thumbsOk = false; notice(); });
+// Snapshots: copies of the data (scans left out) in IndexedDB, once a day and before Import JSON, Delete collection
+// and Restore; the newest SNAP_KEEP stay. They live in the same browser, so Backup JSON is still the real backup.
+const SNAP_KEEP = 10;
+function snapshot(note) {
+  const { thumbs, ...rest } = S;
+  const snap = { at: `${today()} ${new Date().toTimeString().slice(0, 5)}`, day: today(), note, rows: S.cards.length,
+    listings: Object.values(S.prices).reduce((n, p) => n + Object.keys(p).length, 0), data: JSON.stringify(rest) };
+  return idb('readwrite', st => st.add(snap), 'snaps')
+    .then(() => idb('readonly', st => st.getAllKeys(), 'snaps'))
+    .then(keys => keys.length > SNAP_KEEP && idb('readwrite', st => { keys.slice(0, keys.length - SNAP_KEEP).forEach(k => st.delete(k)); }, 'snaps'))
+    .catch(() => { /* no IndexedDB: snapshots are optional */ });
+}
+function restoreDialog() {
+  idb('readonly', st => st.getAll(), 'snaps').then(all => {
+    const d = $('#dlg');
+    d.classList.remove('zoom-dlg');
+    const list = all.reverse();
+    d.innerHTML = `<form method="dialog"><h2>Restore a snapshot</h2>
+      <p class="muted">Copies kept in this browser: one a day, and one before Import JSON, Delete collection or Restore (newest ${SNAP_KEEP}). Scans are not in snapshots and stay as they are.</p>
+      ${list.length ? list.map(x => `<div style="display:flex;gap:12px;align-items:center;justify-content:space-between;margin:8px 0">
+        <span>${esc(x.at)} · ${esc(x.note)}<br><span class="muted">${x.rows} rows · ${x.listings} prices</span></span>
+        <button type="button" data-snap="${x.id}">Restore</button></div>`).join('') : '<p>No snapshots yet.</p>'}
+      <div class="actions"><button type="button" id="snNo">Close</button></div></form>`;
+    $('#snNo', d).onclick = () => d.close();
+    d.querySelectorAll('[data-snap]').forEach(b => b.onclick = () => {
+      const x = list.find(k => String(k.id) === b.dataset.snap);
+      askConfirm(`Replace the current data with the snapshot from ${x.at}? The current data is kept as a snapshot first.`, () => {
+        snapshot('Before restore');
+        const t = S.thumbs;
+        S = JSON.parse(x.data);
+        S.thumbs = t;
+        save(); render();
+      });
+    });
+    if (d.open) d.close();
+    d.showModal();
+  }, () => infoBox('Snapshots are not available in this browser.'));
+}
 function notice() {
-  $('#notice').innerHTML = storageOk ? '' :
-    '<div class="banner warn">Browser storage is blocked, so changes will not be saved. Use Backup JSON to keep your data.</div>';
+  $('#notice').innerHTML = (storageOk ? '' :
+    '<div class="banner warn">Browser storage is blocked, so changes will not be saved. Use Backup JSON to keep your data.</div>')
+    + (thumbsOk ? '' :
+    '<div class="banner warn">Added scans could not be saved (IndexedDB unavailable). Use Backup JSON to keep them.</div>');
 }
 function applyTheme() {
   document.documentElement.dataset.theme = S.theme || '';
@@ -454,6 +535,7 @@ function renameCollection() {
 function deleteCollection() {
   const c = activeCol(); if (!c) return;
   askConfirm(`Delete "${c.name}" and all its cards and prices?`, () => {
+    snapshot(`Before deleting "${c.name}"`);
     const ids = cardsOf(c.id).map(x => x.id);
     ids.forEach(id => delete S.prices[id]);
     S.cards = S.cards.filter(x => x.cid !== c.id);
@@ -561,25 +643,36 @@ function ratesDialog() {
 }
 
 // ---------- shop listings: a card's price at a shop ----------
-const shopOptions = sel => {
+// Shops of one venue ('' = shops without a venue), plus "+ New shop" (selected when the venue has none).
+const shopOptions = (venue, sel) => {
+  const list = S.stores.filter(s => (s.venue || '') === venue);
   const opt = s => `<option value="${esc(s.id)}"${s.id === sel ? ' selected' : ''}>${esc(s.name)} (${esc(s.currency || 'RM')})</option>`;
-  return S.stores.filter(s => !s.venue).map(opt).join('')
-    + venues().map(v => `<optgroup label="${esc(v)}">${S.stores.filter(s => s.venue === v).map(opt).join('')}</optgroup>`).join('');
+  return list.map(opt).join('') + `<option value="__new"${list.length ? '' : ' selected'}>+ New shop${venue ? ' in ' + esc(venue) : ''}...</option>`;
 };
 // "Which shop" block: pick a saved shop, or type a new one right here.
+// Venue first (mall / group / marketplace), then the shops inside it.
 function shopBlock(sel, locked) {
-  const none = !S.stores.length;
-  return `<label>Shop<select name="store"${locked ? ' disabled' : ''}>${shopOptions(sel)}<option value="__new"${none ? ' selected' : ''}>+ New shop...</option></select></label>
-    <div id="newShop" class="stack"${none ? '' : ' hidden'}>
+  const st = S.stores.find(s => s.id === sel);
+  const venue = st ? (st.venue || '') : '';
+  const dis = locked ? ' disabled' : '';
+  return `<label>Venue<select name="svsel"${dis}><option value="">No venue</option>${venues().map(v => `<option value="${esc(v)}"${v === venue ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label>
+    <label>Shop<select name="store"${dis}>${shopOptions(venue, sel)}</select></label>
+    <div id="newShop" class="stack" hidden>
       <label>New shop name<input name="sname" placeholder="Collectr"></label>
-      <label>Venue (optional)<input name="svenue" list="dl-svenue" placeholder="Mall X / Group Y / Carousell"><datalist id="dl-svenue">${venues().map(v => `<option value="${esc(v)}">`).join('')}</datalist></label>
+      <label>Venue (pick above, or type a new one)<input name="svenue" value="${esc(venue)}" placeholder="Mall X / Group Y / Carousell"></label>
       <label>Type<select name="stype"><option value="physical">Physical</option><option value="online">Online</option></select></label>
       <label>Currency<select name="scur">${CURRENCIES.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('')}</select></label>
     </div>`;
 }
 function wireShopBlock(d) {
-  const sel = d.querySelector('select[name="store"]'), box = d.querySelector('#newShop');
+  const vsel = d.querySelector('select[name="svsel"]'), sel = d.querySelector('select[name="store"]');
+  const box = d.querySelector('#newShop'), vin = d.querySelector('[name="svenue"]');
   const sync = () => { box.hidden = sel.value !== '__new'; };
+  vsel.addEventListener('change', () => {
+    sel.innerHTML = shopOptions(vsel.value, lastShop);
+    vin.value = vsel.value;
+    sync();
+  });
   sel.addEventListener('change', sync);
   sync();
 }
@@ -736,7 +829,7 @@ function backupJson() {
   S.lastBackup = today();
   download(`card-tracker-backup-${today()}.json`, JSON.stringify(S, null, 2));
   S.edits = 0;
-  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* the storage banner shows on the next save */ }
+  persist();
   render();
 }
 // Scan images: pick many files, each matched to a card by filename (e.g. bw7-58.webp -> row whose image is bw7-58).
@@ -956,6 +1049,7 @@ function importJson(file) {
       const s = JSON.parse(reader.result);
       if (!Array.isArray(s.collections) || !Array.isArray(s.stores) || !Array.isArray(s.cards) || typeof s.prices !== 'object') throw new Error('shape');
       askConfirm('Replace all current data with this backup?', () => {
+        snapshot('Before Import JSON');
         S = s; S.active = S.collections[0] ? S.collections[0].id : null;
         S.lastBackup = today(); S.edits = 0;
         save(); render();
@@ -1149,6 +1243,7 @@ function render() {
       <button type="button" data-act="json-out">Backup JSON</button>
       <span class="muted" style="align-self:center">Last backup: ${backupAge()}</span>
       <button type="button" data-act="json-in">Import JSON</button>
+      <button type="button" data-act="snaps">Restore snapshot</button>
       <button type="button" data-act="csv-in">Import card CSV</button>
       <button type="button" data-act="fill">Fill details + JP/CN/KR</button>
       <button type="button" data-act="img-in">Add scan images</button>
@@ -1213,6 +1308,7 @@ document.addEventListener('click', e => {
   else if (act === 'xlsx') exportXlsx();
   else if (act === 'json-out') backupJson();
   else if (act === 'json-in') $('#importFile').click();
+  else if (act === 'snaps') restoreDialog();
   else if (act === 'csv-in') $('#csvFile').click();
   else if (act === 'fill') fillDetails();
   else if (act === 'img-in') $('#imgFile').click();
