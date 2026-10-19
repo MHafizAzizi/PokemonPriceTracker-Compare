@@ -399,9 +399,37 @@ const eraRank = e => { const i = ERA_ORDER.indexOf(e); return i < 0 ? 99 : i; };
 const fullSrc = x => (SEED && SEED.fulls && SEED.fulls[x.key]) || '';
 const thumbSrc = x => (S.thumbs && S.thumbs[x.key]) || (SEED && SEED.thumbs && SEED.thumbs[x.key])
   || (SEED && SEED.thumbDir && x.key ? `${SEED.thumbDir}/${encodeURIComponent(x.key)}.jpg` : '') || x.img || '';
+// Card languages. CN = mainland Simplified Chinese, TW = Traditional Chinese (Taiwan / Hong Kong): different sets.
+const LANGS = [['EN', 'English'], ['JP', 'Japanese'], ['CN', 'Chinese (Simplified)'], ['TW', 'Chinese (Traditional)'],
+  ['KR', 'Korean'], ['TH', 'Thai'], ['ID', 'Indonesian'], ['DE', 'German'], ['FR', 'French'], ['IT', 'Italian'],
+  ['ES', 'Spanish'], ['PT', 'Portuguese']];
+const LANG_ALIAS = [[/^(jp|ja|jpn|japan)/, 'JP'], [/^(tw|hk|zh-?(tw|hk|hant)|tc|cht|trad)/, 'TW'], [/^(cn|zh|sc|chs|chi|simp)/, 'CN'],
+  [/^(kr|ko)/, 'KR'], [/^(th)/, 'TH'], [/^(id|ind|in$)/, 'ID'], [/^(de|ger)/, 'DE'], [/^(fr)/, 'FR'], [/^(it)/, 'IT'],
+  [/^(es|sp)/, 'ES'], [/^(pt|por)/, 'PT'], [/^(en|$)/, 'EN']];
+// A CSV language cell to a code; anything unknown is kept as typed (upper case), never turned into English.
+const langCode = raw => { const r = raw.trim().toLowerCase(); const hit = LANG_ALIAS.find(([re]) => re.test(r)); return hit ? hit[1] : raw.trim().toUpperCase(); };
 const badge = x => (x.lang && x.lang !== 'EN' ? `<span class="badge lang">${esc(x.lang)}</span>` : '')
   + (VARIANT_LABEL[x.variant] ? `<span class="badge ${x.variant}">${VARIANT_LABEL[x.variant]}</span>` : '');
 const altLine = x => (x.alt ? `<div class="muted">${esc(x.alt)}</div>` : '');
+// Rarity tiers: printed rarity (any language, lower case) -> [tier, special]. special = art / secret print, which
+// card linking (scripts/link_cards.py reads this JSON) keeps apart from the regular card. Unknown values stay as printed.
+// ponytail: mur / fur come from 2026 sets (Chaos Rising, M6a); check them against more cards when new sets arrive
+const RARITY_TIER = {"common": ["Common", false], "c": ["Common", false], "uncommon": ["Uncommon", false], "u": ["Uncommon", false],
+  "rare": ["Rare", false], "r": ["Rare", false], "holo rare": ["Holo Rare", false], "rare holo": ["Holo Rare", false],
+  "double rare": ["Double Rare", false], "rr": ["Double Rare", false], "holo rare v": ["Double Rare", false], "rare holo v": ["Double Rare", false],
+  "ultra rare": ["Ultra Rare", true], "sr": ["Ultra Rare", true], "super rare": ["Ultra Rare", true],
+  "illustration rare": ["Illustration Rare", true], "ar": ["Illustration Rare", true], "art rare": ["Illustration Rare", true],
+  "special illustration rare": ["Special Illustration Rare", true], "sar": ["Special Illustration Rare", true], "special art rare": ["Special Illustration Rare", true],
+  "hyper rare": ["Hyper Rare", true], "ur": ["Hyper Rare", true], "mega hyper rare": ["Hyper Rare", true], "mur": ["Hyper Rare", true],
+  "futuristic rare": ["Futuristic Rare", true], "fur": ["Futuristic Rare", true],
+  "shiny rare": ["Shiny", true], "s": ["Shiny", true], "shiny ultra rare": ["Shiny", true], "ssr": ["Shiny", true],
+  "ace spec rare": ["ACE SPEC", false], "ace": ["ACE SPEC", false],
+  "trainer gallery": ["Trainer Gallery", true], "chr": ["Trainer Gallery", true], "csr": ["Trainer Gallery", true],
+  "pikachu rare": ["Pikachu Rare", false], "promo": ["Promo", false]};
+const TIER_ORDER = ['Common', 'Uncommon', 'Rare', 'Holo Rare', 'Double Rare', 'Ultra Rare', 'Illustration Rare',
+  'Special Illustration Rare', 'Hyper Rare', 'Futuristic Rare', 'Shiny', 'ACE SPEC', 'Trainer Gallery', 'Pikachu Rare', 'Promo'];
+const tierOf = raw => { const r = String(raw || '').trim(); const t = RARITY_TIER[r.toLowerCase()]; return t ? t[0] : r; };
+const isSpecial = raw => { const t = RARITY_TIER[String(raw || '').trim().toLowerCase()]; return !!(t && t[1]); };
 const metaLine = x => { const t = [x.era, x.type, x.rarity].filter(Boolean).join(' · '); return t ? `<div class="muted">${esc(t)}</div>` : ''; };
 
 const F = { q: '', era: '', set: '', type: '', rarity: '', variant: '', lang: '', shop: '', status: '', price: '', sort: '' };
@@ -420,7 +448,7 @@ function applyFilters(all) {
     if (F.era && x.era !== F.era) return false;
     if (F.set && x.set !== F.set) return false;
     if (F.type && x.type !== F.type) return false;
-    if (F.rarity && x.rarity !== F.rarity) return false;
+    if (F.rarity && tierOf(x.rarity) !== F.rarity) return false;
     if (F.variant && x.variant !== F.variant) return false;
     if (F.lang && (x.lang || 'EN') !== F.lang) return false;
     if (F.shop === '__none') { if (Object.keys(S.prices[x.id] || {}).length) return false; }
@@ -441,13 +469,15 @@ function filterBar(all) {
   const uniq = get => [...new Set(all.map(get).filter(Boolean))];
   const eras = uniq(x => x.era).sort((a, b) => eraRank(a) - eraRank(b) || a.localeCompare(b));
   const types = uniq(x => x.type).sort();
-  const rars = uniq(x => x.rarity).sort();
+  const rank = t => { const i = TIER_ORDER.indexOf(t); return i < 0 ? TIER_ORDER.length : i; };
+  const rars = uniq(x => tierOf(x.rarity)).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   const opt = (v, label, cur) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
   const setsOf = pred => [...new Set(all.filter(pred).map(x => x.set).filter(Boolean))];
   const setGroups = eras.map(e => `<optgroup label="${esc(e)}">${setsOf(x => x.era === e).map(s => opt(s, s, F.set)).join('')}</optgroup>`).join('')
     + setsOf(x => !x.era).map(s => opt(s, s, F.set)).join('');
   const sel = (key, label, body) => `<label>${label}<select data-filter="${key}">${body}</select></label>`;
-  const langs = ['EN', 'JP', 'CN', 'KR'].filter(l => all.some(x => (x.lang || 'EN') === l));
+  const used = new Set(all.map(x => x.lang || 'EN'));
+  const langs = [...LANGS.filter(([c]) => used.has(c)), ...[...used].filter(c => !LANGS.some(([k]) => k === c)).map(c => [c, c])];
   const open = window.innerWidth >= 768 || Object.values(F).some(Boolean);
   return `<details class="filters"${open ? ' open' : ''}><summary>Filters</summary><div class="filter-grid">
     <label>Search<input type="search" data-filter="q" value="${esc(F.q)}" placeholder="Name, set, number..."></label>
@@ -456,7 +486,7 @@ function filterBar(all) {
     ${sel('type', 'Type', opt('', 'All types', F.type) + types.map(t => opt(t, t, F.type)).join(''))}
     ${sel('rarity', 'Rarity', opt('', 'All rarities', F.rarity) + rars.map(r => opt(r, r, F.rarity)).join(''))}
     ${sel('variant', 'Variant', opt('', 'All variants', F.variant) + ['normal', 'holo', 'reverse'].map(v => opt(v, VARIANT_LABEL[v], F.variant)).join(''))}
-    ${sel('lang', 'Language', opt('', 'All languages', F.lang) + langs.map(l => opt(l, l, F.lang)).join(''))}
+    ${sel('lang', 'Language', opt('', 'All languages', F.lang) + langs.map(([c, n]) => opt(c, n, F.lang)).join(''))}
     ${sel('shop', 'Shop', opt('', 'All shops', F.shop) + opt('__none', 'No shop yet', F.shop) + S.stores.map(s => opt(s.id, shopLabel(s), F.shop)).join(''))}
     ${sel('status', 'Found', opt('', 'All', F.status) + opt('found', 'Found only', F.status) + opt('notfound', 'Not found', F.status))}
     ${sel('price', 'Prices', opt('', 'All', F.price) + opt('priced', 'Has a price', F.price) + opt('unpriced', 'No price yet', F.price))}
@@ -552,7 +582,7 @@ const cardFields = [
   { key: 'type', label: 'Type', placeholder: 'Psychic' },
   { key: 'rarity', label: 'Rarity', placeholder: 'Rare' },
   { key: 'variant', label: 'Printing', type: 'select', options: [['', '-'], ['normal', 'Normal'], ['holo', 'Holo'], ['reverse', 'Reverse Holo']] },
-  { key: 'lang', label: 'Language', type: 'select', default: 'EN', options: [['EN', 'English'], ['JP', 'Japanese'], ['CN', 'Chinese'], ['KR', 'Korean']] },
+  { key: 'lang', label: 'Language', type: 'select', default: 'EN', options: LANGS },
   { key: 'alt', label: 'Local name (optional)', placeholder: 'ソーナンス' },
   { key: 'img', label: 'Scan path (relative, e.g. images/base-12.jpg)', placeholder: 'images/…' },
 ];
@@ -931,6 +961,7 @@ function mergeCards(col, parsed) {
     if (x) {
       let changed = false;
       ['era', 'type', 'rarity', 'variant', 'key', 'alt'].forEach(f => { if (!x[f] && p[f]) { x[f] = p[f]; changed = true; } });
+      if (p.ref && (!x.ref || (!Array.isArray(x.ref) && !Array.isArray(p.ref) && x.ref !== p.ref))) { x.ref = p.ref; changed = true; }
       if (p.lang === 'KR' && x.lang === 'KR' && (x.rarity || '') !== (p.rarity || '')) { x.rarity = p.rarity || ''; changed = true; }
       if (changed) updated++;
       exact.set(cardSig(x, true), x);
@@ -945,13 +976,14 @@ function mergeCards(col, parsed) {
 }
 // The page ships with Wobbuffet and Yuka Morii card data (era, rarity, printings, JP and CN prints).
 // Any CSV or collection missing those fields is completed from it, matched on name + set + number.
-let seedIdx = null, seedLnk = null, seedAlone = [];
+let seedIdx = null, seedLnk = null, seedAlone = [], seedRef = null;
 function buildSeedIndexes() {
-  seedIdx = new Map(); seedLnk = new Map(); seedAlone = [];
+  seedIdx = new Map(); seedLnk = new Map(); seedAlone = []; seedRef = new Map();
   ((SEED && SEED.cards) || []).forEach(s => {
     const en = (s.lang || 'EN') === 'EN';
     const refs = Array.isArray(s.ref) ? s.ref : (s.ref ? [s.ref] : []);
     if (!en && !refs.length) { seedAlone.push(s); return; }
+    if (!en) seedRef.set(cardSig(s, false), refs);
     const add = (map, k) => { if (!map.has(k)) map.set(k, []); map.get(k).push(s); };
     if (en) add(seedIdx, cardSig(s, false));
     else refs.forEach(r => add(seedLnk, r));
@@ -960,9 +992,45 @@ function buildSeedIndexes() {
 const seedIndex = () => { if (!seedIdx) buildSeedIndexes(); return seedIdx; };
 const seedLinked = () => { if (!seedLnk) buildSeedIndexes(); return seedLnk; };
 const seedStandalone = () => { if (!seedIdx) buildSeedIndexes(); return seedAlone; };
+// Card links: rows sharing a ref are the same card in other printings / languages (scripts/link_cards.py writes it).
+// A row without one uses the seed's (saved built-in rows lost it before 2026-10-19), else its own name|set|number,
+// which is what the seed's JP / CN / KR rows point at.
+const refsOf = x => {
+  if (x.ref) return Array.isArray(x.ref) ? x.ref : [x.ref];
+  if ((x.lang || 'EN') !== 'EN') { if (!seedRef) buildSeedIndexes(); const r = seedRef.get(cardSig(x, false)); if (r) return r; }
+  return [refKey(x)];
+};
+let linkIdx = null;   // ref -> rows over every collection, rebuilt by render()
+const linkIndex = () => {
+  if (!linkIdx) {
+    linkIdx = new Map();
+    S.cards.forEach(x => refsOf(x).forEach(r => { if (!linkIdx.has(r)) linkIdx.set(r, []); linkIdx.get(r).push(x); }));
+  }
+  return linkIdx;
+};
+// Linked rows in other languages, grouped by language, each with its cheapest price in RM (Infinity = no price).
+function otherLangs(x) {
+  const lang = x.lang || 'EN', by = new Map();
+  refsOf(x).forEach(r => (linkIndex().get(r) || []).forEach(y => {
+    const l = y.lang || 'EN';
+    if (l === lang) return;
+    if (!by.has(l)) by.set(l, new Set());
+    by.get(l).add(y);
+  }));
+  return [...by].map(([l, rows]) => ({ lang: l, rows: [...rows], best: Math.min(...[...rows].map(minPrice)) }))
+    .sort((a, b) => LANGS.findIndex(([c]) => c === a.lang) - LANGS.findIndex(([c]) => c === b.lang));
+}
+const rm = v => `RM ${v.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+const otherLine = x => {
+  const o = otherLangs(x);
+  if (!o.length) return '';
+  const own = minPrice(x), low = Math.min(...o.map(k => k.best));
+  return `<div class="muted other-langs">Other languages: ${o.map(k => k.best === Infinity ? `${esc(k.lang)} no price`
+    : `<span${k.best === low && low < own ? ' class="best"' : ''}>${esc(k.lang)} ${rm(k.best)}</span>`).join(' · ')}</div>`;
+};
 const refKey = x => [x.name, x.set, x.number].map(v => String(v || '').toLowerCase().trim()).join('|');
 const rowFrom = s => ({ name: s.name, set: s.set, number: s.number, era: s.era, type: s.type, rarity: s.rarity,
-  variant: s.variant, lang: s.lang || 'EN', alt: s.alt || '', img: '', key: s.key });
+  variant: s.variant, lang: s.lang || 'EN', alt: s.alt || '', img: '', key: s.key, ...(s.ref ? { ref: s.ref } : {}) });
 function enrichFromSeed(parsed) {
   const out = [];
   parsed.forEach(p => {
@@ -1014,10 +1082,9 @@ function importCsv(file) {
       const key = get('image') ? stem(get('image')) : first('key', 'en_id', 'id').toLowerCase();
       const vraw = get('variant').toLowerCase();
       const variant = !vraw ? '' : /rev/.test(vraw) ? 'reverse' : /holo/.test(vraw) ? 'holo' : /norm|non|basic/.test(vraw) ? 'normal' : '';
-      const lraw = get('language').toLowerCase();
-      const lang = /^(jp|ja|jpn|japan)/.test(lraw) ? 'JP' : /^(cn|zh|sc|chi)/.test(lraw) ? 'CN' : /^(kr|ko)/.test(lraw) ? 'KR' : 'EN';
+      const lang = langCode(get('language'));
       parsed.push({ name: get('name'), set: get('set'), number: first('number', 'num'), era: get('era'), type: get('type'),
-        rarity: get('rarity'), variant, lang, alt: first('local_name', 'alt'), img: /[\\/]/.test(get('image')) ? get('image') : '', key });
+        rarity: get('rarity'), variant, lang, alt: first('local_name', 'alt'), ref: get('ref'), img: /[\\/]/.test(get('image')) ? get('image') : '', key });
     });
     if (!parsed.length) { infoBox('No card rows found in that CSV.'); return; }
     parsed = enrichFromSeed(parsed);
@@ -1162,6 +1229,7 @@ function linkBits(st) {
   return links.join('');
 }
 function render() {
+  linkIdx = null;
   applyTheme();
   notice();
   const app = $('#app');
@@ -1201,14 +1269,14 @@ function render() {
       : `<div class="thumb">no scan</div>`;
     return `<tr>
       <td><input type="checkbox" data-found="${x.id}"${x.found ? ' checked' : ''} title="Found / available"></td>
-      <td><div class="card-cell">${thumb}<div><strong>${esc(x.name)}</strong>${badge(x)}<div class="muted">${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''}</div>${altLine(x)}${metaLine(x)}</div></div></td>
+      <td><div class="card-cell">${thumb}<div><strong>${esc(x.name)}</strong>${badge(x)}<div class="muted">${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''}</div>${altLine(x)}${metaLine(x)}${otherLine(x)}</div></div></td>
       <td>${chipsFor(x)}</td>
       <td>${esc(cheapest)}</td>
       <td class="act">${iconBtns('card', x.id)}</td></tr>`;
   }).join('');
 
   const phoneCards = cards.map(x => `<div class="pcard"><div class="top">
-        <div class="card-cell" style="min-width:0"><div><strong>${esc(x.name)}</strong>${badge(x)}<div class="muted">${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''}</div>${altLine(x)}${metaLine(x)}</div></div>
+        <div class="card-cell" style="min-width:0"><div><strong>${esc(x.name)}</strong>${badge(x)}<div class="muted">${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''}</div>${altLine(x)}${metaLine(x)}${otherLine(x)}</div></div>
         <div style="margin-left:auto;display:flex;align-items:center;gap:4px"><input type="checkbox" data-found="${x.id}"${x.found ? ' checked' : ''}>${iconBtns('card', x.id)}</div></div>
       ${chipsFor(x)}</div>`).join('');
 
