@@ -1,0 +1,5 @@
+# Publish only the slim page and README. Everything else stays local (price backups, full page with scans, notes).
+/*
+!/docs
+!/README.md
+!/.gitignore
