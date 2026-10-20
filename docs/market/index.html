@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
+<title>Yuka Morii Market Report</title>
+<style>
+:root{
+  --bg:#f6f6f4;--surface:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e2dd;--accent:#2f6fdb;
+  --best-bg:#e3f4e8;--best-text:#1d7a3a;--danger:#b3261e;--danger-bg:#fbe9e7;--fair-bg:#eef3fc;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#141416;--surface:#1c1c1f;--text:#ececE8;--muted:#9a9a94;--line:#2e2e33;--accent:#6d9cff;
+  --best-bg:#1d3626;--best-text:#7fd39a;--danger:#f2877f;--danger-bg:#3a2020;--fair-bg:#1f2738;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font)}
+a{color:var(--accent);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .2s}
+a:hover,a:focus-visible{background-size:100% 1px}
+.num,td.n{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono)}
+
+/* layout: Dark-Editorial sticky side rail + scrolling main */
+.shell{display:grid;grid-template-columns:240px minmax(0,1fr);max-width:1440px;margin:0 auto}
+.rail{position:sticky;top:0;height:100vh;padding:40px 28px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:28px}
+.rail h1{font-size:20px;line-height:1.25;margin:0}
+.rail .sub{color:var(--muted);font-size:13px;margin-top:6px}
+.rail nav{display:flex;flex-direction:column;gap:2px}
+.rail nav a{display:flex;gap:12px;align-items:baseline;padding:7px 0;color:var(--muted);font-size:14px;background:none}
+.rail nav a .mono{font-size:12px;color:var(--accent)}
+.rail nav a::after{content:"";flex:1;height:1px;background:var(--line);align-self:center;transition:background .2s}
+.rail nav a.on,.rail nav a:hover{color:var(--text)}
+.rail nav a.on::after{background:var(--accent)}
+.rail .fx{margin-top:auto;font-size:12px;color:var(--muted);font-family:var(--mono);line-height:1.7}
+main{padding:40px 40px 64px;min-width:0}
+section{scroll-margin-top:16px}
+.skip{position:absolute;left:-9999px;top:8px;z-index:10;padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.skip:focus{left:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.sec-h{display:flex;align-items:baseline;gap:12px;margin:0 0 16px;font-size:18px}
+.sec-h .mono{font-size:13px;color:var(--accent);font-weight:500}
+.sec-h small{font-size:13px;color:var(--muted);font-weight:400;margin-left:auto}
+.label{font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+
+/* 01 summary */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.kpi{padding:16px 18px;border-right:1px solid var(--line);min-width:0}
+.kpi:last-child{border-right:0}
+.kpi b{display:block;font-size:30px;line-height:1.1;margin-top:6px;font-variant-numeric:tabular-nums}
+.kpi .pct{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.kpi.deal b{color:var(--best-text)} .kpi.over b{color:var(--danger)}
+.totals{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.totals .big{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.totals .vs{color:var(--muted);font-size:14px}
+.split{display:flex;height:10px;border-radius:5px;overflow:hidden;margin-top:10px;background:var(--line)}
+.split i{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;background:var(--c)}
+
+/* three columns */
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:40px}
+#sellers{margin-top:48px}
+.col{min-width:0}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.thumb{width:100%;height:auto;aspect-ratio:63/88;object-fit:cover;border-radius:3px;background:var(--line);display:block}
+.ph{display:grid;place-items:center;font-size:11px;color:var(--muted);text-align:center;padding:2px}
+.item .t{font-weight:600;font-size:14px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .m{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row2{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px;font-size:13px}
+.badge{font-family:var(--mono);font-size:12px;padding:1px 6px;border-radius:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.b-deal{background:var(--best-bg);color:var(--best-text)}
+.b-over{background:var(--danger-bg);color:var(--danger)}
+.b-fair{background:var(--fair-bg);color:var(--accent)}
+.b-bulk,.b-none{background:var(--line);color:var(--muted)}
+/* gap motif: market tick at centre, price dot on log scale */
+.gap{position:relative;height:14px;margin-top:6px}
+.gap::before{content:"";position:absolute;left:0;right:0;top:6px;height:2px;background:var(--line);border-radius:1px}
+.gap .mk{position:absolute;left:50%;top:1px;width:2px;height:12px;background:var(--muted)}
+.gap .bar{position:absolute;top:6px;height:2px}
+.gap .dot{position:absolute;top:2px;width:10px;height:10px;border-radius:50%;margin-left:-5px;border:2px solid var(--surface)}
+.more{margin-top:10px;font-size:13px}
+
+/* sellers */
+.sel{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
+.sel table{width:100%;border-collapse:collapse;font-size:13px}
+.sel th,.sel td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.sel th:first-child,.sel td:first-child{text-align:left;white-space:normal;overflow-wrap:anywhere}
+.sel th{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted);background:var(--surface);position:sticky;top:0}
+.sel .scroll{max-height:720px;overflow:auto}
+.sel .v{font-size:12px;color:var(--muted);text-align:left}
+.sel tr.bulk td{color:var(--muted)}
+.dn{color:var(--best-text)} .up{color:var(--danger)}
+
+/* 05 table */
+.all{margin-top:48px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.toolbar select,.toolbar input[type=search]{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text)}
+.toolbar input[type=search]{min-width:200px}
+.toolbar label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.toolbar .count{margin-left:auto;font-size:13px;color:var(--muted)}
+.tbl{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:auto}
+.tbl table{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{position:sticky;top:0;background:var(--surface);text-align:left;font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+.tbl th button{all:unset;cursor:pointer;color:var(--accent)}
+.tbl th button:focus-visible{outline:2px solid var(--accent)}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl td.n{text-align:right;white-space:nowrap}
+.tbl td.img{width:44px}
+.tbl td.img .thumb{width:36px}
+.tbl tr.grp td{border-top:2px solid var(--line)}
+.tbl .cname{font-weight:600}
+.tbl .sm{font-size:12px;color:var(--muted)}
+.chip{font-family:var(--mono);font-size:11px;padding:1px 5px;border-radius:3px;background:var(--best-bg);color:var(--best-text);margin-left:6px}
+.tbl .gapcell{width:120px}
+.morebtn{display:block;margin:12px auto 0;font:inherit;font-size:14px;padding:8px 16px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--accent);cursor:pointer}
+.morebtn[hidden]{display:none}
+.morebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+
+@media (max-width:820px){
+  .shell{grid-template-columns:1fr}
+  .rail{min-width:0;position:sticky;height:auto;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line);background:var(--bg);z-index:5;gap:8px}
+  .rail .sub,.rail .fx{display:none}
+  .rail h1{font-size:16px}
+  .rail nav{flex-direction:row;overflow-x:auto;gap:16px}
+  .rail nav a{white-space:nowrap;padding:2px 0}
+  .rail nav a::after{display:none}
+  main{padding:20px 16px 48px}
+  section{scroll-margin-top:96px}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kpi{border-bottom:1px solid var(--line)}
+  .kpi b{font-size:24px}
+  .totals{grid-template-columns:1fr;gap:10px}
+  .cols{grid-template-columns:1fr;gap:32px;margin-top:32px}
+  .toolbar input[type=search]{min-width:0;flex:1}
+  .toolbar .count{margin-left:0;width:100%}
+  .hide-s{display:none}
+  .sel th:first-child,.sel td:first-child{min-width:110px;overflow-wrap:normal;word-break:break-word}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#summary">Skip to report</a>
+<div class="shell">
+  <aside class="rail">
+    <div>
+      <h1>Yuka Morii market report</h1>
+      <div class="sub" id="sub"></div>
+    </div>
+    <nav id="nav">
+      <a href="#summary"><span class="mono">01</span>Summary</a>
+      <a href="#deals"><span class="mono">02</span>Best deals</a>
+      <a href="#over"><span class="mono">03</span>Most overpriced</a>
+      <a href="#sellers"><span class="mono">04</span>Sellers</a>
+      <a href="#all"><span class="mono">05</span>All listings</a>
+    </nav>
+    <div class="fx" id="fx"></div>
+  </aside>
+  <main id="main">
+    <section id="summary">
+      <h2 class="sec-h"><span class="mono">01.</span>Summary<small id="sumNote"></small></h2>
+      <div class="kpis" id="kpis"></div>
+      <div class="totals" id="totals"></div>
+    </section>
+    <div class="cols">
+      <section class="col" id="deals"><h2 class="sec-h"><span class="mono">02.</span>Best deals<small id="dealsN"></small></h2><div class="list" id="dealList"></div><div class="more"><a href="#all" data-v="deal">See all deals in the table</a></div></section>
+      <section class="col" id="over"><h2 class="sec-h"><span class="mono">03.</span>Most overpriced<small id="overN"></small></h2><div class="list" id="overList"></div><div class="more"><a href="#all" data-v="overpriced">See all overpriced in the table</a></div></section>
+    </div>
+    <section id="sellers"><h2 class="sec-h"><span class="mono">04.</span>Sellers<small>median vs market, cheapest first</small></h2><div class="sel"><div class="scroll"><table><thead><tr><th>Seller</th><th class="hide-s">Venue</th><th>Median</th><th>Compared / listings</th><th>Deals</th><th>Overpriced</th><th class="hide-s">Asked (compared)</th><th class="hide-s">Market (compared)</th></tr></thead><tbody id="selBody"></tbody></table></div></div></section>
+    <section class="all" id="all">
+      <h2 class="sec-h"><span class="mono">05.</span>All listings</h2>
+      <div class="toolbar">
+        <select id="fV" aria-label="Verdict"><option value="">All verdicts</option><option value="deal">Deal</option><option value="fair">Fair</option><option value="overpriced">Overpriced</option><option value="bulk">Bulk</option><option value="no market">No market</option></select>
+        <select id="fL" aria-label="Language"><option value="">All languages</option><option>EN</option><option>JP</option><option>CN</option></select>
+        <select id="fVen" aria-label="Venue"><option value="">All venues</option><option>Carousell</option><option>Facebook</option><option>Amcorp Mall</option></select>
+        <input type="search" id="fS" placeholder="Search seller or card…" aria-label="Search seller or card">
+        <label><input type="checkbox" id="fG" checked> Group by card</label>
+        <span class="count num" id="count" aria-live="polite"></span>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th></th><th>Card</th><th class="hide-s">Seller</th><th style="text-align:right">Price</th><th style="text-align:right" class="hide-s">Market</th><th class="hide-s">Gap</th><th style="text-align:right"><button id="sortBtn" type="button">% vs market &#8597;</button></th></tr></thead>
+        <tbody id="tBody"></tbody>
+      </table></div>
+      <button type="button" id="moreRows" class="morebtn" hidden></button>
+    </section>
+    <footer id="foot"></footer>
+  </main>
+</div>
+<script src="market_compare.js"></script>
+<script>
+(function(){
+var MC=window.MC,R=MC.rows,S=MC.sellers;
+var $=function(id){return document.getElementById(id)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var rm=function(v){return v==null?'-':'RM '+Math.round(v).toLocaleString('en-US')};
+var pct=function(p){return p==null?'-':(p>0?'+':'')+(Math.abs(p)>=100?Math.round(p).toLocaleString('en-US'):p.toFixed(1))+'%'};
+var VC={deal:'b-deal',overpriced:'b-over',fair:'b-fair',bulk:'b-bulk','no market':'b-none'};
+var img=function(r){var a='alt="'+esc(r.name)+'"';return r.image?'<img class="thumb" loading="lazy" width="63" height="88" '+a+' src="'+esc(r.image)+'" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'thumb ph\',textContent:\'no scan\'}))">':'<div class="thumb ph" role="img" aria-label="'+esc(r.name)+'">no scan</div>'};
+var fin=function(r){return r.lang+' '+r.variant};
+function gap(r){
+  if(r.market_rm==null||!r.market_rm)return '';
+  // ponytail: log2 scale, 1 step = 2x; clamps at 1/4x and 4x
+  var x=50+25*Math.log2(r.price_rm/r.market_rm);x=Math.max(2,Math.min(98,x));
+  var c=r.price_rm<=r.market_rm?'var(--best-text)':'var(--danger)';
+  var l=Math.min(x,50),w=Math.abs(x-50);
+  return '<div class="gap" title="Price '+rm(r.price_rm)+' vs market '+rm(r.market_rm)+'"><span class="bar" style="left:'+l+'%;width:'+w+'%;background:'+c+'"></span><span class="mk"></span><span class="dot" style="left:'+x+'%;background:'+c+'"></span></div>';
+}
+
+/* rail + header */
+$('sub').textContent=R.length+' listings from '+S.length+' sellers';
+$('fx').innerHTML='USD/MYR '+MC.fx.usd_myr.toFixed(3)+'<br>USD/JPY '+MC.fx.usd_jpy.toFixed(2)+'<br>FX '+esc(MC.fx.usd_myr_date)+'<br>Data '+esc(MC.fx.date);
+
+/* 01 summary */
+var cnt={deal:0,fair:0,overpriced:0,bulk:0,'no market':0};R.forEach(function(r){cnt[r.verdict]++});
+var K=[['deal','Deals','deal'],['fair','Fair',''],['overpriced','Overpriced','over'],['bulk','Bulk',''],['no market','No market','']];
+$('kpis').innerHTML=K.map(function(k){return '<div class="kpi '+k[2]+'"><div class="label">'+k[1]+'</div><b>'+cnt[k[0]]+'</b><div class="pct">'+(cnt[k[0]]/R.length*100).toFixed(0)+'% of listings</div></div>'}).join('');
+var cmp=R.filter(function(r){return r.verdict==='deal'||r.verdict==='fair'||r.verdict==='overpriced'});
+var ask=0,mkt=0;cmp.forEach(function(r){ask+=r.price_rm;mkt+=r.market_rm});
+var cols={deal:'var(--best-text)',fair:'var(--accent)',overpriced:'var(--danger)',bulk:'var(--muted)','no market':'var(--line)'};
+$('totals').innerHTML='<div><div class="label">Comparable listings ('+cmp.length+')</div><div class="big">'+rm(ask)+' <span class="vs">asked vs '+rm(mkt)+' market</span></div><div class="mono" style="font-size:13px;color:'+(ask>mkt?'var(--danger)':'var(--best-text)')+'">'+pct((ask/mkt-1)*100)+' overall</div></div>'+
+  '<div><div class="split">'+K.map(function(k){return '<i style="width:'+(cnt[k[0]]/R.length*100)+'%;background:'+cols[k[0]]+'"></i>'}).join('')+'</div><div class="legend">'+K.map(function(k){return '<span style="--c:'+cols[k[0]]+'">'+k[1]+' '+cnt[k[0]]+'</span>'}).join('')+'</div></div>';
+$('sumNote').textContent='thresholds: deal '+MC.thresholds.deal_pct+'%, overpriced +'+MC.thresholds.over_pct+'%, bulk < RM '+MC.thresholds.bulk_rm;
+
+/* 02 / 03 */
+function card(r){
+  return '<article class="item">'+img(r)+'<div style="min-width:0"><div class="t" title="'+esc(r.name)+'">'+esc(r.name)+'</div>'+
+  '<div class="m">'+esc(r.set)+' '+esc(r.number)+' - '+fin(r)+'</div>'+
+  '<div class="m">'+esc(r.seller)+' - '+esc(r.venue)+'</div>'+
+  '<div class="row2"><span class="num">'+rm(r.price_rm)+' <span style="color:var(--muted)">/ '+rm(r.market_rm)+'</span></span><span class="badge '+VC[r.verdict]+'">'+pct(r.diff_pct)+'</span></div>'+
+  gap(r)+(r.url?'<div class="m" style="margin-top:4px"><a href="'+esc(r.url)+'" target="_blank" rel="noopener">Open listing</a></div>':'')+'</div></article>';
+}
+var deals=R.filter(function(r){return r.verdict==='deal'}).sort(function(a,b){return a.diff_pct-b.diff_pct});
+var over=R.filter(function(r){return r.verdict==='overpriced'}).sort(function(a,b){return b.diff_pct-a.diff_pct});
+$('dealsN').textContent='top 8 of '+deals.length;$('overN').textContent='top 8 of '+over.length;
+$('dealList').innerHTML=deals.slice(0,8).map(card).join('');
+$('overList').innerHTML=over.slice(0,8).map(card).join('');
+
+/* 04 sellers */
+var SB={};S.forEach(function(s){s.cmp_ask=0;s.cmp_mkt=0;SB[s.seller]=s});
+cmp.forEach(function(r){var s=SB[r.seller];if(s){s.cmp_ask+=r.price_rm;s.cmp_mkt+=r.market_rm}});
+var ss=S.slice().sort(function(a,b){if(!a.compared!==!b.compared)return a.compared?-1:1;return (a.median_pct==null?1e9:a.median_pct)-(b.median_pct==null?1e9:b.median_pct)});
+$('selBody').innerHTML=ss.map(function(s){var b=!s.compared;
+  return '<tr class="'+(b?'bulk':'')+'"><td>'+esc(s.seller)+'</td><td class="v hide-s">'+esc(s.venue)+(b?' - bulk only':'')+'</td><td class="mono '+(b?'':s.median_pct<0?'dn':'up')+'">'+(b?'-':pct(s.median_pct))+'</td><td class="num">'+s.compared+'/'+s.listings+'</td><td class="num">'+s.deals+'</td><td class="num">'+s.overpriced+'</td><td class="num hide-s">'+(b?'-':rm(s.cmp_ask))+'</td><td class="num hide-s">'+(b?'-':rm(s.cmp_mkt))+'</td></tr>'}).join('');
+
+/* 05 table */
+var dir=1,LIMIT=60,shown=LIMIT;
+var key=function(r){return r.lang+'|'+r.set+'|'+r.number+'|'+r.variant};
+function draw(){
+  var v=$('fV').value,l=$('fL').value,ve=$('fVen').value,q=$('fS').value.trim().toLowerCase(),g=$('fG').checked;
+  var rows=R.filter(function(r){return(!v||r.verdict===v)&&(!l||r.lang===l)&&(!ve||r.venue===ve)&&(!q||(r.seller+' '+r.name+' '+r.store).toLowerCase().indexOf(q)>=0)});
+  var P=function(r){return r.diff_pct==null?(dir>0?1e9:-1e9):r.diff_pct};
+  var byPct=function(a,b){return (P(a)-P(b))*dir};
+  var out=[];
+  if(g){
+    var G={};rows.forEach(function(r){(G[key(r)]=G[key(r)]||[]).push(r)});
+    var groups=Object.keys(G).map(function(k){return G[k].sort(function(a,b){return a.price_rm-b.price_rm})});
+    groups.sort(function(a,b){return byPct(a[0],b[0])});
+    groups.forEach(function(gr){gr.forEach(function(r,i){out.push([r,i===0,gr.length])})});
+  } else rows.sort(byPct).forEach(function(r){out.push([r,true,1])});
+  $('count').textContent=rows.length+' of '+R.length+' listings';
+  var total=out.length;out=out.slice(0,shown);
+  $('moreRows').hidden=total<=shown;$('moreRows').textContent='Show '+Math.min(LIMIT,total-shown)+' more ('+(total-shown)+' left)';
+  $('tBody').innerHTML=out.map(function(o){var r=o[0],first=o[1];
+    return '<tr class="'+(g&&first?'grp':'')+'"><td class="img">'+img(r)+'</td><td><span class="cname">'+esc(r.name)+'</span>'+(g&&first&&o[2]>1?'<span class="chip">CHEAPEST of '+o[2]+'</span>':'')+
+    '<div class="sm">'+esc(r.set)+' '+esc(r.number)+' - '+fin(r)+'</div></td>'+
+    '<td class="hide-s">'+(r.url?'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.seller)+'</a>':esc(r.seller))+'<div class="sm">'+esc(r.venue)+'</div></td>'+
+    '<td class="n">'+rm(r.price_rm)+'</td><td class="n hide-s">'+rm(r.market_rm)+(r.market_rm==null?'<div class="sm">'+esc(r.market_src)+'</div>':'<div class="sm">'+esc(r.market_src)+'</div>')+'</td>'+
+    '<td class="gapcell hide-s">'+gap(r)+'</td><td class="n"><span class="badge '+VC[r.verdict]+'">'+(r.diff_pct==null?esc(r.verdict):pct(r.diff_pct))+'</span></td></tr>'}).join('');
+}
+var redraw=function(){shown=LIMIT;draw()};
+['fV','fL','fVen','fG'].forEach(function(id){$(id).addEventListener('change',redraw)});
+$('fS').addEventListener('input',redraw);
+$('sortBtn').addEventListener('click',function(){dir=-dir;redraw()});
+$('moreRows').addEventListener('click',function(){shown+=LIMIT;draw()});
+document.querySelectorAll('.more a').forEach(function(a){a.addEventListener('click',function(){$('fV').value=a.dataset.v;dir=a.dataset.v==='overpriced'?-1:1;redraw()})});
+draw();
+
+/* rail highlight */
+var links=[].slice.call(document.querySelectorAll('#nav a'));
+if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)links.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)})})},{rootMargin:'-20% 0px -70% 0px'});
+['summary','deals','over','sellers','all'].forEach(function(id){io.observe($(id))});}
+
+$('foot').innerHTML='<b>How market is set.</b> EN = TCGplayer price for the listing\'s finish. JP = Mercari median (else Cardmarket), normal finish only. Bulk = market under RM '+MC.thresholds.bulk_rm+', where % is meaningless (local floor RM 1-3). Gap bar: centre tick = market, dot = asking price, log scale (each quarter = 2x). FX USD/MYR '+MC.fx.usd_myr.toFixed(3)+' on '+esc(MC.fx.usd_myr_date)+'. Some % are huge (+3,000%): likely graded or mis-recorded, shown as-is. Source: '+esc(MC.backup)+'.';
+})();
+</script>
+</body>
+</html>
