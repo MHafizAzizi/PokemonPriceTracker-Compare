@@ -69,6 +69,26 @@ section{scroll-margin-top:16px}
 .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px;color:var(--muted)}
 .legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;background:var(--c)}
 
+/* 02 eras and sets */
+#eras{margin-top:40px}
+.eras{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.era,.set{font:inherit;color:inherit;text-align:left;cursor:pointer;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0;display:flex;flex-direction:column;gap:6px}
+.era:hover,.set:hover{border-color:var(--muted)}
+.era[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.era:focus-visible,.set:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.era .t{font-weight:600;font-size:14px;line-height:1.3}
+.era b{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.vc{display:flex;flex-wrap:wrap;gap:4px}
+.vc .badge{font-size:11px}
+.era .split,.set .split{height:6px;margin-top:0}
+.sets-h{display:flex;align-items:baseline;gap:12px;margin:20px 0 10px;font-size:15px}
+.sets-h small{font-size:13px;color:var(--muted);font-weight:400}
+.sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.set .logo{height:64px;display:grid;place-items:center}
+.set .logo img{max-width:100%;max-height:64px;object-fit:contain}
+.set .logo span{font-weight:600;font-size:13px;text-align:center;line-height:1.3}
+.set .m{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 /* three columns */
 .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:40px}
 #sellers{margin-top:48px}
@@ -109,6 +129,7 @@ section{scroll-margin-top:16px}
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
 .toolbar select,.toolbar input[type=search]{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text)}
 .toolbar input[type=search]{min-width:200px}
+#fSet{max-width:100%;min-width:0;text-overflow:ellipsis}
 .toolbar label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
 .toolbar .count{margin-left:auto;font-size:13px;color:var(--muted)}
 .tbl{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:auto}
@@ -166,10 +187,11 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
     </div>
     <nav id="nav">
       <a href="#summary"><span class="mono">01</span>Summary</a>
-      <a href="#deals"><span class="mono">02</span>Best deals</a>
-      <a href="#over"><span class="mono">03</span>Most overpriced</a>
-      <a href="#sellers"><span class="mono">04</span>Sellers</a>
-      <a href="#all"><span class="mono">05</span>All listings</a>
+      <a href="#eras"><span class="mono">02</span>Eras and sets</a>
+      <a href="#deals"><span class="mono">03</span>Best deals</a>
+      <a href="#over"><span class="mono">04</span>Most overpriced</a>
+      <a href="#sellers"><span class="mono">05</span>Sellers</a>
+      <a href="#all"><span class="mono">06</span>All listings</a>
     </nav>
     <div class="fx" id="fx"></div>
   </aside>
@@ -179,17 +201,24 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
       <div class="kpis" id="kpis"></div>
       <div class="totals" id="totals"></div>
     </section>
+    <section id="eras">
+      <h2 class="sec-h"><span class="mono">02.</span>Eras and sets<small>pick an era, then a set to see its listings</small></h2>
+      <div class="eras" id="eraList"></div>
+      <h3 class="sets-h" id="setsH"></h3>
+      <div class="sets" id="setList"></div>
+    </section>
     <div class="cols">
-      <section class="col" id="deals"><h2 class="sec-h"><span class="mono">02.</span>Best deals<small id="dealsN"></small></h2><div class="list" id="dealList"></div><div class="more"><a href="#all" data-v="deal">See all deals in the table</a></div></section>
-      <section class="col" id="over"><h2 class="sec-h"><span class="mono">03.</span>Most overpriced<small id="overN"></small></h2><div class="list" id="overList"></div><div class="more"><a href="#all" data-v="overpriced">See all overpriced in the table</a></div></section>
+      <section class="col" id="deals"><h2 class="sec-h"><span class="mono">03.</span>Best deals<small id="dealsN"></small></h2><div class="list" id="dealList"></div><div class="more"><a href="#all" data-v="deal">See all deals in the table</a></div></section>
+      <section class="col" id="over"><h2 class="sec-h"><span class="mono">04.</span>Most overpriced<small id="overN"></small></h2><div class="list" id="overList"></div><div class="more"><a href="#all" data-v="overpriced">See all overpriced in the table</a></div></section>
     </div>
-    <section id="sellers"><h2 class="sec-h"><span class="mono">04.</span>Sellers<small>median vs market, click a column to sort</small></h2><div class="sel"><div class="scroll"><table><thead id="selHead"><tr><th><button type="button" data-k="seller">Seller</button></th><th class="hide-s"><button type="button" data-k="venue">Venue</button></th><th aria-sort="ascending"><button type="button" data-k="median_pct">Median</button></th><th><button type="button" data-k="compared">Compared / listings</button></th><th><button type="button" data-k="deals">Deals</button></th><th><button type="button" data-k="overpriced">Overpriced</button></th><th class="hide-s"><button type="button" data-k="cmp_ask">Asked (compared)</button></th><th class="hide-s"><button type="button" data-k="cmp_mkt">Market (compared)</button></th></tr></thead><tbody id="selBody"></tbody></table></div></div></section>
+    <section id="sellers"><h2 class="sec-h"><span class="mono">05.</span>Sellers<small>median vs market, click a column to sort</small></h2><div class="sel"><div class="scroll"><table><thead id="selHead"><tr><th><button type="button" data-k="seller">Seller</button></th><th class="hide-s"><button type="button" data-k="venue">Venue</button></th><th aria-sort="ascending"><button type="button" data-k="median_pct">Median</button></th><th><button type="button" data-k="compared">Compared / listings</button></th><th><button type="button" data-k="deals">Deals</button></th><th><button type="button" data-k="overpriced">Overpriced</button></th><th class="hide-s"><button type="button" data-k="cmp_ask">Asked (compared)</button></th><th class="hide-s"><button type="button" data-k="cmp_mkt">Market (compared)</button></th></tr></thead><tbody id="selBody"></tbody></table></div></div></section>
     <section class="all" id="all">
-      <h2 class="sec-h"><span class="mono">05.</span>All listings</h2>
+      <h2 class="sec-h"><span class="mono">06.</span>All listings</h2>
       <div class="toolbar">
         <select id="fV" aria-label="Verdict"><option value="">All verdicts</option><option value="deal">Deal</option><option value="fair">Fair</option><option value="overpriced">Overpriced</option><option value="bulk">Bulk</option><option value="no market">No market</option></select>
         <select id="fL" aria-label="Language"><option value="">All languages</option><option>EN</option><option>JP</option><option>CN</option></select>
         <select id="fVen" aria-label="Venue"><option value="">All venues</option><option>Carousell</option><option>Facebook</option><option>Amcorp Mall</option></select>
+        <select id="fSet" aria-label="Set"><option value="">All sets</option></select>
         <input type="search" id="fS" placeholder="Search seller or card…" aria-label="Search seller or card">
         <label><input type="checkbox" id="fG" checked> Group by card</label>
         <span class="count num" id="count" aria-live="polite"></span>
@@ -238,7 +267,32 @@ $('totals').innerHTML='<div><div class="label">Comparable listings ('+cmp.length
   '<div><div class="split">'+K.map(function(k){return '<i style="width:'+(cnt[k[0]]/R.length*100)+'%;background:'+cols[k[0]]+'"></i>'}).join('')+'</div><div class="legend">'+K.map(function(k){return '<span style="--c:'+cols[k[0]]+'">'+k[1]+' '+cnt[k[0]]+'</span>'}).join('')+'</div></div>';
 $('sumNote').textContent='thresholds: deal '+MC.thresholds.deal_pct+'%, overpriced +'+MC.thresholds.over_pct+'%, bulk < RM '+MC.thresholds.bulk_rm;
 
-/* 02 / 03 */
+/* 02 eras and sets */
+var ERA_ORDER=['Base','Gym','Neo','Legendary Collection','e-Card','EX','Diamond & Pearl','Platinum','HeartGold & SoulSilver','Black & White','XY','Sun & Moon','Sword & Shield','Scarlet & Violet','Mega Evolution'];
+var LOGO=MC.logos||{};
+var skey=function(r){return r.lang+'|'+r.set};
+var E={};R.forEach(function(r){var e=E[r.era||'Other']=E[r.era||'Other']||{name:r.era||'Other',rows:[],sets:{}};e.rows.push(r);(e.sets[skey(r)]=e.sets[skey(r)]||[]).push(r)});
+var eraIx=function(n){var i=ERA_ORDER.indexOf(n);return i<0?99:i};
+var ERAS=Object.keys(E).map(function(k){return E[k]}).sort(function(a,b){return eraIx(a.name)-eraIx(b.name)});
+function vsum(rows){var c={deal:0,fair:0,overpriced:0,bulk:0,'no market':0};rows.forEach(function(r){c[r.verdict]++});
+  return '<span class="split" aria-hidden="true">'+K.map(function(k){return c[k[0]]?'<i style="width:'+(c[k[0]]/rows.length*100)+'%;background:'+cols[k[0]]+'"></i>':''}).join('')+'</span>'+
+  '<span class="vc">'+[['deal','deal','b-deal'],['fair','fair','b-fair'],['overpriced','over','b-over'],['bulk','bulk','b-bulk']].map(function(k){return c[k[0]]?'<span class="badge '+k[2]+'">'+c[k[0]]+' '+k[1]+'</span>':''}).join('')+'</span>'}
+var curEra=ERAS.length?ERAS.reduce(function(a,b){return b.rows.length>a.rows.length?b:a}).name:'';
+$('eraList').innerHTML=ERAS.map(function(e){return '<button type="button" class="era" data-era="'+esc(e.name)+'" aria-pressed="'+(e.name===curEra)+'"><span class="t">'+esc(e.name)+'</span><b>'+e.rows.length+'</b><span class="label">'+Object.keys(e.sets).length+' sets</span>'+vsum(e.rows)+'</button>'}).join('');
+function drawSets(){
+  if(!curEra)return;
+  var e=E[curEra],ks=Object.keys(e.sets).sort(function(a,b){return e.sets[b].length-e.sets[a].length||a.localeCompare(b)});
+  $('setsH').innerHTML=esc(curEra)+' <small>'+ks.length+' sets, '+e.rows.length+' listings</small>';
+  $('setList').innerHTML=ks.map(function(k){var rs=e.sets[k],r=rs[0];
+    return '<button type="button" class="set" data-set="'+esc(k)+'" title="'+esc(r.lang+' '+r.set)+'"><span class="logo">'+(LOGO[k]?'<img loading="lazy" alt="'+esc(r.set)+'" src="'+esc(LOGO[k])+'">':'<span>'+esc(r.set)+'</span>')+'</span>'+
+    '<span class="m"><span class="mono">'+r.lang+'</span> '+esc(r.lang!=='EN'&&(r.set.match(/\(([^()]+)\)$/)||[])[1]||r.set)+'</span><span class="label">'+rs.length+' listing'+(rs.length>1?'s':'')+'</span>'+vsum(rs)+'</button>'}).join('');
+}
+$('eraList').addEventListener('click',function(ev){var b=ev.target.closest('[data-era]');if(!b)return;curEra=b.dataset.era;$('eraList').querySelectorAll('[data-era]').forEach(function(x){x.setAttribute('aria-pressed',x===b)});drawSets()});
+$('setList').addEventListener('click',function(ev){var b=ev.target.closest('[data-set]');if(!b)return;$('fSet').value=b.dataset.set;$('fV').value=$('fL').value=$('fVen').value=$('fS').value='';redraw();$('all').scrollIntoView()});
+$('fSet').insertAdjacentHTML('beforeend',ERAS.map(function(e){return '<optgroup label="'+esc(e.name)+'">'+Object.keys(e.sets).sort().map(function(k){return '<option value="'+esc(k)+'">'+esc(k.replace('|',' '))+'</option>'}).join('')+'</optgroup>'}).join(''));
+drawSets();
+
+/* 03 / 04 */
 function card(r){
   return '<article class="item">'+img(r)+'<div style="min-width:0"><div class="t" title="'+esc(r.name)+'">'+esc(r.name)+'</div>'+
   '<div class="m">'+esc(r.set)+' '+esc(r.number)+' - '+fin(r)+'</div>'+
@@ -273,8 +327,8 @@ sortHead('selHead',selSt,drawSel);drawSel();
 var st={k:'diff_pct',d:1},LIMIT=60,shown=LIMIT;
 var key=function(r){return r.lang+'|'+r.set+'|'+r.number+'|'+r.variant};
 function draw(){
-  var v=$('fV').value,l=$('fL').value,ve=$('fVen').value,q=$('fS').value.trim().toLowerCase(),g=$('fG').checked;
-  var rows=R.filter(function(r){return(!v||r.verdict===v)&&(!l||r.lang===l)&&(!ve||r.venue===ve)&&(!q||(r.seller+' '+r.name+' '+r.store).toLowerCase().indexOf(q)>=0)});
+  var v=$('fV').value,l=$('fL').value,ve=$('fVen').value,se=$('fSet').value,q=$('fS').value.trim().toLowerCase(),g=$('fG').checked;
+  var rows=R.filter(function(r){return(!v||r.verdict===v)&&(!l||r.lang===l)&&(!ve||r.venue===ve)&&(!se||skey(r)===se)&&(!q||(r.seller+' '+r.name+' '+r.store).toLowerCase().indexOf(q)>=0)});
   var byPct=cmpBy(st.k,st.d);
   var out=[];
   if(g){
@@ -294,17 +348,17 @@ function draw(){
     '<td class="gapcell hide-s">'+gap(r)+'</td><td class="n"><span class="badge '+VC[r.verdict]+'">'+(r.diff_pct==null?esc(r.verdict):pct(r.diff_pct))+'</span></td></tr>'}).join('');
 }
 var redraw=function(){shown=LIMIT;draw()};
-['fV','fL','fVen','fG'].forEach(function(id){$(id).addEventListener('change',redraw)});
+['fV','fL','fVen','fSet','fG'].forEach(function(id){$(id).addEventListener('change',redraw)});
 $('fS').addEventListener('input',redraw);
 var markT=sortHead('tHead',st,redraw);
 $('moreRows').addEventListener('click',function(){shown+=LIMIT;draw()});
-document.querySelectorAll('.more a').forEach(function(a){a.addEventListener('click',function(){$('fV').value=a.dataset.v;st.k='diff_pct';st.d=a.dataset.v==='overpriced'?-1:1;markT();redraw()})});
+document.querySelectorAll('.more a').forEach(function(a){a.addEventListener('click',function(){$('fV').value=a.dataset.v;$('fSet').value='';st.k='diff_pct';st.d=a.dataset.v==='overpriced'?-1:1;markT();redraw()})});
 draw();
 
 /* rail highlight */
 var links=[].slice.call(document.querySelectorAll('#nav a'));
 if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)links.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)})})},{rootMargin:'-20% 0px -70% 0px'});
-['summary','deals','over','sellers','all'].forEach(function(id){io.observe($(id))});}
+['summary','eras','deals','over','sellers','all'].forEach(function(id){io.observe($(id))});}
 
 $('foot').innerHTML='<b>How market is set.</b> EN = TCGplayer price for the listing\'s finish. JP = Mercari median (else Cardmarket), normal finish only. Bulk = market under RM '+MC.thresholds.bulk_rm+', where % is meaningless (local floor RM 1-3). Gap bar: centre tick = market, dot = asking price, log scale (each quarter = 2x). FX USD/MYR '+MC.fx.usd_myr.toFixed(3)+' on '+esc(MC.fx.usd_myr_date)+'. Some % are huge (+3,000%): likely graded or mis-recorded, shown as-is. Source: '+esc(MC.backup)+'.';
 })();
