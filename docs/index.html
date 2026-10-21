@@ -139,7 +139,6 @@
   .shell.no-side { grid-template-columns: 0 minmax(0, 1fr) var(--det-w); }
   .shell.no-det { grid-template-columns: var(--side-w) minmax(0, 1fr) 0; }
   .shell.no-side.no-det { grid-template-columns: 0 minmax(0, 1fr) 0; }
-  @media (prefers-reduced-motion: no-preference) { .shell { transition: grid-template-columns .2s ease; } }
   .side, .det { position: sticky; top: 0; align-self: start; height: 100vh; overflow: hidden auto; overscroll-behavior: contain; min-width: 0; }
   .no-side .side-in, .no-det .det-in { visibility: hidden; }
   .side { background: var(--rail); color: var(--rail-text); }
@@ -147,8 +146,9 @@
   .side-title { font-weight: 700; font-size: 15px; margin: 2px 8px 0; }
   .side h2 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--rail-muted); margin: 12px 8px 6px; font-weight: 600; }
   .side-sec > h2:first-child { margin-top: 0; }
-  .side button { display: flex; justify-content: space-between; gap: 8px; width: 100%; border: none; background: none; color: var(--rail-text); text-align: left; padding: 6px 8px; border-radius: 6px; }
-  .side button:hover { background: var(--rail-hover); }
+  .side button, .side a.side-link { display: flex; justify-content: space-between; gap: 8px; width: 100%; border: none; background: none; color: var(--rail-text); text-align: left; padding: 6px 8px; border-radius: 6px; }
+  .side a.side-link { text-decoration: none; box-sizing: border-box; }
+  .side button:hover, .side a.side-link:hover { background: var(--rail-hover); }
   .side button[aria-current] { background: #ffffff22; font-weight: 600; }
   .side small { color: var(--rail-muted); font-variant-numeric: tabular-nums; }
   .side .foot button { color: var(--rail-muted); }
@@ -1359,7 +1359,9 @@ const fval = (k, v) => {
 function sideHtml(c, all) {
   const a = (act, label, cls) => `<button type="button" data-act="${act}"${cls ? ` class="${cls}"` : ''}>${label}</button>`;
   const cols = S.collections.map(x => `<button type="button" data-act="col" data-id="${x.id}"${c && x.id === c.id ? ' aria-current="page"' : ''}>${esc(x.name)} <small>${cardsOf(x.id).length}</small></button>`).join('');
-  return `<div class="side-title">Card Price Tracker</div>
+  // The market report sits next to the page: market/ on GitHub Pages (thumbDir is set only there), market_report.html on the PC
+  const market = `<a class="side-link" href="${SEED.thumbDir ? 'market/' : 'market_report.html'}">Market report <small>↗</small></a>`;
+  return `<div class="side-title">Card Price Tracker</div>${market}
     <div class="side-sec"><h2>Collections</h2>${cols}${a('newcol', '+ New collection')}</div>
     ${c ? `<div class="side-sec"><h2>Filters</h2>${filterBar(cardsOf(c.id))}<button type="button" class="side-reset" data-act="resetf">Reset filters</button></div>` : ''}
     <div class="side-sec foot"><h2>Data</h2><span class="side-ok${backupDue() ? ' due' : ''}">Last backup: ${backupAge()}</span>
