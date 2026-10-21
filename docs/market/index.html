@@ -114,8 +114,11 @@ section{scroll-margin-top:16px}
 .tbl{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:auto}
 .tbl table{width:100%;border-collapse:collapse;font-size:14px}
 .tbl th{position:sticky;top:0;background:var(--surface);text-align:left;font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
-.tbl th button{all:unset;cursor:pointer;color:var(--accent)}
-.tbl th button:focus-visible{outline:2px solid var(--accent)}
+th button{all:unset;cursor:pointer}
+th button:hover,th[aria-sort] button{color:var(--accent)}
+th button:focus-visible{outline:2px solid var(--accent)}
+th[aria-sort=ascending] button::after{content:" \2191"}
+th[aria-sort=descending] button::after{content:" \2193"}
 .tbl td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
 .tbl td.n{text-align:right;white-space:nowrap}
 .tbl td.img{width:44px}
@@ -180,7 +183,7 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
       <section class="col" id="deals"><h2 class="sec-h"><span class="mono">02.</span>Best deals<small id="dealsN"></small></h2><div class="list" id="dealList"></div><div class="more"><a href="#all" data-v="deal">See all deals in the table</a></div></section>
       <section class="col" id="over"><h2 class="sec-h"><span class="mono">03.</span>Most overpriced<small id="overN"></small></h2><div class="list" id="overList"></div><div class="more"><a href="#all" data-v="overpriced">See all overpriced in the table</a></div></section>
     </div>
-    <section id="sellers"><h2 class="sec-h"><span class="mono">04.</span>Sellers<small>median vs market, cheapest first</small></h2><div class="sel"><div class="scroll"><table><thead><tr><th>Seller</th><th class="hide-s">Venue</th><th>Median</th><th>Compared / listings</th><th>Deals</th><th>Overpriced</th><th class="hide-s">Asked (compared)</th><th class="hide-s">Market (compared)</th></tr></thead><tbody id="selBody"></tbody></table></div></div></section>
+    <section id="sellers"><h2 class="sec-h"><span class="mono">04.</span>Sellers<small>median vs market, click a column to sort</small></h2><div class="sel"><div class="scroll"><table><thead id="selHead"><tr><th><button type="button" data-k="seller">Seller</button></th><th class="hide-s"><button type="button" data-k="venue">Venue</button></th><th aria-sort="ascending"><button type="button" data-k="median_pct">Median</button></th><th><button type="button" data-k="compared">Compared / listings</button></th><th><button type="button" data-k="deals">Deals</button></th><th><button type="button" data-k="overpriced">Overpriced</button></th><th class="hide-s"><button type="button" data-k="cmp_ask">Asked (compared)</button></th><th class="hide-s"><button type="button" data-k="cmp_mkt">Market (compared)</button></th></tr></thead><tbody id="selBody"></tbody></table></div></div></section>
     <section class="all" id="all">
       <h2 class="sec-h"><span class="mono">05.</span>All listings</h2>
       <div class="toolbar">
@@ -192,7 +195,7 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
         <span class="count num" id="count" aria-live="polite"></span>
       </div>
       <div class="tbl"><table>
-        <thead><tr><th></th><th>Card</th><th class="hide-s">Seller</th><th style="text-align:right">Price</th><th style="text-align:right" class="hide-s">Market</th><th class="hide-s">Gap</th><th style="text-align:right" id="sortTh" aria-sort="ascending"><button id="sortBtn" type="button">% vs market &#8597;</button></th></tr></thead>
+        <thead id="tHead"><tr><th></th><th><button type="button" data-k="name">Card</button></th><th class="hide-s"><button type="button" data-k="seller">Seller</button></th><th style="text-align:right"><button type="button" data-k="price_rm">Price</button></th><th style="text-align:right" class="hide-s"><button type="button" data-k="market_rm">Market</button></th><th class="hide-s">Gap</th><th style="text-align:right" aria-sort="ascending"><button type="button" data-k="diff_pct">% vs market</button></th></tr></thead>
         <tbody id="tBody"></tbody>
       </table></div>
       <button type="button" id="moreRows" class="morebtn" hidden></button>
@@ -249,21 +252,30 @@ $('dealsN').textContent='top 8 of '+deals.length;$('overN').textContent='top 8 o
 $('dealList').innerHTML=deals.slice(0,8).map(card).join('');
 $('overList').innerHTML=over.slice(0,8).map(card).join('');
 
+/* sortable headers: click a column to sort by it, click again to flip; blanks always last */
+function cmpBy(k,d){return function(a,b){var x=a[k],y=b[k];if(x==null||y==null)return (x==null)-(y==null);return (typeof x==='string'?x.localeCompare(y):x-y)*d}}
+function sortHead(id,st,cb){var head=$(id);head.addEventListener('click',function(e){var bt=e.target.closest('button[data-k]');if(!bt)return;
+  st.d=st.k===bt.dataset.k?-st.d:1;st.k=bt.dataset.k;mark(head,st);cb()});return function(){mark(head,st)}}
+function mark(head,st){head.querySelectorAll('button[data-k]').forEach(function(b){var th=b.parentNode;if(b.dataset.k===st.k)th.setAttribute('aria-sort',st.d>0?'ascending':'descending');else th.removeAttribute('aria-sort')})}
+
 /* 04 sellers */
 var SB={};S.forEach(function(s){s.cmp_ask=0;s.cmp_mkt=0;SB[s.seller]=s});
 cmp.forEach(function(r){var s=SB[r.seller];if(s){s.cmp_ask+=r.price_rm;s.cmp_mkt+=r.market_rm}});
-var ss=S.slice().sort(function(a,b){if(!a.compared!==!b.compared)return a.compared?-1:1;return (a.median_pct==null?1e9:a.median_pct)-(b.median_pct==null?1e9:b.median_pct)});
-$('selBody').innerHTML=ss.map(function(s){var b=!s.compared;
+S.forEach(function(s){if(!s.compared){s.cmp_ask=s.cmp_mkt=null}});
+var selSt={k:'median_pct',d:1};
+function drawSel(){
+$('selBody').innerHTML=S.slice().sort(cmpBy(selSt.k,selSt.d)).map(function(s){var b=!s.compared;
   return '<tr class="'+(b?'bulk':'')+'"><td>'+esc(s.seller)+'</td><td class="v hide-s">'+esc(s.venue)+(b?' - bulk only':'')+'</td><td class="mono '+(b?'':s.median_pct<0?'dn':'up')+'">'+(b?'-':pct(s.median_pct))+'</td><td class="num">'+s.compared+'/'+s.listings+'</td><td class="num">'+s.deals+'</td><td class="num">'+s.overpriced+'</td><td class="num hide-s">'+(b?'-':rm(s.cmp_ask))+'</td><td class="num hide-s">'+(b?'-':rm(s.cmp_mkt))+'</td></tr>'}).join('');
+}
+sortHead('selHead',selSt,drawSel);drawSel();
 
 /* 05 table */
-var dir=1,LIMIT=60,shown=LIMIT;
+var st={k:'diff_pct',d:1},LIMIT=60,shown=LIMIT;
 var key=function(r){return r.lang+'|'+r.set+'|'+r.number+'|'+r.variant};
 function draw(){
   var v=$('fV').value,l=$('fL').value,ve=$('fVen').value,q=$('fS').value.trim().toLowerCase(),g=$('fG').checked;
   var rows=R.filter(function(r){return(!v||r.verdict===v)&&(!l||r.lang===l)&&(!ve||r.venue===ve)&&(!q||(r.seller+' '+r.name+' '+r.store).toLowerCase().indexOf(q)>=0)});
-  var P=function(r){return r.diff_pct==null?(dir>0?1e9:-1e9):r.diff_pct};
-  var byPct=function(a,b){return (P(a)-P(b))*dir};
+  var byPct=cmpBy(st.k,st.d);
   var out=[];
   if(g){
     var G={};rows.forEach(function(r){(G[key(r)]=G[key(r)]||[]).push(r)});
@@ -284,9 +296,9 @@ function draw(){
 var redraw=function(){shown=LIMIT;draw()};
 ['fV','fL','fVen','fG'].forEach(function(id){$(id).addEventListener('change',redraw)});
 $('fS').addEventListener('input',redraw);
-$('sortBtn').addEventListener('click',function(){dir=-dir;$('sortTh').setAttribute('aria-sort',dir>0?'ascending':'descending');redraw()});
+var markT=sortHead('tHead',st,redraw);
 $('moreRows').addEventListener('click',function(){shown+=LIMIT;draw()});
-document.querySelectorAll('.more a').forEach(function(a){a.addEventListener('click',function(){$('fV').value=a.dataset.v;dir=a.dataset.v==='overpriced'?-1:1;$('sortTh').setAttribute('aria-sort',dir>0?'ascending':'descending');redraw()})});
+document.querySelectorAll('.more a').forEach(function(a){a.addEventListener('click',function(){$('fV').value=a.dataset.v;st.k='diff_pct';st.d=a.dataset.v==='overpriced'?-1:1;markT();redraw()})});
 draw();
 
 /* rail highlight */
