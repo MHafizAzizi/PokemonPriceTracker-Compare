@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
 <title>Yuka Morii Market Report</title>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('cpt-theme')||''}catch(e){}</script>
 <style>
 :root{
   --bg:#f6f6f4;--surface:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e2dd;--accent:#2f6fdb;
@@ -14,10 +15,15 @@
   --mono:ui-monospace,"SFMono-Regular","Cascadia Mono",Consolas,"Liberation Mono",monospace;
   color-scheme:light dark;
 }
-@media (prefers-color-scheme:dark){:root{
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#141416;--surface:#1c1c1f;--text:#ececE8;--muted:#9a9a94;--line:#2e2e33;--accent:#6d9cff;
   --best-bg:#1d3626;--best-text:#7fd39a;--danger:#f2877f;--danger-bg:#3a2020;--fair-bg:#1f2738;
 }}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#141416;--surface:#1c1c1f;--text:#ececE8;--muted:#9a9a94;--line:#2e2e33;--accent:#6d9cff;
+  --best-bg:#1d3626;--best-text:#7fd39a;--danger:#f2877f;--danger-bg:#3a2020;--fair-bg:#1f2738;
+}
+:root[data-theme="light"]{color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font)}
 a{color:var(--accent);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .2s}
@@ -186,7 +192,7 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
         <span class="count num" id="count" aria-live="polite"></span>
       </div>
       <div class="tbl"><table>
-        <thead><tr><th></th><th>Card</th><th class="hide-s">Seller</th><th style="text-align:right">Price</th><th style="text-align:right" class="hide-s">Market</th><th class="hide-s">Gap</th><th style="text-align:right"><button id="sortBtn" type="button">% vs market &#8597;</button></th></tr></thead>
+        <thead><tr><th></th><th>Card</th><th class="hide-s">Seller</th><th style="text-align:right">Price</th><th style="text-align:right" class="hide-s">Market</th><th class="hide-s">Gap</th><th style="text-align:right" id="sortTh" aria-sort="ascending"><button id="sortBtn" type="button">% vs market &#8597;</button></th></tr></thead>
         <tbody id="tBody"></tbody>
       </table></div>
       <button type="button" id="moreRows" class="morebtn" hidden></button>
@@ -278,9 +284,9 @@ function draw(){
 var redraw=function(){shown=LIMIT;draw()};
 ['fV','fL','fVen','fG'].forEach(function(id){$(id).addEventListener('change',redraw)});
 $('fS').addEventListener('input',redraw);
-$('sortBtn').addEventListener('click',function(){dir=-dir;redraw()});
+$('sortBtn').addEventListener('click',function(){dir=-dir;$('sortTh').setAttribute('aria-sort',dir>0?'ascending':'descending');redraw()});
 $('moreRows').addEventListener('click',function(){shown+=LIMIT;draw()});
-document.querySelectorAll('.more a').forEach(function(a){a.addEventListener('click',function(){$('fV').value=a.dataset.v;dir=a.dataset.v==='overpriced'?-1:1;redraw()})});
+document.querySelectorAll('.more a').forEach(function(a){a.addEventListener('click',function(){$('fV').value=a.dataset.v;dir=a.dataset.v==='overpriced'?-1:1;$('sortTh').setAttribute('aria-sort',dir>0?'ascending':'descending');redraw()})});
 draw();
 
 /* rail highlight */

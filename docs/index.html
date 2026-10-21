@@ -3,27 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
 <title>Card Price Tracker</title>
 <style>
   :root {
     --bg: #f6f6f4; --surface: #ffffff; --text: #1d1d1b; --muted: #6b6b66;
     --line: #e2e2dd; --accent: #2f6fdb; --best-bg: #e3f4e8; --best-text: #1d7a3a;
-    --thumb: #ececE7; --danger: #b3261e;
+    --thumb: #ececE7; --danger: #b3261e; --danger-bg: #fbe9e7;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #141416; --surface: #1c1c1f; --text: #ececE8; --muted: #9a9a94;
       --line: #2e2e33; --accent: #6d9cff; --best-bg: #1d3626; --best-text: #7fd39a;
-      --thumb: #2a2a2e; --danger: #f2877f;
+      --thumb: #2a2a2e; --danger: #f2877f; --danger-bg: #3a2020;
     }
   }
   :root[data-theme="dark"] {
     --bg: #141416; --surface: #1c1c1f; --text: #ececE8; --muted: #9a9a94;
     --line: #2e2e33; --accent: #6d9cff; --best-bg: #1d3626; --best-text: #7fd39a;
-    --thumb: #2a2a2e; --danger: #f2877f;
+    --thumb: #2a2a2e; --danger: #f2877f; --danger-bg: #3a2020;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 var(--font); }
   .wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px 48px; }
   header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   h1 { font-size: 20px; margin: 0; }
@@ -44,7 +48,7 @@
   .toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
   .muted { color: var(--muted); font-size: 12px; }
   .banner { background: var(--best-bg); color: var(--best-text); padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
-  .banner.warn { background: #fbe9e7; color: var(--danger); }
+  .banner.warn { background: var(--danger-bg); color: var(--danger); }
   .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; margin-bottom: 18px; }
   .panel-pad { padding: 14px 16px; }
   table { width: 100%; border-collapse: collapse; min-width: 760px; }
@@ -127,39 +131,104 @@
     .wrap { padding: 16px; }
     .panel { overflow: visible; }
   }
-  /* ---------- layout: sidebar | card list | detail panel (2026-10-20) ---------- */
-  :root { color-scheme: light dark; --rail: #1f2329; --rail-text: #dfe3e8; --rail-muted: #9aa3ad; --rail-hover: #ffffff14;
-    --sel: #eaf1fd; --side-w: 248px; --det-w: 360px; --top-h: 55px; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sel: #1b2638; --rail: #0f1114; } }
-  :root[data-theme="dark"] { color-scheme: dark; --sel: #1b2638; --rail: #0f1114; }
+  /* ---------- layout: rail | report column | detail drawer (2026-10-21, styled after market_report.html) ---------- */
+  :root { color-scheme: light dark; --sel: #eaf1fd; --side-w: 240px; --det-w: 360px; --top-h: 55px; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --sel: #1b2638; } }
+  :root[data-theme="dark"] { color-scheme: dark; --sel: #1b2638; }
   :root[data-theme="light"] { color-scheme: light; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .side :focus-visible { outline-color: #9cc0ff; }
-  .shell { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr) var(--det-w); min-height: 100vh; }
-  .shell.no-side { grid-template-columns: 0 minmax(0, 1fr) var(--det-w); }
-  .shell.no-det { grid-template-columns: var(--side-w) minmax(0, 1fr) 0; }
-  .shell.no-side.no-det { grid-template-columns: 0 minmax(0, 1fr) 0; }
+  .shell { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); min-height: 100vh; }
+  .shell.no-side { grid-template-columns: 0 minmax(0, 1fr); }
   .side, .det { position: sticky; top: 0; align-self: start; height: 100vh; overflow: hidden auto; overscroll-behavior: contain; min-width: 0; }
-  .no-side .side-in, .no-det .det-in { visibility: hidden; }
-  .side { background: var(--rail); color: var(--rail-text); }
-  .side-in { width: var(--side-w); padding: 14px 12px 20px; display: flex; flex-direction: column; gap: 16px; min-height: 100%; }
-  .side-title { font-weight: 700; font-size: 15px; margin: 2px 8px 0; }
-  .side h2 { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--rail-muted); margin: 12px 8px 6px; font-weight: 600; }
+  .no-side .side-in { visibility: hidden; }
+  .no-det .det { display: none; }
+  .side { background: var(--bg); color: var(--text); border-right: 1px solid var(--line); }
+  .side-in { width: var(--side-w); padding: 40px 20px 24px; display: flex; flex-direction: column; gap: 24px; min-height: 100%; }
+  .side-title { font-weight: 700; font-size: 20px; line-height: 1.25; margin: 0 8px; }
+  .rail-sub { color: var(--muted); font-size: 13px; margin: 6px 8px 0; }
+  .side h2 { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 12px 8px 6px; font-weight: 500; }
   .side-sec > h2:first-child { margin-top: 0; }
-  .side button, .side a.side-link { display: flex; justify-content: space-between; gap: 8px; width: 100%; border: none; background: none; color: var(--rail-text); text-align: left; padding: 6px 8px; border-radius: 6px; }
-  .side a.side-link { text-decoration: none; box-sizing: border-box; }
-  .side button:hover, .side a.side-link:hover { background: var(--rail-hover); }
-  .side button[aria-current] { background: #ffffff22; font-weight: 600; }
-  .side small { color: var(--rail-muted); font-variant-numeric: tabular-nums; }
-  .side .foot button { color: var(--rail-muted); }
-  .side .foot button:hover { color: var(--rail-text); }
-  .side button.danger { color: #f2877f; }
-  .side label { display: grid; gap: 3px; font-size: 12px; color: var(--rail-muted); margin: 0 8px 8px; }
-  .side select { font: inherit; font-size: 14px; background: #2a2f36; color: var(--rail-text); border: 1px solid #ffffff22; border-radius: 6px; padding: 6px 8px; width: 100%; }
-  .side .side-reset { justify-content: center; border: 1px solid #ffffff22; margin: 4px 8px 0; width: auto; }
-  .side-ok { display: block; font-size: 12px; color: #7fd39a; margin: 0 8px 4px; }
-  .side-ok.due { color: #f2877f; }
-  .side .foot { margin-top: auto; }
+  .side button { display: flex; justify-content: space-between; gap: 8px; width: 100%; border: none; background: none; color: var(--text); text-align: left; padding: 6px 8px; border-radius: 6px; }
+  .side button:hover { background: color-mix(in srgb, var(--line) 70%, transparent); }
+  .side small { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .side button.danger { color: var(--danger); }
+  .side label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); margin: 0 8px 8px; }
+  .side select { font: 14px var(--font); background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
+  .side .side-reset { justify-content: center; border: 1px solid var(--line); margin: 4px 8px 0; width: auto; }
+  .rnav { display: flex; flex-direction: column; gap: 2px; }
+  .side .rnav button, .rnav a { display: flex; gap: 12px; align-items: baseline; justify-content: flex-start; padding: 7px 8px; color: var(--muted); font-size: 14px; background: none; text-decoration: none; border-radius: 0; }
+  .rnav .mono { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+  .rnav .ln { flex: 1; height: 1px; background: var(--line); align-self: center; }
+  .rnav small { font-family: var(--mono); font-size: 12px; }
+  .side .rnav [aria-current], .side .rnav button:hover, .rnav a:hover { color: var(--text); background: none; }
+  .rnav [aria-current] .ln { background: var(--accent); }
+  .side .rnav .add { font-size: 13px; }
+  .tools summary { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); cursor: pointer; padding: 4px 8px; }
+  .tools[open] summary { margin-bottom: 6px; }
+  .side .tools button { font-size: 13px; padding: 4px 8px; }
+  .rfx { margin-top: auto; font-family: var(--mono); font-size: 12px; line-height: 1.7; color: var(--muted); padding: 0 8px; }
+  .rfx .due { color: var(--danger); }
+  .rfilt { display: none; }
+  .ftool { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+  .ftool label { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .ftool select { font: 14px var(--font); padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); max-width: 180px; }
+  .secH { display: flex; align-items: baseline; gap: 12px; margin: 8px 0 16px; font-size: 18px; }
+  .secH .mono { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 500; }
+  .secH small { font-size: 13px; color: var(--muted); font-weight: 400; margin-left: auto; }
+  .kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; background: var(--surface); overflow: hidden; margin-bottom: 32px; }
+  .kpi { padding: 14px 18px; border-right: 1px solid var(--line); min-width: 0; }
+  .kpi:last-child { border-right: 0; }
+  .kpi .lab { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .kpi b { display: block; font-size: 28px; line-height: 1.1; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .kpi .pct { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .kpi.ok b { color: var(--best-text); }
+  /* the report's type: mono labels, 8px panels, 6px controls */
+  th, .det-top, .det h3 { font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .04em; }
+  .panel, .li { border-radius: 8px; }
+  button, .btn, .topbar input { border-radius: 6px; }
+  .chip, .badge { border-radius: 4px; }
+  .badge, .chip.best::before, .ftags .count { font-family: var(--mono); }
+  .chip.best::before { font-weight: 500; }
+  .seg { display: inline-flex; }
+  .seg button { border-radius: 0; }
+  .seg button:first-child { border-radius: 6px 0 0 6px; }
+  .seg button:last-child { border-radius: 0 6px 6px 0; margin-left: -1px; }
+  .seg button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); position: relative; }
+  /* binder view: a 4x4 sheet with binder rings, after the collections' own 4x4 pocket pages */
+  .bsheet { position: relative; max-width: 720px; margin: 0 auto; padding: 20px 20px 20px 60px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  .bsheet::before { content: ""; position: absolute; left: 18px; top: 20px; bottom: 20px; width: 24px;
+    background: radial-gradient(circle at 12px 50%, var(--bg) 0 5px, var(--line) 5.5px 10px, transparent 10.5px) 0 0 / 24px 25% repeat-y; }
+  .binder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .pocket { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); text-align: left; font-size: 13px; }
+  .pocket:hover { border-color: var(--accent); }
+  .pocket[aria-current] { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .pocket img, .pk-no, .pocket.blank i { display: block; width: 100%; height: auto; aspect-ratio: 63 / 88; object-fit: cover; border-radius: 4px; background: var(--thumb); margin-bottom: 4px; }
+  .pk-no { display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+  .pocket:not(.got) img { filter: grayscale(1); opacity: .45; }
+  .pocket.blank { border-style: dashed; background: none; }
+  .pocket.blank i { background: none; }
+  .pk-t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pk-m { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pk-b { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 20px; }
+  .pk-b .badge { margin: 0 4px 0 0; }
+  .pk-b b { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--best-text); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .bpager { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; margin: 14px 0 6px; }
+  .bpager .pg { font-family: var(--mono); font-size: 13px; }
+  .bpager .muted { order: 9; flex-basis: 100%; text-align: center; }
+  .bpager button:disabled { opacity: .4; cursor: default; }
+  @container (max-width: 640px) {
+    .bsheet { padding: 10px 10px 10px 34px; }
+    .bsheet::before { left: 6px; top: 10px; bottom: 10px; }
+    .binder { gap: 6px; }
+    .pocket { padding: 4px; }
+    .pk-t, .pk-m, .pk-b .badge { display: none; }
+    .pk-b b { font-size: 10px; }
+  }
+  @media (min-width: 901px) {
+    .det { position: fixed; right: 0; top: 0; width: var(--det-w); z-index: 20; box-shadow: -12px 0 40px #0002; }
+    .main { padding: 0 40px 48px; }
+    .topbar { margin: 0 -40px 24px; padding: 0 40px; }
+  }
   .main { min-width: 0; padding: 0 16px 48px; container-type: inline-size; }
   .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 8px; height: var(--top-h); margin: 0 -16px 10px; padding: 0 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
   .topbar > * { flex: none; }
@@ -217,7 +286,12 @@
   .scrim { display: none; }
   kbd { font: 11px ui-monospace, monospace; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
   @media (max-width: 900px) {
-    .shell, .shell.no-side, .shell.no-det, .shell.no-side.no-det { grid-template-columns: minmax(0, 1fr); }
+    .shell, .shell.no-side { grid-template-columns: minmax(0, 1fr); }
+    .ftool { display: none; }
+    .rfilt { display: block; }
+    .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .kpi { border-bottom: 1px solid var(--line); }
+    .kpi b { font-size: 22px; }
     .side, .det { position: fixed; top: 0; bottom: 0; height: auto; z-index: 30; box-shadow: 0 0 40px #0005; }
     .side { left: 0; width: min(86vw, var(--side-w)); }
     .det { right: 0; width: min(100vw, var(--det-w)); }
@@ -458,6 +532,8 @@ function notice() {
 }
 function applyTheme() {
   document.documentElement.dataset.theme = S.theme || '';
+  // the market report reads this so both pages show the same theme
+  try { localStorage.setItem('cpt-theme', S.theme || ''); } catch (e) { /* the report then follows the system */ }
 }
 
 // ---------- data helpers ----------
@@ -1329,8 +1405,8 @@ function linkBits(st) {
 // Sidebar and detail panel can each be hidden; the choice is kept per device (not in backups).
 const UI_KEY = 'cpt-ui';
 const narrow = () => matchMedia('(max-width: 900px)').matches;
-const ui = (() => { try { return { side: true, det: true, ...JSON.parse(localStorage.getItem(UI_KEY) || '{}') }; } catch (e) { return { side: true, det: true }; } })();
-if (narrow()) { ui.side = false; ui.det = false; }
+const ui = (() => { try { return { side: true, view: 'list', ...JSON.parse(localStorage.getItem(UI_KEY) || '{}'), det: false }; } catch (e) { return { side: true, view: 'list', det: false }; } })();
+if (narrow()) ui.side = false;
 let selId = null;
 function layout() {
   const sh = $('#shell');
@@ -1343,7 +1419,7 @@ function layout() {
 }
 function setPane(which, on) {
   ui[which] = on ?? !ui[which];
-  if (!narrow()) try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, det: ui.det })); } catch (e) { /* not saved, fine */ }
+  if (!narrow()) try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, view: ui.view })); } catch (e) { /* not saved, fine */ }
   layout();
 }
 const paneBtn = (w, d) => `<button type="button" class="icon pane" data-act="pane" data-id="${w}" aria-controls="${w}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="${d}"/></svg></button>`;
@@ -1356,19 +1432,53 @@ const fval = (k, v) => {
   if (k === 'sort' && v === 'found') return 'Found first';
   return FVAL[v] || v;
 };
+// The rail follows the market report's: title, sub line, numbered nav, mono facts at the foot. Tools fold away;
+// filters sit above the list on wide screens and in the rail (a drawer) on narrow ones.
+const numOf = i => String(i + 1).padStart(2, '0');
 function sideHtml(c, all) {
   const a = (act, label, cls) => `<button type="button" data-act="${act}"${cls ? ` class="${cls}"` : ''}>${label}</button>`;
-  const cols = S.collections.map(x => `<button type="button" data-act="col" data-id="${x.id}"${c && x.id === c.id ? ' aria-current="page"' : ''}>${esc(x.name)} <small>${cardsOf(x.id).length}</small></button>`).join('');
-  // The market report sits next to the page: market/ on GitHub Pages (thumbDir is set only there), market_report.html on the PC
-  const market = `<a class="side-link" href="${SEED.thumbDir ? 'market/' : 'market_report.html'}">Market report <small>↗</small></a>`;
-  return `<div class="side-title">Card Price Tracker</div>${market}
-    <div class="side-sec"><h2>Collections</h2>${cols}${a('newcol', '+ New collection')}</div>
-    ${c ? `<div class="side-sec"><h2>Filters</h2>${filterBar(cardsOf(c.id))}<button type="button" class="side-reset" data-act="resetf">Reset filters</button></div>` : ''}
-    <div class="side-sec foot"><h2>Data</h2><span class="side-ok${backupDue() ? ' due' : ''}">Last backup: ${backupAge()}</span>
+  const cols = S.collections.map((x, i) => `<button type="button" data-act="col" data-id="${x.id}"${c && x.id === c.id ? ' aria-current="page"' : ''}><span class="mono">${numOf(i)}</span>${esc(x.name)}<span class="ln"></span><small>${cardsOf(x.id).length}</small></button>`).join('');
+  // market/ on GitHub Pages (thumbDir is set only there), market_report.html on the PC
+  const market = `<a href="${SEED && SEED.thumbDir ? 'market/' : 'market_report.html'}"><span class="mono">${numOf(S.collections.length)}</span>Market report<span class="ln"></span><small>↗</small></a>`;
+  return `<div><div class="side-title">Card Price Tracker</div>
+      <div class="rail-sub">${c ? `${esc(c.name)} · ${all.length} cards · ${all.filter(x => x.found).length} found` : 'No collection yet'}</div></div>
+    <nav class="rnav" aria-label="Collections">${cols}${market}${a('newcol', '+ New collection', 'add')}</nav>
+    ${c ? `<div class="side-sec rfilt"><h2>Filters</h2>${filterBar(all)}<button type="button" class="side-reset" data-act="resetf">Reset filters</button></div>` : ''}
+    <details class="tools"><summary>Tools</summary>
       ${a('json-out', 'Backup JSON')}${a('json-in', 'Import JSON')}${a('snaps', 'Restore snapshot')}${a('xlsx', 'Export .xlsx')}${a('rates', 'Exchange rates')}${a('addstore', '+ Add store')}
-      ${c ? `<h2>Cards</h2>${a('csv-in', 'Import card CSV')}${a('fill', 'Fill details + JP/CN/KR')}${a('img-in', 'Add scan images')}${a('img-dir', 'Scan a folder')}
-      <h2>Collection</h2>${a('renamecol', 'Rename')}${a('delcol', 'Delete collection…', 'danger')}` : ''}
-      <h2>View</h2>${a('theme', 'Light / dark')}</div>`;
+      ${c ? `${a('csv-in', 'Import card CSV')}${a('fill', 'Fill details + JP/CN/KR')}${a('img-in', 'Add scan images')}${a('img-dir', 'Scan a folder')}${a('renamecol', 'Rename collection')}${a('delcol', 'Delete collection…', 'danger')}` : ''}
+      ${a('theme', 'Light / dark')}</details>
+    <div class="rfx"><span class="${backupDue() ? 'due' : ''}">Backup ${esc(backupAge())}</span><br>Shops ${S.stores.length}<br>Cards ${S.cards.length}</div>`;
+}
+const filterTool = all => `<div class="ftool">${filterBar(all)}<button type="button" data-act="resetf">Reset</button></div>`;
+function summaryHtml(c, all) {
+  const n = all.length || 1, found = all.filter(x => x.found).length;
+  const priced = all.filter(x => listingsOf(x.id).some(l => hasPrice(l.p))).length;
+  const listings = all.reduce((t, x) => t + listingsOf(x.id).filter(l => hasPrice(l.p)).length, 0);
+  const k = (lab, v, sub, cls) => `<div class="kpi ${cls || ''}"><div class="lab">${lab}</div><b>${v}</b><div class="pct">${sub}</div></div>`;
+  return `<h2 class="secH"><span class="mono">01.</span>Summary<small>${esc(c.name)}</small></h2>
+    <div class="kpis">${k('Cards', all.length, 'in this collection')}${k('Found', found, Math.round(found / n * 100) + '% of cards', 'ok')}${k('Priced', priced, Math.round(priced / n * 100) + '% of cards')}${k('Listings', listings, 'prices recorded')}${k('Shops', S.stores.length, 'all collections')}</div>`;
+}
+// Binder view: the filtered rows as 4x4 binder pages, one pocket per row (a row is one print + finish already).
+let bPage = 0, bSig = '';
+function binderHtml(cards) {
+  const sig = S.active + JSON.stringify(F);
+  if (sig !== bSig) { bSig = sig; bPage = 0; }   // other filters = other pockets, so start at page 1
+  const pages = Math.ceil(cards.length / 16);
+  bPage = Math.max(0, Math.min(bPage, pages - 1));
+  const from = bPage * 16, page = cards.slice(from, from + 16);
+  const pocket = x => {
+    const src = thumbSrc(x), best = bestStores(x.id), l = listingsOf(x.id).find(k => best.has(k.key));
+    return `<button type="button" class="pocket${x.found ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.found ? ', found' : ''}">
+      ${src ? `<img src="${esc(src)}" alt="" width="126" height="176" loading="lazy">` : '<span class="pk-no">no scan</span>'}
+      <span class="pk-t">${esc(x.name)}</span><span class="pk-m">${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''}</span>
+      <span class="pk-b"><span>${badge(x)}</span>${l ? `<b>${esc(fmt(l.st, l.p))}</b>` : ''}</span></button>`;
+  };
+  const blanks = '<span class="pocket blank" aria-hidden="true"><i></i></span>'.repeat(16 - page.length);
+  const nav = (d, label, off) => `<button type="button" data-act="bpage" data-id="${d}"${off ? ' disabled' : ''}>${label}</button>`;
+  return `<div class="bsheet"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
+    <div class="bpager">${nav(-1, '← Prev', bPage === 0)}<span class="pg">Page ${bPage + 1} / ${pages}</span><span class="muted">pockets ${from + 1}–${from + page.length} of ${cards.length}</span>${nav(1, 'Next →', bPage >= pages - 1)}</div>
+    <div class="best-note">Grey pocket = not found yet. Click a pocket for details. ← → turn the page.</div>`;
 }
 function topBar(c) {
   const q = (k, v, label) => `<button type="button" class="qchip" data-act="qf" data-id="${k}:${v}" aria-pressed="${F[k] === v}">${label}</button>`;
@@ -1376,6 +1486,7 @@ function topBar(c) {
     <input type="search" data-filter="q" value="${esc(F.q)}" placeholder="Search name, set, number…" aria-label="Search cards" autocomplete="off" spellcheck="false">
     ${q('status', 'found', 'Found')}${q('price', 'priced', 'Has price')}${q('price', 'unpriced', 'No price')}
     <span class="sp"></span>
+    ${trip.on ? '' : `<span class="seg" role="group" aria-label="View">${['list', 'binder'].map(v => `<button type="button" data-act="view" data-id="${v}" aria-pressed="${ui.view === v}">${v === 'list' ? 'List' : 'Binder 4×4'}</button>`).join('')}</span>`}
     ${trip.on ? '<button type="button" data-act="tripback">Back to list</button>' : '<button type="button" data-act="trip">Shopping trip</button>'}
     <button type="button" data-act="addcard" class="primary">+ Add card</button>${paneBtn('det', 'M15 4v16')}</div>`;
 }
@@ -1403,6 +1514,7 @@ function renderDet() {
 function selectCard(id) {
   selId = id;
   document.querySelectorAll('tr[data-row]').forEach(r => r.setAttribute('aria-selected', r.dataset.row === id));
+  document.querySelectorAll('.pocket[data-id]').forEach(b => b.toggleAttribute('aria-current', b.dataset.id === id));
   renderDet();
   if (!ui.det) setPane('det', true);
 }
@@ -1471,12 +1583,16 @@ function render() {
 
   app.innerHTML = `
     ${topBar(c)}
+    ${summaryHtml(c, all)}
+    <h2 class="secH"><span class="mono">02.</span>Cards<small>${ui.view === 'binder' ? 'binder, 16 pockets a page' : 'list'}</small></h2>
+    ${filterTool(all)}
     ${dueBanner}${fileTip}
     <div class="ftags">${tags}${bulk}<span class="count" aria-live="polite">${cards.length === all.length ? all.length : cards.length + ' of ' + all.length} row${all.length === 1 ? '' : 's'} · ${all.filter(x => x.found).length} found</span></div>
     ${hint}
     ${cards.length === 0 ? `<div class="panel"><div class="empty">${all.length ? 'No cards match the filters.' : 'No cards yet. Click + Add card.'}</div></div>` : ''}
 
-    ${cards.length ? `
+    ${cards.length && ui.view === 'binder' ? binderHtml(cards) : ''}
+    ${cards.length && ui.view !== 'binder' ? `
     <div class="panel tbl">
       <table>
         <thead><tr><th class="found">Found</th><th class="cardh">Card</th><th>Where to buy</th></tr></thead>
@@ -1485,7 +1601,7 @@ function render() {
     </div>
     <div class="best-note">Green = cheapest for that card (other currencies compared at your exchange rates). Click a card for details, or a shop to edit its price.</div>` : ''}
 
-    <h2>Stores</h2>
+    <h2 class="secH"><span class="mono">03.</span>Stores</h2>
     <div class="panel">${stores.length ? `<div class="store-list">${storeCards}</div>` : '<div class="empty">No stores yet.</div>'}</div>
   `;
   renderDet();
@@ -1503,6 +1619,11 @@ document.addEventListener('click', e => {
   if (act === 'theme') { S.theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; save(); render(); }
   else if (act === 'col') { S.active = id; save(); render(); if (narrow()) setPane('side', false); }
   else if (act === 'pane') setPane(id);
+  else if (act === 'view') {
+    ui.view = id; render();
+    try { localStorage.setItem(UI_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(UI_KEY) || '{}'), view: id })); } catch (e) { /* not saved, fine */ }
+  }
+  else if (act === 'bpage') { bPage += Number(id); render(); }
   else if (act === 'scrim') { setPane('side', false); setPane('det', false); }
   else if (act === 'sel') selectCard(id);
   else if (act === 'qf') { const [k, v] = id.split(':'); F[k] = F[k] === v ? '' : v; render(); }
@@ -1579,6 +1700,7 @@ document.addEventListener('keydown', e => {
   if (e.key === '[') setPane('side');
   else if (e.key === ']') setPane('det');
   else if (e.key === 'Escape') { if (narrow()) setPane('side', false); setPane('det', false); }
+  else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && ui.view === 'binder' && !trip.on && $('.pocket')) { bPage += e.key === 'ArrowRight' ? 1 : -1; render(); }
   else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && e.target.closest('.cardc')) {
     const i = shownIds.indexOf(selId) + (e.key === 'ArrowDown' ? 1 : -1);
     if (i < 0 || i >= shownIds.length) return;
