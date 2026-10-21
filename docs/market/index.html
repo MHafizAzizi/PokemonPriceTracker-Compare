@@ -131,7 +131,7 @@ section{scroll-margin-top:16px}
 .toolbar input[type=search]{min-width:200px}
 #fSet{width:240px;max-width:100%;min-width:0;text-overflow:ellipsis} /* fixed: a select grows to its longest option (JP set names) */
 .toolbar label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
-.toolbar .count{margin-left:auto;font-size:13px;color:var(--muted)}
+.toolbar .count{flex-basis:100%;text-align:right;font-size:13px;color:var(--muted)} /* own line always, so the row looks the same for every filter */
 .tbl{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:auto}
 .tbl table{width:100%;border-collapse:collapse;font-size:14px}
 .tbl th{position:sticky;top:0;background:var(--surface);text-align:left;font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
@@ -170,7 +170,7 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
   .totals{grid-template-columns:1fr;gap:10px}
   .cols{grid-template-columns:1fr;gap:32px;margin-top:32px}
   .toolbar input[type=search]{min-width:0;flex:1}
-  .toolbar .count{margin-left:0;width:100%}
+  .toolbar .count{text-align:left}
   .hide-s{display:none}
   .sel th:first-child,.sel td:first-child{min-width:110px;overflow-wrap:normal;word-break:break-word}
 }
