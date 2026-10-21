@@ -129,7 +129,7 @@ section{scroll-margin-top:16px}
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
 .toolbar select,.toolbar input[type=search]{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text)}
 .toolbar input[type=search]{min-width:200px}
-#fSet{max-width:100%;min-width:0;text-overflow:ellipsis}
+#fSet{width:240px;max-width:100%;min-width:0;text-overflow:ellipsis} /* fixed: a select grows to its longest option (JP set names) */
 .toolbar label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
 .toolbar .count{margin-left:auto;font-size:13px;color:var(--muted)}
 .tbl{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:auto}
