@@ -301,8 +301,15 @@ function drawSets(){
     '<span class="m"><span class="mono">'+r.lang+'</span> '+esc(code(r))+'</span><span class="label">'+rs.length+' listing'+(rs.length>1?'s':'')+'</span>'+vsum(rs)+'</button>'}).join('');
 }
 $('eraList').addEventListener('click',function(ev){var b=ev.target.closest('[data-era]');if(!b)return;curEra=b.dataset.era;$('eraList').querySelectorAll('[data-era]').forEach(function(x){x.setAttribute('aria-pressed',x===b)});drawSets();syncUrl()});
-$('setList').addEventListener('click',function(ev){var b=ev.target.closest('[data-set]');if(!b)return;$('fSet').value=b.dataset.set;$('fV').value=$('fL').value=$('fVen').value=$('fS').value='';redraw();$('all').scrollIntoView()});
-$('fSet').insertAdjacentHTML('beforeend',ERAS.map(function(e){return '<optgroup label="'+esc(e.name)+'">'+Object.keys(e.sets).sort().map(function(k){return '<option value="'+esc(k)+'">'+esc(k.replace('|',' '))+'</option>'}).join('')+'</optgroup>'}).join(''));
+$('setList').addEventListener('click',function(ev){var b=ev.target.closest('[data-set]');if(!b)return;$('fV').value=$('fL').value=$('fVen').value=$('fS').value='';fillSets();$('fSet').value=b.dataset.set;redraw();$('all').scrollIntoView()});
+// Set list follows the Language filter; a set the language lacks is dropped
+function fillSets(){var l=$('fL').value,cur=$('fSet').value,keep=false;
+  $('fSet').innerHTML='<option value="">All sets</option>'+ERAS.map(function(e){var ks=Object.keys(e.sets).filter(function(k){return !l||k.indexOf(l+'|')===0}).sort();
+    if(ks.indexOf(cur)>=0)keep=true;
+    return ks.length?'<optgroup label="'+esc(e.name)+'">'+ks.map(function(k){return '<option value="'+esc(k)+'">'+esc(k.replace('|',' '))+'</option>'}).join('')+'</optgroup>':''}).join('');
+  $('fSet').value=keep?cur:''}
+fillSets();
+$('fL').addEventListener('change',fillSets);
 if(qE)$('fSet').value=qSet;
 drawSets();
 

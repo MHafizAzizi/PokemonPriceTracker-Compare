@@ -650,8 +650,11 @@ function filterBar(all) {
   const rank = t => { const i = TIER_ORDER.indexOf(t); return i < 0 ? TIER_ORDER.length : i; };
   const rars = uniq(x => tierOf(x.rarity)).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   const opt = (v, label, cur) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
-  const setsOf = pred => [...new Set(all.filter(pred).map(x => x.set).filter(Boolean))];
-  const setGroups = eras.map(e => `<optgroup label="${esc(e)}">${setsOf(x => x.era === e).map(s => opt(s, s, F.set)).join('')}</optgroup>`).join('')
+  // Set list follows the Language filter: only that language's sets, empty eras left out
+  const inLang = x => !F.lang || (x.lang || 'EN') === F.lang;
+  const setsOf = pred => [...new Set(all.filter(x => inLang(x) && pred(x)).map(x => x.set).filter(Boolean))];
+  const setGroups = eras.map(e => [e, setsOf(x => x.era === e)]).filter(([, ss]) => ss.length)
+    .map(([e, ss]) => `<optgroup label="${esc(e)}">${ss.map(s => opt(s, s, F.set)).join('')}</optgroup>`).join('')
     + setsOf(x => !x.era).map(s => opt(s, s, F.set)).join('');
   const sel = (key, label, body) => `<label>${label}<select data-filter="${key}">${body}</select></label>`;
   const used = new Set(all.map(x => x.lang || 'EN'));
@@ -1725,7 +1728,12 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target.closest('select[data-filter]');
-  if (el) { F[el.dataset.filter] = el.value; render(); }
+  if (el) {
+    F[el.dataset.filter] = el.value;
+    // a set the new language does not have would leave an empty list
+    if (el.dataset.filter === 'lang' && F.lang && F.set && !cardsOf(activeCol().id).some(x => x.set === F.set && (x.lang || 'EN') === F.lang)) F.set = '';
+    render();
+  }
 });
 
 // Trip: venue / stall pickers, saving a typed price or link, Enter jumps to the next price box.
