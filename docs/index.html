@@ -241,8 +241,7 @@
   @container (max-width: 980px) { .topbar h1 { display: none; } }
   button.icon.pane svg { width: 18px; height: 18px; }
   .qchip { border-radius: 999px; padding: 4px 12px; }
-  .qchip.danger { color: #c0392b; }
-  .qchip:disabled { opacity: .45; cursor: default; }
+  .icon-btn:disabled { opacity: .4; cursor: default; }
   .qchip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
   .ftags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; font-size: 13px; }
   .ftag { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 2px 4px 2px 10px; }
@@ -1494,11 +1493,10 @@ function binderHtml(cards) {
     <div class="best-note">Grey pocket = not found yet. Click a pocket for details. ← → turn the page.</div>`;
 }
 function topBar(c) {
-  const nTicked = cardsOf(c.id).filter(x => x.found).length;
   const q = (k, v, label) => `<button type="button" class="qchip" data-act="qf" data-id="${k}:${v}" aria-pressed="${F[k] === v}">${label}</button>`;
   return `<div class="topbar">${paneBtn('side', 'M9 4v16')}<h1>${esc(c.name)}</h1>
     <input type="search" data-filter="q" value="${esc(F.q)}" placeholder="Search name, set, number…" aria-label="Search cards" autocomplete="off" spellcheck="false">
-    <button type="button" class="qchip" data-act="tickall" title="Tick or untick every row listed below">Tick all</button><button type="button" class="qchip danger" data-act="delticked" ${nTicked ? '' : 'disabled'} title="Delete every ticked card in this collection, with its prices">Delete ticked (${nTicked})</button>${q('price', 'priced', 'Has price')}${q('price', 'unpriced', 'No price')}
+    ${q('price', 'priced', 'Has price')}${q('price', 'unpriced', 'No price')}
     <span class="sp"></span>
     ${trip.on ? '' : `<span class="seg" role="group" aria-label="View">${['list', 'binder'].map(v => `<button type="button" data-act="view" data-id="${v}" aria-pressed="${ui.view === v}">${v === 'list' ? 'List' : 'Binder 4×4'}</button>`).join('')}</span>`}
     ${trip.on ? '<button type="button" data-act="tripback">Back to list</button>' : '<button type="button" data-act="trip">Shopping trip</button>'}
@@ -1601,7 +1599,7 @@ function render() {
     <h2 class="secH"><span class="mono">02.</span>Cards<small>${ui.view === 'binder' ? 'binder, 16 pockets a page' : 'list'}</small></h2>
     ${filterTool(all)}
     ${dueBanner}${fileTip}
-    <div class="ftags">${tags}${bulk}<span class="count" aria-live="polite">${cards.length === all.length ? all.length : cards.length + ' of ' + all.length} row${all.length === 1 ? '' : 's'} · ${all.filter(x => x.found).length} found</span></div>
+    <div class="ftags">${tags}${bulk}<button type="button" class="icon-btn" data-act="tickall" aria-label="Tick or untick every row listed below" title="Tick or untick every row listed below"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-9 14-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button><button type="button" class="icon-btn danger" data-act="delticked"${all.some(x => x.found) ? '' : ' disabled'} aria-label="Delete ticked cards (${all.filter(x => x.found).length})" title="Delete every ticked card in this collection, with its prices"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button><span class="count" aria-live="polite">${cards.length === all.length ? all.length : cards.length + ' of ' + all.length} row${all.length === 1 ? '' : 's'} · ${all.filter(x => x.found).length} found</span></div>
     ${hint}
     ${cards.length === 0 ? `<div class="panel"><div class="empty">${all.length ? 'No cards match the filters.' : 'No cards yet. Click + Add card.'}</div></div>` : ''}
 
