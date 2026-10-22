@@ -34,7 +34,8 @@ a:hover,a:focus-visible{background-size:100% 1px}
 /* layout: Dark-Editorial sticky side rail + scrolling main */
 .shell{display:grid;grid-template-columns:240px minmax(0,1fr);max-width:1440px;margin:0 auto}
 .rail{position:sticky;top:0;height:100vh;padding:40px 28px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:28px}
-.rail .back{display:inline-block;font-size:13px;margin-bottom:10px}
+.rail .back{display:inline-block;font-size:13px;margin-bottom:14px;padding:4px 12px;border:1px solid var(--accent);border-radius:999px;background:none}
+.rail .back:hover{background:var(--accent);color:var(--surface)}
 .rail h1{font-size:20px;line-height:1.25;margin:0}
 .rail .sub{color:var(--muted);font-size:13px;margin-top:6px}
 .rail nav{display:flex;flex-direction:column;gap:2px}
