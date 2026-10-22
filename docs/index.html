@@ -1450,7 +1450,7 @@ function sideHtml(c, all) {
   const a = (act, label, cls) => `<button type="button" data-act="${act}"${cls ? ` class="${cls}"` : ''}>${label}</button>`;
   const cols = S.collections.map((x, i) => `<button type="button" data-act="col" data-id="${x.id}"${c && x.id === c.id ? ' aria-current="page"' : ''}><span class="mono">${numOf(i)}</span>${esc(x.name)}<span class="ln"></span><small>${cardsOf(x.id).length}</small></button>`).join('');
   // market/ on GitHub Pages (thumbDir is set only there), market_report.html on the PC
-  const market = `<a class="pageswitch" href="${SEED && SEED.thumbDir ? 'market/' : 'market_report.html'}">Market report →</a>`;
+  const market = `<a class="pageswitch" href="${(SEED && SEED.thumbDir ? 'market/' : 'market_report.html') + '?collection=' + encodeURIComponent(S.active)}">Market report →</a>`;
   return `<div>${market}<div class="side-title">Card Price Tracker</div>
       <div class="rail-sub">${c ? `${esc(c.name)} · ${all.length} cards · ${all.filter(x => x.found).length} found` : 'No collection yet'}</div></div>
     <nav class="rnav" aria-label="Collections">${cols}${a('newcol', '+ New collection', 'add')}</nav>

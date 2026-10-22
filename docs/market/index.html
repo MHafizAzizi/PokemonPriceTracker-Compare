@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
-<title>Yuka Morii Market Report</title>
+<title>Market Report</title>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('cpt-theme')||''}catch(e){}</script>
 <style>
 :root{
@@ -183,7 +183,7 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
   <aside class="rail">
     <div>
       <a class="back" href="../">← Card Price Tracker</a>
-      <h1>Yuka Morii market report</h1>
+      <h1 id="colName">Market report</h1>
       <div class="sub" id="sub"></div>
     </div>
     <nav id="nav">
@@ -236,7 +236,12 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
 <script src="market_compare.js"></script>
 <script>
 (function(){
-var MC=window.MC,R=MC.rows,S=MC.sellers;
+var CID=new URLSearchParams(location.search).get('collection')||'yuka-morii';
+var MCS=window.MCS||{collections:{}};
+var COL=MCS.collections[CID];
+if(!COL){document.getElementById('main').innerHTML='<div class="empty">No market report for this collection yet.</div>';return;}
+var MC=Object.assign({fx:MCS.fx,thresholds:MCS.thresholds,logos:MCS.logos},COL),R=MC.rows,S=MC.sellers;
+document.title=MC.name+' Market Report';document.getElementById('colName').textContent=MC.name+' market report';
 var $=function(id){return document.getElementById(id)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var rm=function(v){return v==null?'-':'RM '+Math.round(v).toLocaleString('en-US')};
