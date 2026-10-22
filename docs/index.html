@@ -241,6 +241,8 @@
   @container (max-width: 980px) { .topbar h1 { display: none; } }
   button.icon.pane svg { width: 18px; height: 18px; }
   .qchip { border-radius: 999px; padding: 4px 12px; }
+  .qchip.danger { color: #c0392b; }
+  .qchip:disabled { opacity: .45; cursor: default; }
   .qchip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
   .ftags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; font-size: 13px; }
   .ftag { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 2px 4px 2px 10px; }
@@ -1492,10 +1494,11 @@ function binderHtml(cards) {
     <div class="best-note">Grey pocket = not found yet. Click a pocket for details. ← → turn the page.</div>`;
 }
 function topBar(c) {
+  const nTicked = cardsOf(c.id).filter(x => x.found).length;
   const q = (k, v, label) => `<button type="button" class="qchip" data-act="qf" data-id="${k}:${v}" aria-pressed="${F[k] === v}">${label}</button>`;
   return `<div class="topbar">${paneBtn('side', 'M9 4v16')}<h1>${esc(c.name)}</h1>
     <input type="search" data-filter="q" value="${esc(F.q)}" placeholder="Search name, set, number…" aria-label="Search cards" autocomplete="off" spellcheck="false">
-    <button type="button" class="qchip" data-act="tickall" title="Tick or untick every row listed below">Tick all</button>${q('price', 'priced', 'Has price')}${q('price', 'unpriced', 'No price')}
+    <button type="button" class="qchip" data-act="tickall" title="Tick or untick every row listed below">Tick all</button><button type="button" class="qchip danger" data-act="delticked" ${nTicked ? '' : 'disabled'} title="Delete every ticked card in this collection, with its prices">Delete ticked (${nTicked})</button>${q('price', 'priced', 'Has price')}${q('price', 'unpriced', 'No price')}
     <span class="sp"></span>
     ${trip.on ? '' : `<span class="seg" role="group" aria-label="View">${['list', 'binder'].map(v => `<button type="button" data-act="view" data-id="${v}" aria-pressed="${ui.view === v}">${v === 'list' ? 'List' : 'Binder 4×4'}</button>`).join('')}</span>`}
     ${trip.on ? '<button type="button" data-act="tripback">Back to list</button>' : '<button type="button" data-act="trip">Shopping trip</button>'}
@@ -1653,6 +1656,15 @@ document.addEventListener('click', e => {
   else if (act === 'price') listingDialog(el.dataset.card, el.dataset.store);
   else if (act === 'addprice') listingDialog(el.dataset.card, null);
   else if (act === 'bulkshop') bulkShop(shownIds);
+  else if (act === 'delticked') {
+    const ids = cardsOf(S.active).filter(x => x.found).map(x => x.id);
+    if (!ids.length) return;
+    askConfirm(`Delete ${ids.length} ticked card${ids.length === 1 ? '' : 's'} and their prices? This cannot be undone.`, () => {
+      ids.forEach(id => { delete S.prices[id]; });
+      S.cards = S.cards.filter(x => !ids.includes(x.id));
+      save(); render();
+    });
+  }
   else if (act === 'tickall') {
     const vis = shownIds.map(sid => S.cards.find(x => x.id === sid)).filter(Boolean);
     const on = vis.some(x => !x.found);
