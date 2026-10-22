@@ -1580,6 +1580,8 @@ function render() {
     ? `<div class="banner">This copy is tied to the file's location, so moving or renaming it loses your data. For a fixed address, double-click <b>Tracker/serve.bat</b> and use http://localhost:8123/Tracker/index.html (back up here first, then Import JSON there). <button type="button" class="small" data-act="hidetip">Hide</button></div>` : '';
   const bulk = cards.length && cards.length !== all.length
     ? `<button type="button" class="small" data-act="bulkshop">Add a shop to these ${cards.length} rows</button>` : '';
+  const tickAll = cards.length
+    ? `<button type="button" class="small" data-act="tickall" title="Tick or untick every row listed below">${cards.every(x => x.found) ? 'Untick all' : 'Tick all'}</button>` : '';
   const hint = !Object.keys(S.prices).some(id => Object.keys(S.prices[id]).length)
     ? '<div class="banner">Tick a card, then press + Shop on its row to record where you found it and its price.</div>' : '';
   const tags = Object.keys(F).filter(k => F[k]).map(k => `<span class="ftag">${FLABEL[k]}: ${esc(fval(k, F[k]))}<button type="button" data-act="clearf" data-id="${k}" aria-label="Remove filter ${FLABEL[k]}">×</button></span>`).join('');
@@ -1598,7 +1600,7 @@ function render() {
     <h2 class="secH"><span class="mono">02.</span>Cards<small>${ui.view === 'binder' ? 'binder, 16 pockets a page' : 'list'}</small></h2>
     ${filterTool(all)}
     ${dueBanner}${fileTip}
-    <div class="ftags">${tags}${bulk}<span class="count" aria-live="polite">${cards.length === all.length ? all.length : cards.length + ' of ' + all.length} row${all.length === 1 ? '' : 's'} · ${all.filter(x => x.found).length} found</span></div>
+    <div class="ftags">${tags}${bulk}${tickAll}<span class="count" aria-live="polite">${cards.length === all.length ? all.length : cards.length + ' of ' + all.length} row${all.length === 1 ? '' : 's'} · ${all.filter(x => x.found).length} found</span></div>
     ${hint}
     ${cards.length === 0 ? `<div class="panel"><div class="empty">${all.length ? 'No cards match the filters.' : 'No cards yet. Click + Add card.'}</div></div>` : ''}
 
@@ -1653,6 +1655,12 @@ document.addEventListener('click', e => {
   else if (act === 'price') listingDialog(el.dataset.card, el.dataset.store);
   else if (act === 'addprice') listingDialog(el.dataset.card, null);
   else if (act === 'bulkshop') bulkShop(shownIds);
+  else if (act === 'tickall') {
+    const vis = shownIds.map(sid => S.cards.find(x => x.id === sid)).filter(Boolean);
+    const on = vis.some(x => !x.found);
+    vis.forEach(x => { x.found = on; });
+    save(); render();
+  }
   else if (act === 'trip') {
     trip.on = true; trip.tab = 'price';
     if (!F.status) F.status = 'found';
