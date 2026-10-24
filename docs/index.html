@@ -93,7 +93,7 @@
   tr.owned > td:not(.acts) { opacity: .5; }
   tr.owned .thumb img { filter: grayscale(1); }
   .icon-btn.own.on { color: var(--best-text); border-color: var(--best-text); }
-  .badge.reverse { color: var(--best-text); border-color: var(--best-text); }
+  .badge.reverse, .badge.reverse2 { color: var(--best-text); border-color: var(--best-text); }
   details.filters { margin: 0 0 12px; }
   details.filters summary { cursor: pointer; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
   .filter-grid { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
@@ -651,7 +651,7 @@ const fmt = (st, p) => (hasPrice(p) ? `${st.currency || 'RM'} ${Number(p.price).
 const listingCount = id => Object.values(S.prices).reduce((n, r) => n + Object.keys(r).filter(k => k.split('~')[0] === id).length, 0);
 
 // ---------- variants, thumbnails, filters ----------
-const VARIANT_LABEL = { normal: 'Normal', holo: 'Holo', reverse: 'Reverse Holo' };
+const VARIANT_LABEL = { normal: 'Normal', holo: 'Holo', reverse: 'Reverse Holo', reverse2: 'Reverse Holo ★★' };
 const ERA_ORDER = ['Neo', 'VS', 'e-Card', 'EX', 'Diamond & Pearl', 'HeartGold & SoulSilver', 'Black & White', 'XY', 'Sun & Moon', 'Sword & Shield', 'Scarlet & Violet', 'Mega Evolution'];
 const eraRank = e => { const i = ERA_ORDER.indexOf(e); return i < 0 ? 99 : i; };
 const fullSrc = x => (SEED && SEED.fulls && SEED.fulls[x.key]) || '';
@@ -674,20 +674,23 @@ const altLine = x => (x.alt ? `<div class="muted">${esc(x.alt)}</div>` : '');
 // ponytail: mur / fur come from 2026 sets (Chaos Rising, M6a); check them against more cards when new sets arrive
 const RARITY_TIER = {"common": ["Common", false], "c": ["Common", false], "uncommon": ["Uncommon", false], "u": ["Uncommon", false],
   "rare": ["Rare", false], "r": ["Rare", false], "holo rare": ["Holo Rare", false], "rare holo": ["Holo Rare", false],
-  "double rare": ["Double Rare", false], "rr": ["Double Rare", false], "holo rare v": ["Double Rare", false], "rare holo v": ["Double Rare", false],
+  "double rare": ["Double Rare", false], "rr": ["Double Rare", false], "triple rare": ["Triple Rare", false], "rrr": ["Triple Rare", false], "holo rare v": ["Double Rare", false], "rare holo v": ["Double Rare", false],
   "ultra rare": ["Ultra Rare", true], "sr": ["Ultra Rare", true], "super rare": ["Ultra Rare", true],
   "illustration rare": ["Illustration Rare", true], "ar": ["Illustration Rare", true], "art rare": ["Illustration Rare", true],
   "special illustration rare": ["Special Illustration Rare", true], "sar": ["Special Illustration Rare", true], "special art rare": ["Special Illustration Rare", true],
-  "hyper rare": ["Hyper Rare", true], "ur": ["Hyper Rare", true], "mega hyper rare": ["Hyper Rare", true], "mur": ["Hyper Rare", true],
+  "hyper rare": ["Hyper Rare", true], "ur": ["Hyper Rare", true], "hr": ["Hyper Rare", true], "mega hyper rare": ["Hyper Rare", true], "mur": ["Hyper Rare", true],
   "futuristic rare": ["Futuristic Rare", true], "fur": ["Futuristic Rare", true],
   "shiny rare": ["Shiny", true], "s": ["Shiny", true], "shiny ultra rare": ["Shiny", true], "ssr": ["Shiny", true],
   "ace spec rare": ["ACE SPEC", false], "ace": ["ACE SPEC", false],
   "trainer gallery": ["Trainer Gallery", true], "chr": ["Trainer Gallery", true], "csr": ["Trainer Gallery", true],
+  "radiant rare": ["Radiant", true], "k": ["Radiant", true], "amazing rare": ["Amazing Rare", true], "a": ["Amazing Rare", true],
+  "●": ["Common", false], "◆": ["Uncommon", false], "★": ["Rare", false], "★★": ["Double Rare", false], "★★★": ["Illustration Rare", true],
   "pikachu rare": ["Pikachu Rare", false], "promo": ["Promo", false]};
-const TIER_ORDER = ['Common', 'Uncommon', 'Rare', 'Holo Rare', 'Double Rare', 'Ultra Rare', 'Illustration Rare',
-  'Special Illustration Rare', 'Hyper Rare', 'Futuristic Rare', 'Shiny', 'ACE SPEC', 'Trainer Gallery', 'Pikachu Rare', 'Promo'];
-const tierOf = raw => { const r = String(raw || '').trim(); const t = RARITY_TIER[r.toLowerCase()]; return t ? t[0] : r; };
-const isSpecial = raw => { const t = RARITY_TIER[String(raw || '').trim().toLowerCase()]; return !!(t && t[1]); };
+const TIER_ORDER = ['Common', 'Uncommon', 'Rare', 'Holo Rare', 'Double Rare', 'Triple Rare', 'Ultra Rare', 'Illustration Rare',
+  'Special Illustration Rare', 'Hyper Rare', 'Futuristic Rare', 'Shiny', 'Radiant', 'Amazing Rare', 'ACE SPEC', 'Trainer Gallery', 'Pikachu Rare', 'Promo'];
+const tierKey = raw => { const r = String(raw || '').trim().toLowerCase(); return RARITY_TIER[r] ? r : r.replace(/^(.*[^★])★+$/, '$1'); };
+const tierOf = raw => { const t = RARITY_TIER[tierKey(raw)]; return t ? t[0] : String(raw || '').trim(); };
+const isSpecial = raw => { const t = RARITY_TIER[tierKey(raw)]; return !!(t && t[1]); };
 const metaLine = x => { const t = [x.era, x.type, x.rarity].filter(Boolean).join(' · '); return t ? `<div class="muted">${esc(t)}</div>` : ''; };
 
 // Multi-select filters hold a list of values; [] means all. The others hold one value; '' means all.
@@ -756,7 +759,7 @@ function filterBar(all) {
     ${ms('set', 'Set', 'All sets', setItems)}
     ${ms('type', 'Type', 'All types', types.map(t => [t, t]))}
     ${ms('rarity', 'Rarity', 'All rarities', rars.map(r => [r, r]))}
-    ${ms('variant', 'Variant', 'All variants', ['normal', 'holo', 'reverse'].map(v => [v, VARIANT_LABEL[v]]))}
+    ${ms('variant', 'Variant', 'All variants', ['normal', 'holo', 'reverse', ...(all.some(x => x.variant === 'reverse2') ? ['reverse2'] : [])].map(v => [v, VARIANT_LABEL[v]]))}
     ${ms('lang', 'Language', 'All languages', langs)}
     ${sel('status', 'Found', opt('', 'All', F.status) + opt('found', 'Found only', F.status) + opt('notfound', 'Not found', F.status))}
     ${sel('owned', 'Owned', opt('', 'All', F.owned) + opt('owned', 'Owned only', F.owned) + opt('missing', 'Not owned', F.owned))}
@@ -851,7 +854,7 @@ const cardFields = [
   { key: 'era', label: 'Era', placeholder: 'XY' },
   { key: 'type', label: 'Type', placeholder: 'Psychic' },
   { key: 'rarity', label: 'Rarity', placeholder: 'Rare' },
-  { key: 'variant', label: 'Printing', type: 'select', options: [['', '-'], ['normal', 'Normal'], ['holo', 'Holo'], ['reverse', 'Reverse Holo']] },
+  { key: 'variant', label: 'Printing', type: 'select', options: [['', '-'], ['normal', 'Normal'], ['holo', 'Holo'], ['reverse', 'Reverse Holo'], ['reverse2', 'Reverse Holo ★★']] },
   { key: 'lang', label: 'Language', type: 'select', default: 'EN', options: LANGS },
   { key: 'alt', label: 'Local name (optional)', placeholder: 'ソーナンス' },
   { key: 'img', label: 'Scan path (relative, e.g. images/base-12.jpg)', placeholder: 'images/…' },
@@ -1352,7 +1355,7 @@ function importCsv(file) {
       // number may be "number" or "num"; the match key is the image filename, else an id column (en_id / key / id)
       const key = get('image') ? stem(get('image')) : first('key', 'en_id', 'id').toLowerCase();
       const vraw = get('variant').toLowerCase();
-      const variant = !vraw ? '' : /rev/.test(vraw) ? 'reverse' : /holo/.test(vraw) ? 'holo' : /norm|non|basic/.test(vraw) ? 'normal' : '';
+      const variant = !vraw ? '' : /reverse2|★★/.test(vraw) ? 'reverse2' : /rev/.test(vraw) ? 'reverse' : /holo/.test(vraw) ? 'holo' : /norm|non|basic/.test(vraw) ? 'normal' : '';
       const lang = langCode(get('language'));
       parsed.push({ name: get('name'), set: get('set'), number: first('number', 'num'), era: get('era'), type: get('type'),
         rarity: get('rarity'), variant, lang, alt: first('local_name', 'alt'), ref: get('ref'), img: /[\\/]/.test(get('image')) ? get('image') : '', key });
