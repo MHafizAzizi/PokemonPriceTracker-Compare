@@ -149,7 +149,35 @@ th[aria-sort=descending] button::after{content:" \2193"}
 .tbl .cname{font-weight:600}
 .tbl .sm{font-size:12px;color:var(--muted)}
 .chip{font-family:var(--mono);font-size:11px;padding:1px 5px;border-radius:3px;background:var(--best-bg);color:var(--best-text);margin-left:6px}
-.tbl .gapcell{width:120px}
+/* % vs market: badge and gap bar share one cell so the eye reads them as one unit */
+.pg{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.pg .gap{width:110px;margin:0;flex:none}
+.pg .badge{min-width:64px;text-align:right}
+/* tag pills under the card name; language, set, rarity and finish are buttons that set that filter */
+.pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.pill{font:12px/18px var(--font);display:inline-flex;align-items:center;gap:4px;padding:0 7px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+button.pill{cursor:pointer}
+button.pill:hover{border-color:var(--muted);color:var(--text)}
+button.pill:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.pill img{height:12px;width:auto;max-width:44px;object-fit:contain}
+.p-lang{font-family:var(--mono);font-weight:600;color:var(--text);background:var(--line);border-color:transparent}
+.p-no{font-family:var(--mono);border-color:transparent;padding:0 2px}
+.p-rar{font-family:var(--mono)}
+.p-rar.common{display:none}
+.p-fin{color:#3d2f00;font-weight:600;border-color:transparent;background:linear-gradient(110deg,#ffe28a,#bfeaff 50%,#ffd0a8)}
+.p-fin.reverse{color:var(--text);border:1px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(110deg,#e0b400,#38a8d8 50%,#e07a30) border-box}
+.tbl tr.dup .cname{font-weight:400;color:var(--muted);font-size:13px}
+/* pill colours (demo B, picked 2026-10-24): language, set, rarity tier; white on each language colour is >= 4.5:1 */
+.p-lang{color:#fff;border-color:transparent}
+.l-EN{background:#2f6fdb}.l-JP{background:#c0392b}.l-CN{background:#8a5a12}
+.p-set{border-color:var(--accent);color:var(--accent)}
+.p-no{color:var(--text)}
+.p-rar.common{display:inline-flex;opacity:.75}
+.p-rar{--u:#1d7a3a;--r:#2f6fdb;--g:#7a5400;--gbg:#fff6d6}
+.r-U{color:var(--u);border-color:var(--u)}.r-R{color:var(--r);border-color:var(--r)}
+.r-IR,.r-HR,.r-P{color:var(--g);border-color:#d4a300;background:var(--gbg)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .p-rar{--u:#7fd39a;--r:#6d9cff;--g:#f0c850;--gbg:#3a3010}}
+:root[data-theme="dark"] .p-rar{--u:#7fd39a;--r:#6d9cff;--g:#f0c850;--gbg:#3a3010}
 .morebtn{display:block;margin:12px auto 0;font:inherit;font-size:14px;padding:8px 16px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--accent);cursor:pointer}
 .morebtn[hidden]{display:none}
 .morebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -170,7 +198,13 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
   .kpi b{font-size:24px}
   .totals{grid-template-columns:1fr;gap:10px}
   .cols{grid-template-columns:1fr;gap:32px;margin-top:32px}
-  .toolbar input[type=search]{min-width:0;flex:1}
+  .toolbar select{flex:1 1 140px;min-width:0}
+  #fSet{width:auto}
+  .toolbar input[type=search]{min-width:0;flex:1 1 100%}
+  .tbl td,.tbl th{padding:6px}
+  .tbl td.img .thumb{width:30px}
+  .pill img{display:none}
+  .pg .badge{min-width:0}
   .toolbar .count{text-align:left}
   .hide-s{display:none}
   .sel th:first-child,.sel td:first-child{min-width:110px;overflow-wrap:normal;word-break:break-word}
@@ -220,12 +254,14 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
         <select id="fL" aria-label="Language"><option value="">All languages</option><option>EN</option><option>JP</option><option>CN</option></select>
         <select id="fVen" aria-label="Venue"><option value="">All venues</option><option>Carousell</option><option>Facebook</option><option>Amcorp Mall</option></select>
         <select id="fSet" aria-label="Set"><option value="">All sets</option></select>
+        <select id="fR" aria-label="Rarity"><option value="">All rarities</option></select>
+        <select id="fF" aria-label="Finish"><option value="">All finishes</option><option value="normal">Normal</option><option value="holo">Holo</option><option value="reverse">Reverse holo</option></select>
         <input type="search" id="fS" placeholder="Search seller or card…" aria-label="Search seller or card">
         <label><input type="checkbox" id="fG" checked> Group by card</label>
         <span class="count num" id="count" aria-live="polite"></span>
       </div>
       <div class="tbl"><table>
-        <thead id="tHead"><tr><th></th><th><button type="button" data-k="name">Card</button></th><th class="hide-s"><button type="button" data-k="seller">Seller</button></th><th style="text-align:right"><button type="button" data-k="price_rm">Price</button></th><th style="text-align:right" class="hide-s"><button type="button" data-k="market_rm">Market</button></th><th class="hide-s">Gap</th><th style="text-align:right" aria-sort="ascending"><button type="button" data-k="diff_pct">% vs market</button></th></tr></thead>
+        <thead id="tHead"><tr><th></th><th><button type="button" data-k="name">Card</button></th><th class="hide-s"><button type="button" data-k="seller">Seller</button></th><th style="text-align:right"><button type="button" data-k="price_rm">Price</button></th><th style="text-align:right" class="hide-s"><button type="button" data-k="market_rm">Market</button></th><th style="text-align:right" aria-sort="ascending"><button type="button" data-k="diff_pct">% vs market</button></th></tr></thead>
         <tbody id="tBody"></tbody>
       </table></div>
       <button type="button" id="moreRows" class="morebtn" hidden></button>
@@ -244,7 +280,7 @@ var MC=Object.assign({fx:MCS.fx,thresholds:MCS.thresholds,logos:MCS.logos},COL),
 document.title=MC.name+' Market Report';document.getElementById('colName').textContent=MC.name+' market report';
 var $=function(id){return document.getElementById(id)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
-var rm=function(v){return v==null?'-':'RM '+Math.round(v).toLocaleString('en-US')};
+var rm=function(v){return v==null?'-':v>0&&v<1?'RM '+v.toFixed(2):'RM '+Math.round(v).toLocaleString('en-US')};
 var pct=function(p){return p==null?'-':(p>0?'+':'')+(Math.abs(p)>=100?Math.round(p).toLocaleString('en-US'):p.toFixed(1))+'%'};
 var VC={deal:'b-deal',overpriced:'b-over',fair:'b-fair',bulk:'b-bulk','no market':'b-none'};
 var img=function(r){var a='alt="'+esc(r.name)+'"';return r.image?'<img class="thumb" loading="lazy" width="63" height="88" '+a+' src="'+esc(r.image)+'" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'thumb ph\',textContent:\'no scan\'}))">':'<div class="thumb ph" role="img" aria-label="'+esc(r.name)+'">no scan</div>'};
@@ -354,8 +390,8 @@ sortHead('selHead',selSt,drawSel);drawSel();
 var st={k:'diff_pct',d:1},LIMIT=60,shown=LIMIT;
 var key=function(r){return r.lang+'|'+r.set+'|'+r.number+'|'+r.variant};
 function draw(){
-  var v=$('fV').value,l=$('fL').value,ve=$('fVen').value,se=$('fSet').value,q=$('fS').value.trim().toLowerCase(),g=$('fG').checked;
-  var rows=R.filter(function(r){return(!v||r.verdict===v)&&(!l||r.lang===l)&&(!ve||r.venue===ve)&&(!se||skey(r)===se)&&(!q||(r.seller+' '+r.name+' '+r.store).toLowerCase().indexOf(q)>=0)});
+  var v=$('fV').value,l=$('fL').value,ve=$('fVen').value,se=$('fSet').value,ra=$('fR').value,fi=$('fF').value,q=$('fS').value.trim().toLowerCase(),g=$('fG').checked;
+  var rows=R.filter(function(r){return(!v||r.verdict===v)&&(!l||r.lang===l)&&(!ve||r.venue===ve)&&(!se||skey(r)===se)&&(!ra||r.rarity===ra)&&(!fi||r.variant===fi)&&(!q||(r.seller+' '+r.name+' '+r.store).toLowerCase().indexOf(q)>=0)});
   var byPct=cmpBy(st.k,st.d);
   var out=[];
   if(g){
@@ -369,14 +405,31 @@ function draw(){
   var total=out.length;out=out.slice(0,shown);
   $('moreRows').hidden=total<=shown;$('moreRows').textContent='Show '+Math.min(LIMIT,total-shown)+' more ('+(total-shown)+' left)';
   $('tBody').innerHTML=out.map(function(o){var r=o[0],first=o[1];
-    return '<tr class="'+(g&&first?'grp':'')+'"><td class="img">'+img(r)+'</td><td><span class="cname">'+esc(r.name)+'</span>'+(g&&first&&o[2]>1?'<span class="chip">CHEAPEST of '+o[2]+'</span>':'')+
-    '<div class="sm">'+esc(r.set)+' '+esc(r.number)+' - '+fin(r)+'</div></td>'+
+    var dup=g&&!first; // later rows of a group: seller and price only, the first row carries the card
+    return '<tr class="'+(g&&first?'grp':dup?'dup':'')+'"><td class="img">'+(dup?'':img(r))+'</td><td class="card"><span class="cname">'+esc(r.name)+'</span>'+(g&&first&&o[2]>1?'<span class="chip">CHEAPEST of '+o[2]+'</span>':'')+
+    (dup?'':pills(r))+'</td>'+
     '<td class="hide-s">'+(r.url?'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.seller)+'</a>':esc(r.seller))+'<div class="sm">'+esc(r.venue)+'</div></td>'+
     '<td class="n">'+rm(r.price_rm)+'</td><td class="n hide-s">'+rm(r.market_rm)+(r.market_rm==null?'<div class="sm">'+esc(r.market_src)+'</div>':'<div class="sm">'+esc(r.market_src)+'</div>')+'</td>'+
-    '<td class="gapcell hide-s">'+gap(r)+'</td><td class="n"><span class="badge '+VC[r.verdict]+'">'+(r.diff_pct==null?esc(r.verdict):pct(r.diff_pct))+'</span></td></tr>'}).join('');
+    // bulk: % is meaningless (footer), so the badge says bulk and the % moves to the tooltip
+    '<td class="n"><div class="pg">'+(r.verdict==='bulk'?'':'<span class="hide-s">'+gap(r)+'</span>')+'<span class="badge '+VC[r.verdict]+'" title="'+pct(r.diff_pct)+'">'+(r.diff_pct==null||r.verdict==='bulk'?esc(r.verdict):pct(r.diff_pct))+'</span></div></td></tr>'}).join('');
 }
+var abbr=function(s){return s.split(/\s+/).map(function(w){return w[0]}).join('').toUpperCase()};
+function pb(f,v,html,cls,what){return '<button type="button" class="pill '+cls+'" data-f="'+f+'" data-v="'+esc(v)+'" title="Show only '+esc(what)+'">'+html+'</button>'}
+function pills(r){var k=skey(r);
+  return '<div class="pills">'+pb('fL',r.lang,esc(r.lang),'p-lang l-'+r.lang,r.lang+' cards')+
+  pb('fSet',k,(LOGO[k]?'<img alt="" loading="lazy" src="'+esc(LOGO[k])+'">':'')+esc(code(r)),'p-set',r.set)+
+  '<span class="pill p-no">'+esc(r.printed||r.number)+'</span>'+
+  (r.rarity?pb('fR',r.rarity,esc(abbr(r.rarity)),'p-rar r-'+abbr(r.rarity)+(r.rarity==='Common'?' common':''),r.rarity):'')+
+  (r.variant!=='normal'?pb('fF',r.variant,r.variant==='holo'?'Holo':'Reverse holo','p-fin '+esc(r.variant),r.variant==='holo'?'holo':'reverse holo'):'')+'</div>'}
+var RC={};R.forEach(function(r){if(r.rarity)RC[r.rarity]=(RC[r.rarity]||0)+1});
+$('fR').innerHTML+=Object.keys(RC).sort(function(a,b){return RC[b]-RC[a]}).map(function(k){return '<option value="'+esc(k)+'">'+esc(k)+' ('+RC[k]+')</option>'}).join('');
+// a pill click sets its filter; a set pill also sets Language so the Set list has the set
+$('tBody').addEventListener('click',function(e){var b=e.target.closest('button[data-f]');if(!b)return;
+  if(b.dataset.f==='fSet'){$('fL').value=b.dataset.v.split('|')[0];fillSets()}
+  if(b.dataset.f==='fL'){$('fL').value=b.dataset.v;fillSets()}else $(b.dataset.f).value=b.dataset.v;
+  redraw();$('all').scrollIntoView({block:'start'})});
 var redraw=function(){shown=LIMIT;draw()};
-['fV','fL','fVen','fSet','fG'].forEach(function(id){$(id).addEventListener('change',redraw)});
+['fV','fL','fVen','fSet','fR','fF','fG'].forEach(function(id){$(id).addEventListener('change',redraw)});
 $('fS').addEventListener('input',redraw);
 var markT=sortHead('tHead',st,redraw);
 $('moreRows').addEventListener('click',function(){shown+=LIMIT;draw()});
