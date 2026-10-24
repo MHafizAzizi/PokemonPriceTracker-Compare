@@ -174,6 +174,26 @@
   .rfilt { display: none; }
   .ftool { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
   .ftool label { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .msf { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .side .msf { display: grid; gap: 3px; font: 12px var(--font); margin: 0 8px 8px; }
+  .ms { position: relative; }
+  .ms > summary { list-style: none; cursor: pointer; font: 14px var(--font); color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 28px 6px 10px; min-width: 130px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+  .ms > summary::-webkit-details-marker { display: none; }
+  .ms > summary::after { content: '\25BE'; position: absolute; right: 10px; color: var(--muted); }
+  .ms > summary.on { border-color: var(--accent); color: var(--accent); }
+  .side .ms > summary { max-width: none; }
+  .ms-pop { position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; width: max(100%, 300px); max-width: calc(100vw - 24px); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 30px #0003; padding: 8px; display: grid; gap: 6px; font: 14px var(--font); color: var(--text); }
+  .ms-pop.right { left: auto; right: 0; }
+  .ms-q { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); }
+  .ms-list { max-height: 320px; overflow: auto; display: grid; overscroll-behavior: contain; }
+  .ms-h { font-weight: 600; font-style: italic; padding: 8px 4px 2px; }
+  .ms-o { display: flex; gap: 8px; align-items: center; padding: 5px 4px; border-radius: 4px; cursor: pointer; }
+  .ms-o:hover { background: var(--sel); }
+  .ms .ms-o { display: flex; margin: 0; font: 14px var(--font); color: var(--text); }   /* not the .ftool / .side label style */
+  .ms-pop [hidden] { display: none !important; }
+  .side .ms-pop { position: static; width: auto; max-width: none; margin-top: 4px; box-shadow: none; }   /* the rail clips overflow */
+  .ms-h + .ms-o, .ms-h ~ .ms-o { padding-left: 14px; }
+  .ms-pop > button { justify-self: start; }
   .ftool select { font: 14px var(--font); padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); max-width: 180px; }
   .secH { display: flex; align-items: baseline; gap: 12px; margin: 8px 0 16px; font-size: 18px; }
   .secH .mono { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 500; }
@@ -655,10 +675,14 @@ const tierOf = raw => { const r = String(raw || '').trim(); const t = RARITY_TIE
 const isSpecial = raw => { const t = RARITY_TIER[String(raw || '').trim().toLowerCase()]; return !!(t && t[1]); };
 const metaLine = x => { const t = [x.era, x.type, x.rarity].filter(Boolean).join(' · '); return t ? `<div class="muted">${esc(t)}</div>` : ''; };
 
-const F = { q: '', era: '', set: '', type: '', rarity: '', variant: '', lang: '', shop: '', status: '', price: '', sort: '' };
+// Multi-select filters hold a list of values; [] means all. The others hold one value; '' means all.
+const MULTI = ['shop', 'era', 'set', 'type', 'rarity', 'variant', 'lang'];
+const F = { q: '', era: [], set: [], type: [], rarity: [], variant: [], lang: [], shop: [], status: '', price: '', sort: '' };
 let lastCol = null, qTimer = null, shownIds = [], lastShop = '';
 const trip = { on: false, tab: 'price', venue: '', store: '', seller: '' };
-const resetFilters = () => { Object.keys(F).forEach(k => { F[k] = ''; }); };
+const resetFilters = () => { Object.keys(F).forEach(k => { F[k] = MULTI.includes(k) ? [] : ''; }); };
+const fOn = k => (MULTI.includes(k) ? F[k].length > 0 : !!F[k]);
+const fHas = (k, v) => !F[k].length || F[k].includes(v);
 const minPrice = x => {
   const v = listingsOf(x.id).map(l => (hasPrice(l.p) ? inRM(Number(l.p.price), l.st.currency) : NaN)).filter(n => !isNaN(n));
   return v.length ? Math.min(...v) : Infinity;
@@ -668,14 +692,10 @@ function applyFilters(all) {
   let out = all.filter(x => {
     if (q && ![x.name, x.alt, x.lang, x.set, x.number, x.era, x.type, x.rarity, VARIANT_LABEL[x.variant]]
       .some(v => String(v || '').toLowerCase().includes(q))) return false;
-    if (F.era && x.era !== F.era) return false;
-    if (F.set && x.set !== F.set) return false;
-    if (F.type && x.type !== F.type) return false;
-    if (F.rarity && tierOf(x.rarity) !== F.rarity) return false;
-    if (F.variant && x.variant !== F.variant) return false;
-    if (F.lang && (x.lang || 'EN') !== F.lang) return false;
-    if (F.shop === '__none') { if (Object.keys(S.prices[x.id] || {}).length) return false; }
-    else if (F.shop && !listingsOf(x.id).some(l => l.st.id === F.shop)) return false;
+    if (!fHas('era', x.era) || !fHas('set', x.set) || !fHas('type', x.type) || !fHas('rarity', tierOf(x.rarity))
+      || !fHas('variant', x.variant) || !fHas('lang', x.lang || 'EN')) return false;
+    if (F.shop.length && !((F.shop.includes('__none') && !Object.keys(S.prices[x.id] || {}).length)
+      || listingsOf(x.id).some(l => F.shop.includes(l.st.id)))) return false;
     if (F.status === 'found' && !x.found) return false;
     if (F.status === 'notfound' && x.found) return false;
     const has = Object.keys(S.prices[x.id] || {}).length > 0;
@@ -696,21 +716,30 @@ function filterBar(all) {
   const rars = uniq(x => tierOf(x.rarity)).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   const opt = (v, label, cur) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
   // Set list follows the Language filter: only that language's sets, empty eras left out
-  const inLang = x => !F.lang || (x.lang || 'EN') === F.lang;
-  const setsOf = pred => [...new Set(all.filter(x => inLang(x) && pred(x)).map(x => x.set).filter(Boolean))];
-  const setGroups = eras.map(e => [e, setsOf(x => x.era === e)]).filter(([, ss]) => ss.length)
-    .map(([e, ss]) => `<optgroup label="${esc(e)}">${ss.map(s => opt(s, s, F.set)).join('')}</optgroup>`).join('')
-    + setsOf(x => !x.era).map(s => opt(s, s, F.set)).join('');
+  const setsOf = pred => [...new Set(all.filter(x => fHas('lang', x.lang || 'EN') && pred(x)).map(x => x.set).filter(Boolean))];
+  const setItems = [...eras.map(e => [e, setsOf(x => x.era === e)]).filter(([, ss]) => ss.length)
+    .flatMap(([e, ss]) => [['', e, true], ...ss.map(v => [v, v])]), ...setsOf(x => !x.era).map(v => [v, v])];
   const sel = (key, label, body) => `<label>${label}<select data-filter="${key}">${body}</select></label>`;
+  // Multi-select with a search box: <details> opens it, each tick applies at once. items: [value, label] or ['', heading, true]
+  const ms = (key, label, allLabel, items) => {
+    const cur = F[key], names = items.filter(i => !i[2] && cur.includes(i[0])).map(i => i[1]);
+    const shown = !cur.length ? allLabel : cur.length === 1 ? (names[0] || cur[0]) : `${cur.length} selected`;
+    return `<div class="msf"><span>${label}</span><details class="ms" data-ms="${key}"><summary class="${cur.length ? 'on' : ''}" title="${esc(names.join(', '))}">${esc(shown)}</summary>
+      <div class="ms-pop"><input type="search" class="ms-q" placeholder="Search…" aria-label="Search ${esc(label)}" autocomplete="off" spellcheck="false">
+      <div class="ms-list" role="group" aria-label="${esc(label)}">${items.map(([v, t, head]) => head ? `<div class="ms-h">${esc(t)}</div>`
+        : `<label class="ms-o"><input type="checkbox" data-ms-v="${esc(v)}"${cur.includes(v) ? ' checked' : ''}><span>${esc(t)}</span></label>`).join('')}</div>
+      <div class="ms-none muted" hidden>No match</div>
+      <button type="button" class="small" data-act="msclear" data-id="${key}"${cur.length ? '' : ' disabled'}>Clear</button></div></details></div>`;
+  };
   const used = new Set(all.map(x => x.lang || 'EN'));
   const langs = [...LANGS.filter(([c]) => used.has(c)), ...[...used].filter(c => !LANGS.some(([k]) => k === c)).map(c => [c, c])];
-  return `${sel('shop', 'Shop', opt('', 'All shops', F.shop) + opt('__none', 'No shop yet', F.shop) + S.stores.map(s => opt(s.id, shopLabel(s), F.shop)).join(''))}
-    ${sel('era', 'Era', opt('', 'All eras', F.era) + eras.map(e => opt(e, e, F.era)).join(''))}
-    ${sel('set', 'Set', opt('', 'All sets', F.set) + setGroups)}
-    ${sel('type', 'Type', opt('', 'All types', F.type) + types.map(t => opt(t, t, F.type)).join(''))}
-    ${sel('rarity', 'Rarity', opt('', 'All rarities', F.rarity) + rars.map(r => opt(r, r, F.rarity)).join(''))}
-    ${sel('variant', 'Variant', opt('', 'All variants', F.variant) + ['normal', 'holo', 'reverse'].map(v => opt(v, VARIANT_LABEL[v], F.variant)).join(''))}
-    ${sel('lang', 'Language', opt('', 'All languages', F.lang) + langs.map(([c, n]) => opt(c, n, F.lang)).join(''))}
+  return `${ms('shop', 'Shop', 'All shops', [['__none', 'No shop yet'], ...S.stores.map(s => [s.id, shopLabel(s)])])}
+    ${ms('era', 'Era', 'All eras', eras.map(e => [e, e]))}
+    ${ms('set', 'Set', 'All sets', setItems)}
+    ${ms('type', 'Type', 'All types', types.map(t => [t, t]))}
+    ${ms('rarity', 'Rarity', 'All rarities', rars.map(r => [r, r]))}
+    ${ms('variant', 'Variant', 'All variants', ['normal', 'holo', 'reverse'].map(v => [v, VARIANT_LABEL[v]]))}
+    ${ms('lang', 'Language', 'All languages', langs)}
     ${sel('status', 'Found', opt('', 'All', F.status) + opt('found', 'Found only', F.status) + opt('notfound', 'Not found', F.status))}
     ${sel('price', 'Prices', opt('', 'All', F.price) + opt('priced', 'Has a price', F.price) + opt('unpriced', 'No price yet', F.price))}
     ${sel('sort', 'Sort', opt('', 'Default order', F.sort) + opt('name', 'Name A-Z', F.sort) + opt('cheapest', 'Cheapest first', F.sort) + opt('found', 'Found first', F.sort))}`;
@@ -1620,7 +1649,7 @@ function render() {
     ? `<button type="button" class="small" data-act="bulkshop">Add a shop to these ${cards.length} rows</button>` : '';
   const hint = !Object.keys(S.prices).some(id => Object.keys(S.prices[id]).length)
     ? '<div class="banner">Tick a card, then press + Shop on its row to record where you found it and its price.</div>' : '';
-  const tags = Object.keys(F).filter(k => F[k]).map(k => `<span class="ftag">${FLABEL[k]}: ${esc(fval(k, F[k]))}<button type="button" data-act="clearf" data-id="${k}" aria-label="Remove filter ${FLABEL[k]}">×</button></span>`).join('');
+  const tags = Object.keys(F).filter(fOn).map(k => `<span class="ftag">${FLABEL[k]}: ${esc(MULTI.includes(k) ? F[k].map(v => fval(k, v)).join(', ') : fval(k, F[k]))}<button type="button" data-act="clearf" data-id="${k}" aria-label="Remove filter ${FLABEL[k]}">×</button></span>`).join('');
 
   const storeCards = stores.map(s => `<div class="store-card">
       <strong>${esc(s.name)}</strong> <span class="muted">${esc(s.type)} · ${esc(s.currency || 'RM')}</span>${s.venue ? `<div class="muted">${esc(s.venue)}</div>` : ''}<div class="muted">${listingCount(s.id)} listing${listingCount(s.id) === 1 ? '' : 's'}</div>
@@ -1676,7 +1705,8 @@ document.addEventListener('click', e => {
   else if (act === 'scrim') { setPane('side', false); setPane('det', false); }
   else if (act === 'sel') selectCard(id);
   else if (act === 'qf') { const [k, v] = id.split(':'); F[k] = F[k] === v ? '' : v; render(); }
-  else if (act === 'clearf') { F[id] = ''; render(); }
+  else if (act === 'clearf') { F[id] = MULTI.includes(id) ? [] : ''; render(); }
+  else if (act === 'msclear') { F[id] = []; render(); reopenMs(id); }
   else if (act === 'newcol') addCollection();
   else if (act === 'renamecol') renameCollection();
   else if (act === 'delcol') deleteCollection();
@@ -1795,6 +1825,59 @@ document.addEventListener('change', e => {
     if (el.dataset.filter === 'lang' && F.lang && F.set && !cardsOf(activeCol().id).some(x => x.set === F.set && (x.lang || 'EN') === F.lang)) F.set = '';
     render();
   }
+});
+
+// Multi-select filters: ticks apply at once and the list stays open (render() rebuilds it, so it is reopened);
+// the search box only hides options; one list open at a time; click outside or Escape closes it.
+function msFind(box) {
+  const q = box.querySelector('.ms-q').value.trim().toLowerCase();
+  let any = false, head = null, headHas = false;
+  const endHead = () => { if (head) head.hidden = !headHas; };
+  box.querySelectorAll('.ms-list > *').forEach(el => {
+    if (el.classList.contains('ms-h')) { endHead(); head = el; headHas = !q || el.textContent.toLowerCase().includes(q); return; }
+    const hit = !q || el.textContent.toLowerCase().includes(q) || (head && head.textContent.toLowerCase().includes(q));
+    el.hidden = !hit; if (hit) { any = true; headHas = true; }
+  });
+  endHead();
+  box.querySelector('.ms-none').hidden = any;
+}
+function reopenMs(key, idx = 0, q = '', focusV = null) {
+  const d = document.querySelectorAll(`details.ms[data-ms="${key}"]`)[idx];
+  if (!d) return;
+  d.open = true;
+  const box = d.querySelector('.ms-q');
+  box.value = q; msFind(d);
+  const cb = focusV != null && [...d.querySelectorAll('[data-ms-v]')].find(c => c.dataset.msV === focusV);
+  (cb || box).focus({ preventScroll: true });
+}
+document.addEventListener('toggle', e => {
+  const d = e.target;
+  if (!d.matches || !d.matches('details.ms') || !d.open) return;
+  document.querySelectorAll('details.ms[open]').forEach(o => { if (o !== d) o.open = false; });
+  const pop = d.querySelector('.ms-pop');
+  pop.classList.remove('right');
+  if (pop.getBoundingClientRect().right > document.documentElement.clientWidth - 8) pop.classList.add('right');
+  if (document.activeElement === d.querySelector('summary')) d.querySelector('.ms-q').focus({ preventScroll: true });
+}, true);
+document.addEventListener('click', e => {
+  document.querySelectorAll('details.ms[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
+});
+document.addEventListener('input', e => { const d = e.target.closest('.ms-q') && e.target.closest('details.ms'); if (d) msFind(d); });
+document.addEventListener('keydown', e => {
+  const d = e.key === 'Escape' && e.target.closest('details.ms[open]');
+  if (!d || (e.target.matches('.ms-q') && e.target.value)) return;   // first Escape clears the search box
+  e.stopPropagation(); d.open = false; d.querySelector('summary').focus();
+}, true);
+document.addEventListener('change', e => {
+  const cb = e.target.closest('[data-ms-v]');
+  if (!cb) return;
+  const d = cb.closest('details.ms'), key = d.dataset.ms;
+  const idx = [...document.querySelectorAll(`details.ms[data-ms="${key}"]`)].indexOf(d), q = d.querySelector('.ms-q').value;
+  F[key] = [...d.querySelectorAll('[data-ms-v]:checked')].map(c => c.dataset.msV);
+  // sets the picked languages do not have would leave an empty list
+  if (key === 'lang' && F.lang.length) F.set = F.set.filter(v => cardsOf(activeCol().id).some(x => x.set === v && F.lang.includes(x.lang || 'EN')));
+  render();
+  reopenMs(key, idx, q, cb.dataset.msV);
 });
 
 // Trip: venue / stall pickers, saving a typed price or link, Enter jumps to the next price box.
