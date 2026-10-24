@@ -265,6 +265,13 @@
   .topbar h1 { font-size: 17px; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
   .topbar input { flex: 1 1 auto; min-width: 120px; max-width: 360px; font: inherit; font-size: 14px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; height: 34px; }
   .topbar .sp { flex: 1 1 0; }
+  .tsearch { position: relative; display: flex; align-items: center; margin: 0 0 10px; max-width: 640px; }
+  .tsearch svg { position: absolute; left: 12px; color: var(--muted); pointer-events: none; }
+  .tsearch input { flex: 1; font: inherit; font-size: 15px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 40px 9px 36px; height: 40px; transition: border-color .15s, box-shadow .15s; }
+  .tsearch input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .tsearch kbd { position: absolute; right: 10px; font: 11px var(--mono); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; pointer-events: none; }
+  .tsearch input:focus ~ kbd, .tsearch input:not(:placeholder-shown) ~ kbd { display: none; }
+  @media (max-width: 900px) { .tsearch kbd { display: none; } .tsearch input { padding-right: 12px; } }
   @container (max-width: 980px) { .topbar h1 { display: none; } }
   button.icon.pane svg { width: 18px; height: 18px; }
   .qchip { border-radius: 999px; padding: 4px 12px; }
@@ -698,8 +705,9 @@ const minPrice = x => {
 function applyFilters(all) {
   const q = F.q.trim().toLowerCase();
   let out = all.filter(x => {
-    if (q && ![x.name, x.alt, x.lang, x.set, x.number, x.era, x.type, x.rarity, VARIANT_LABEL[x.variant]]
-      .some(v => String(v || '').toLowerCase().includes(q))) return false;
+    const hit = v => String(v || '').toLowerCase().includes(q);
+    if (q && ![x.name, x.alt, x.lang, x.set, x.number, x.era, x.type, x.rarity, VARIANT_LABEL[x.variant]].some(hit)
+      && !listingsOf(x.id).some(l => [l.st.name, l.st.venue, l.seller].some(hit))) return false;
     if (!fHas('era', x.era) || !fHas('set', x.set) || !fHas('type', x.type) || !fHas('rarity', tierOf(x.rarity))
       || !fHas('variant', x.variant) || !fHas('lang', x.lang || 'EN')) return false;
     if (F.shop.length && !((F.shop.includes('__none') && !Object.keys(S.prices[x.id] || {}).length)
@@ -1582,10 +1590,12 @@ function binderHtml(cards) {
     <div class="bpager">${nav(-1, '← Prev', bPage === 0)}<span class="pg">Page ${bPage + 1} / ${pages}</span><span class="muted">pockets ${from + 1}–${from + page.length} of ${cards.length}</span>${nav(1, 'Next →', bPage >= pages - 1)}</div>
     <div class="best-note">Grey pocket = not owned yet. Click a pocket for details. ← → turn the page.</div>`;
 }
+// Card search, above the list: card fields plus the shops, venues and sellers on its listings. "/" jumps here.
+const searchRow = () => `<div class="tsearch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+  <input type="search" data-filter="q" value="${esc(F.q)}" placeholder="Search card, set, number, shop, seller…" aria-label="Search cards" autocomplete="off" spellcheck="false"><kbd aria-hidden="true">/</kbd></div>`;
 function topBar(c) {
   const q = (k, v, label) => `<button type="button" class="qchip" data-act="qf" data-id="${k}:${v}" aria-pressed="${F[k] === v}">${label}</button>`;
   return `<div class="topbar">${paneBtn('side', 'M9 4v16')}<h1>${esc(c.name)}</h1>
-    <input type="search" data-filter="q" value="${esc(F.q)}" placeholder="Search name, set, number…" aria-label="Search cards" autocomplete="off" spellcheck="false">
     ${q('price', 'priced', 'Has price')}${q('price', 'unpriced', 'No price')}${q('owned', 'missing', 'Hide owned')}
     <span class="sp"></span>
     ${trip.on ? '' : `<span class="seg" role="group" aria-label="View">${['list', 'binder'].map(v => `<button type="button" data-act="view" data-id="${v}" aria-pressed="${ui.view === v}">${v === 'list' ? 'List' : 'Binder 4×4'}</button>`).join('')}</span>`}
@@ -1643,7 +1653,7 @@ function render() {
   if (!cards.some(x => x.id === selId)) selId = cards.length ? cards[0].id : null;
   const stores = S.stores;
   $('#sideIn').innerHTML = sideHtml(c, all);
-  if (trip.on) { app.innerHTML = topBar(c) + tripView(c, all, cards); renderDet(); return; }
+  if (trip.on) { app.innerHTML = topBar(c) + searchRow() + tripView(c, all, cards); renderDet(); return; }
 
   const chipsFor = x => {
     const best = x.owned ? new Set() : bestStores(x.id);   // an owned card's prices are history, not a buy
@@ -1694,9 +1704,11 @@ function render() {
     <h2 class="secH"><span class="mono">02.</span>Cards<small>${ui.view === 'binder' ? 'binder, 16 pockets a page' : 'list'}</small></h2>
     ${filterTool(all)}
     ${dueBanner}${fileTip}
+    ${searchRow()}
     <div class="ftags">${tags}${bulk}<button type="button" class="icon-btn" data-act="tickall" aria-label="Tick or untick every row in the filter (all pages)" title="Tick or untick every row in the filter (all pages)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-9 14-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button><button type="button" class="icon-btn" data-act="delticked"${all.some(x => x.found) ? '' : ' disabled'} aria-label="Mark ticked cards as owned (${all.filter(x => x.found).length})" title="Mark every ticked card in this collection as owned (rows and prices stay)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button><span class="count" aria-live="polite">${cards.length === all.length ? all.length : cards.length + ' of ' + all.length} row${all.length === 1 ? '' : 's'} · ${all.filter(x => x.found).length} found</span></div>
     ${hint}
-    ${cards.length === 0 ? `<div class="panel"><div class="empty">${all.length ? 'No cards match the filters.' : 'No cards yet. Click + Add card.'}</div></div>` : ''}
+    ${cards.length === 0 ? `<div class="panel"><div class="empty">${!all.length ? 'No cards yet. Click + Add card.'
+      : F.q.trim() ? `No cards match “${esc(F.q.trim())}”. <button type="button" class="small" data-act="clearf" data-id="q">Clear search</button>` : 'No cards match the filters.'}</div></div>` : ''}
 
     ${cards.length && ui.view === 'binder' ? binderHtml(cards) : ''}
     ${cards.length && ui.view !== 'binder' ? `
@@ -1821,7 +1833,8 @@ $('#importFile').addEventListener('change', e => {
 // Keys: [ sidebar, ] details, Esc closes the details, arrow keys move between cards.
 document.addEventListener('keydown', e => {
   if ($('#dlg').open || e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input, select, textarea')) return;
-  if (e.key === '[') setPane('side');
+  if (e.key === '/' && $('input[data-filter="q"]')) { e.preventDefault(); $('input[data-filter="q"]').focus(); }
+  else if (e.key === '[') setPane('side');
   else if (e.key === ']') setPane('det');
   else if (e.key === 'Escape') { if (narrow()) setPane('side', false); setPane('det', false); }
   else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && ui.view === 'binder' && !trip.on && $('.pocket')) { bPage += e.key === 'ArrowRight' ? 1 : -1; render(); }
