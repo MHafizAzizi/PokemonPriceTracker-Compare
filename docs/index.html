@@ -243,6 +243,9 @@
   .bpager .pg { font-family: var(--mono); font-size: 13px; }
   .bpager .muted { order: 9; flex-basis: 100%; text-align: center; }
   .bpager button:disabled { opacity: .4; cursor: default; }
+  .lpager.top { margin: 0 0 10px; }
+  .lpager select { font: 13px var(--mono); padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
+  .lpager .per { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
   @container (max-width: 640px) {
     .bsheet { padding: 10px 10px 10px 34px; }
     .bsheet::before { left: 6px; top: 10px; bottom: 10px; }
@@ -1506,7 +1509,7 @@ function layout() {
 }
 function setPane(which, on) {
   ui[which] = on ?? !ui[which];
-  if (!narrow()) try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, view: ui.view })); } catch (e) { /* not saved, fine */ }
+  if (!narrow()) try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, view: ui.view, per: ui.per })); } catch (e) { /* not saved, fine */ }
   layout();
 }
 const paneBtn = (w, d) => `<button type="button" class="icon pane" data-act="pane" data-id="${w}" aria-controls="${w}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="${d}"/></svg></button>`;
@@ -1549,6 +1552,17 @@ function summaryHtml(c, all) {
 }
 // Binder view: the filtered rows as 4x4 binder pages, one pocket per row (a row is one print + finish already).
 let bPage = 0, bSig = '';
+// List view pages: ui.per rows a page ('all' = one page); other filters or another collection start at page 1.
+let lPage = 0, lSig = '';
+const PER = [25, 50, 100, 200, 'all'];
+function listPager(n, pages, from, to, where) {
+  if (n <= 25) return '';
+  const nav = (d, label, off) => `<button type="button" data-act="lpage" data-id="${d}"${off ? ' disabled' : ''}>${label}</button>`;
+  const jump = `<select data-lpage aria-label="Go to page">${Array.from({ length: pages }, (_, i) => `<option value="${i}"${i === lPage ? ' selected' : ''}>${i + 1}</option>`).join('')}</select>`;
+  return `<div class="bpager lpager ${where}">${nav(-1, '← Prev', lPage === 0)}<span class="pg">Page ${jump} / ${pages}</span>${nav(1, 'Next →', lPage >= pages - 1)}
+    <label class="per">Rows a page <select data-per>${PER.map(v => `<option value="${v}"${v === (ui.per || 50) ? ' selected' : ''}>${v === 'all' ? 'All' : v}</option>`).join('')}</select></label>
+    <span class="muted">rows ${from + 1}–${to} of ${n}</span></div>`;
+}
 function binderHtml(cards) {
   const sig = S.active + JSON.stringify(F);
   if (sig !== bSig) { bSig = sig; bPage = 0; }   // other filters = other pockets, so start at page 1
@@ -1640,7 +1654,12 @@ function render() {
     return `<div class="chips">${chips}<button type="button" class="chip add" data-act="addprice" data-card="${x.id}" aria-label="Add a shop for ${esc(x.name)}">+ Shop</button></div>`;
   };
 
-  const rows = cards.map(x => {
+  const per = ui.per || 50, sig = c.id + JSON.stringify(F);
+  if (sig !== lSig) { lSig = sig; lPage = 0; }
+  const lPages = per === 'all' ? 1 : Math.max(1, Math.ceil(cards.length / per));
+  lPage = Math.max(0, Math.min(lPage, lPages - 1));
+  const lFrom = per === 'all' ? 0 : lPage * per, pageCards = per === 'all' ? cards : cards.slice(lFrom, lFrom + per);
+  const rows = pageCards.map(x => {
     const src = thumbSrc(x);
     const thumb = src
       ? `<div class="thumb"><img src="${esc(src)}" alt="" width="36" height="50" loading="lazy" onerror="this.parentNode.textContent='no scan'"></div>`
@@ -1675,18 +1694,20 @@ function render() {
     <h2 class="secH"><span class="mono">02.</span>Cards<small>${ui.view === 'binder' ? 'binder, 16 pockets a page' : 'list'}</small></h2>
     ${filterTool(all)}
     ${dueBanner}${fileTip}
-    <div class="ftags">${tags}${bulk}<button type="button" class="icon-btn" data-act="tickall" aria-label="Tick or untick every row listed below" title="Tick or untick every row listed below"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-9 14-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button><button type="button" class="icon-btn" data-act="delticked"${all.some(x => x.found) ? '' : ' disabled'} aria-label="Mark ticked cards as owned (${all.filter(x => x.found).length})" title="Mark every ticked card in this collection as owned (rows and prices stay)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button><span class="count" aria-live="polite">${cards.length === all.length ? all.length : cards.length + ' of ' + all.length} row${all.length === 1 ? '' : 's'} · ${all.filter(x => x.found).length} found</span></div>
+    <div class="ftags">${tags}${bulk}<button type="button" class="icon-btn" data-act="tickall" aria-label="Tick or untick every row in the filter (all pages)" title="Tick or untick every row in the filter (all pages)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-9 14-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button><button type="button" class="icon-btn" data-act="delticked"${all.some(x => x.found) ? '' : ' disabled'} aria-label="Mark ticked cards as owned (${all.filter(x => x.found).length})" title="Mark every ticked card in this collection as owned (rows and prices stay)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button><span class="count" aria-live="polite">${cards.length === all.length ? all.length : cards.length + ' of ' + all.length} row${all.length === 1 ? '' : 's'} · ${all.filter(x => x.found).length} found</span></div>
     ${hint}
     ${cards.length === 0 ? `<div class="panel"><div class="empty">${all.length ? 'No cards match the filters.' : 'No cards yet. Click + Add card.'}</div></div>` : ''}
 
     ${cards.length && ui.view === 'binder' ? binderHtml(cards) : ''}
     ${cards.length && ui.view !== 'binder' ? `
+    ${listPager(cards.length, lPages, lFrom, lFrom + pageCards.length, 'top')}
     <div class="panel tbl">
       <table>
         <thead><tr><th class="found">Found</th><th class="cardh">Card</th><th>Where to buy</th><th class="acts"></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
+    ${listPager(cards.length, lPages, lFrom, lFrom + pageCards.length, 'bottom')}
     <div class="best-note">Green = cheapest for that card (other currencies compared at your exchange rates). Click a card for details, or a shop to edit its price.</div>` : ''}
 
     <h2 class="secH"><span class="mono">03.</span>Stores</h2>
@@ -1712,6 +1733,7 @@ document.addEventListener('click', e => {
     try { localStorage.setItem(UI_KEY, JSON.stringify({ ...JSON.parse(localStorage.getItem(UI_KEY) || '{}'), view: id })); } catch (e) { /* not saved, fine */ }
   }
   else if (act === 'bpage') { bPage += Number(id); render(); }
+  else if (act === 'lpage') { lPage += Number(id); render(); toListTop(); }
   else if (act === 'scrim') { setPane('side', false); setPane('det', false); }
   else if (act === 'sel') selectCard(id);
   else if (act === 'qf') { const [k, v] = id.split(':'); F[k] = F[k] === v ? '' : v; render(); }
@@ -1808,7 +1830,8 @@ document.addEventListener('keydown', e => {
     if (i < 0 || i >= shownIds.length) return;
     e.preventDefault();
     selectCard(shownIds[i]);
-    const b = document.querySelector(`.cardc[data-id="${shownIds[i]}"]`);
+    let b = document.querySelector(`.cardc[data-id="${shownIds[i]}"]`);
+    if (!b && ui.view !== 'binder' && (ui.per || 50) !== 'all') { lPage = Math.floor(i / (ui.per || 50)); render(); b = document.querySelector(`.cardc[data-id="${shownIds[i]}"]`); }
     if (b) b.focus();
   }
 });
@@ -1886,6 +1909,17 @@ document.addEventListener('change', e => {
   if (key === 'lang' && F.lang.length) F.set = F.set.filter(v => cardsOf(activeCol().id).some(x => x.set === v && F.lang.includes(x.lang || 'EN')));
   render();
   reopenMs(key, idx, q, cb.dataset.msV);
+});
+
+// List pages: jump to a page, or change rows a page (kept like the List / Binder choice).
+function toListTop() { const t = $('.lpager.top') || $('.tbl'); if (t) window.scrollTo(0, t.getBoundingClientRect().top + scrollY - 70); }
+document.addEventListener('change', e => {
+  if (e.target.matches('select[data-lpage]')) { lPage = Number(e.target.value); render(); toListTop(); }
+  else if (e.target.matches('select[data-per]')) {
+    ui.per = e.target.value === 'all' ? 'all' : Number(e.target.value); lPage = 0;
+    try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, view: ui.view, per: ui.per })); } catch (err) { /* not saved, fine */ }
+    render(); toListTop();
+  }
 });
 
 // Trip: venue / stall pickers, saving a typed price or link, Enter jumps to the next price box.
