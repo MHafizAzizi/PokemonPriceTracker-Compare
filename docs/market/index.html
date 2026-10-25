@@ -312,6 +312,8 @@ $('sumNote').textContent='thresholds: deal '+MC.thresholds.deal_pct+'%, overpric
 /* 02 eras and sets */
 var ERA_ORDER=['Base','Gym','Neo','Legendary Collection','e-Card','EX','Diamond & Pearl','Platinum','HeartGold & SoulSilver','Black & White','XY','Sun & Moon','Sword & Shield','Scarlet & Violet','Mega Evolution'];
 var LOGO=MC.logos||{};
+// EN set release dates (market_compare.py); undated sets (JP) after them by name
+var SD=MCS.set_dates||{};function byRelease(a,b){return (SD[a]||'9999').localeCompare(SD[b]||'9999')||a.localeCompare(b)}
 var skey=function(r){return r.lang+'|'+r.set};
 var E={};R.forEach(function(r){var e=E[r.era||'Other']=E[r.era||'Other']||{name:r.era||'Other',rows:[],sets:{}};e.rows.push(r);(e.sets[skey(r)]=e.sets[skey(r)]||[]).push(r)});
 var eraIx=function(n){var i=ERA_ORDER.indexOf(n);return i<0?99:i};
@@ -346,7 +348,7 @@ $('eraList').addEventListener('click',function(ev){var b=ev.target.closest('[dat
 $('setList').addEventListener('click',function(ev){var b=ev.target.closest('[data-set]');if(!b)return;$('fV').value=$('fL').value=$('fVen').value=$('fS').value='';fillSets();$('fSet').value=b.dataset.set;redraw();$('all').scrollIntoView()});
 // Set list follows the Language filter; a set the language lacks is dropped
 function fillSets(){var l=$('fL').value,cur=$('fSet').value,keep=false;
-  $('fSet').innerHTML='<option value="">All sets</option>'+ERAS.map(function(e){var ks=Object.keys(e.sets).filter(function(k){return !l||k.indexOf(l+'|')===0}).sort();
+  $('fSet').innerHTML='<option value="">All sets</option>'+ERAS.map(function(e){var ks=Object.keys(e.sets).filter(function(k){return !l||k.indexOf(l+'|')===0}).sort(byRelease);
     if(ks.indexOf(cur)>=0)keep=true;
     return ks.length?'<optgroup label="'+esc(e.name)+'">'+ks.map(function(k){return '<option value="'+esc(k)+'">'+esc(k.replace('|',' '))+'</option>'}).join('')+'</optgroup>':''}).join('');
   $('fSet').value=keep?cur:''}
