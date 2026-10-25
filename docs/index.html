@@ -103,7 +103,6 @@
     .pgrid figure.blank { border: 0.3mm dashed #bbb; border-radius: 2mm; }
     .pgrid img, .pgrid i { flex: 1; min-height: 0; max-width: 100%; aspect-ratio: 63 / 88; object-fit: contain; }
     .pgrid i { display: grid; place-items: center; font: 8pt sans-serif; color: #888; border: 0.3mm solid #ddd; }
-    .pgrid .not img { filter: grayscale(1); opacity: .45; }
     .pgrid figcaption { font: 7pt/1.2 sans-serif; text-align: center; padding-top: 1mm; }
   }
   .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: 6px; vertical-align: middle; font-weight: 500; }
@@ -1182,29 +1181,84 @@ function exportDlg() {
   if (d.open) d.close();
   d.showModal();
 }
+// Each scan is redrawn on a canvas at print size (~150 dpi) as a JPEG, greyed in the pixels when asked: Firefox
+// prints no CSS filters (unowned cards came out blank) and the full scans made big, slow PDFs. A scan the canvas
+// may not read (a host without CORS, a file:// page) resolves to null and prints in colour, marked "not owned".
+// TCGdex's server sometimes sends its CORS header twice, which browsers reject, and the browser then keeps that
+// copy cached: retries fetch a fresh copy (no-store) and draw it from a same-origin blob URL
+async function printImg(src, w, grey) {
+  const v = await printImg1(src, w, grey);
+  if (v || !/^https?:/.test(src)) return v;
+  for (let i = 0; i < 2; i++) {
+    try {
+      const blob = await (await fetch(src, { mode: 'cors', cache: 'no-store' })).blob(), u = URL.createObjectURL(blob);
+      const r = await printImg1(u, w, grey);
+      URL.revokeObjectURL(u);
+      if (r) return r;
+    } catch (e) { /* try again */ }
+    await new Promise(r => setTimeout(r, 400));
+  }
+  return null;
+}
+function printImg1(src, w, grey) {
+  return new Promise(res => {
+    const im = new Image(), done = v => { clearTimeout(t); res(v); }, t = setTimeout(() => done(null), 15000);
+    const cross = /^https?:/.test(src) && new URL(src, location.href).origin !== location.origin;
+    if (cross) im.crossOrigin = 'anonymous';
+    im.onload = () => {
+      try {
+        const h = Math.round(w * 88 / 63), cv = document.createElement('canvas'), g = cv.getContext('2d');
+        cv.width = w; cv.height = h; g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
+        const k = Math.min(w / im.naturalWidth, h / im.naturalHeight), dw = im.naturalWidth * k, dh = im.naturalHeight * k;
+        g.drawImage(im, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        if (grey) {   // black and white, lightened like the binder's grey pockets
+          const d = g.getImageData(0, 0, w, h), q = d.data;
+          for (let i = 0; i < q.length; i += 4) { const y = .299 * q[i] + .587 * q[i + 1] + .114 * q[i + 2]; q[i] = q[i + 1] = q[i + 2] = y + (255 - y) * .4; }
+          g.putImageData(d, 0, 0);
+        }
+        done(cv.toDataURL('image/jpeg', .82));
+      } catch (e) { done(null); }
+    };
+    im.onerror = () => done(null);
+    im.src = src;
+  });
+}
 async function printBinder(c, cards, grey, withPrice) {
   const [cols, rows] = bDims(), per = cols * rows, n = Math.ceil(cards.length / per);
-  const fig = x => {
-    const src = fullSrc(x) || thumbSrc(x), pr = withPrice && !x.owned ? minPrice(x) : Infinity;
-    return `<figure class="${grey && !x.owned ? 'not' : ''}">${src ? `<img src="${esc(src)}" alt="">` : '<i>no scan</i>'}
-      <figcaption><b>${esc(x.name)}</b> ${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''} · ${esc(VARIANT_LABEL[x.variant] || '')}${x.lang && x.lang !== 'EN' ? ' · ' + esc(x.lang) : ''}${pr < Infinity ? ' · ' + rm(pr) : ''}</figcaption></figure>`;
+  // pocket width on A4 (190 x 262 mm usable, 8 mm caption) -> pixels at 150 dpi. 3+ columns use the small scan
+  // (TCGdex low, ~110 dpi at 3x3): its large scans took up to 10 s each, ~6 min for a whole collection
+  const mm = Math.min((190 - 3 * (cols - 1)) / cols, ((262 - 3 * (rows - 1)) / rows - 8) * 63 / 88);
+  const w = Math.min(420, Math.round(mm / 25.4 * 150));
+  const srcs = cards.map(x => (cols >= 3 ? thumbSrc(x) : fullSrc(x) || thumbSrc(x)));
+  const out = new Array(cards.length);
+  infoBox(`Preparing scans for printing… 0 / ${cards.length}`);
+  const note = $('#dlg p');
+  let next = 0, ready = 0;
+  await Promise.all(Array.from({ length: 6 }, async () => {
+    while (next < cards.length) {
+      const i = next++, x = cards[i];
+      out[i] = srcs[i] ? (await printImg(srcs[i], w, grey && !x.owned)) || srcs[i] : '';
+      if (note) note.textContent = `Preparing scans for printing… ${++ready} / ${cards.length}`;
+    }
+  }));
+  $('#dlg').close();
+  const fig = (x, i) => {
+    const src = out[i], pr = withPrice && !x.owned ? minPrice(x) : Infinity;
+    // a scan that could not be greyed prints in colour, marked in its caption (Firefox drops CSS-filtered images)
+    const unmarked = grey && !x.owned && src && !src.startsWith('data:image/jpeg');
+    return `<figure class="${grey && !x.owned ? 'grey' : ''}">${src ? `<img src="${esc(src)}" alt="">` : '<i>no scan</i>'}
+      <figcaption>${unmarked ? '<i>not owned</i> · ' : ''}<b>${esc(x.name)}</b> ${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''} · ${esc(VARIANT_LABEL[x.variant] || '')}${x.lang && x.lang !== 'EN' ? ' · ' + esc(x.lang) : ''}${pr < Infinity ? ' · ' + rm(pr) : ''}</figcaption></figure>`;
   };
   let html = '';
-  for (let i = 0; i < n; i++) {
-    const pg = cards.slice(i * per, i * per + per);
-    html += `<section class="ppage" style="--cols:${cols};--rows:${rows}"><header>${esc(c.name)} · page ${i + 1} / ${n}</header>
-      <div class="pgrid">${pg.map(fig).join('')}${'<figure class="blank"></figure>'.repeat(per - pg.length)}</div></section>`;
+  for (let p = 0; p < n; p++) {
+    const pg = cards.slice(p * per, p * per + per);
+    html += `<section class="ppage" style="--cols:${cols};--rows:${rows}"><header>${esc(c.name)} · page ${p + 1} / ${n}</header>
+      <div class="pgrid">${pg.map((x, j) => fig(x, p * per + j)).join('')}${'<figure class="blank"></figure>'.repeat(per - pg.length)}</div></section>`;
   }
   let area = $('#printArea');
   if (!area) { area = document.createElement('div'); area.id = 'printArea'; document.body.append(area); }
   area.innerHTML = html;
-  // the print box only shows images that have loaded; scans come from TCGdex or the PC's folders
-  const imgs = [...area.querySelectorAll('img')].filter(i => !i.complete);
-  if (imgs.length) {
-    infoBox(`Loading ${imgs.length} scans for printing…`);
-    await Promise.race([Promise.all(imgs.map(i => new Promise(r => { i.onload = i.onerror = r; }))), new Promise(r => setTimeout(r, 20000))]);
-    $('#dlg').close();
-  }
+  await Promise.all([...area.querySelectorAll('img')].map(i => (i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; }))));
   window.addEventListener('afterprint', () => { area.innerHTML = ''; }, { once: true });
   window.print();
 }
