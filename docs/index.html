@@ -734,7 +734,8 @@ function filterBar(all) {
   const eras = uniq(x => x.era).sort((a, b) => eraRank(a) - eraRank(b) || a.localeCompare(b));
   const types = uniq(x => x.type).sort();
   const rank = t => { const i = TIER_ORDER.indexOf(t); return i < 0 ? TIER_ORDER.length : i; };
-  const rars = uniq(x => tierOf(x.rarity)).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  // Rarity list follows the Language filter, like the Set list: only the picked languages' tiers
+  const rars = [...new Set(all.filter(x => fHas('lang', x.lang || 'EN')).map(x => tierOf(x.rarity)).filter(Boolean))].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   const opt = (v, label, cur) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
   // Set list follows the Language filter: only that language's sets, empty eras left out
   const setsOf = pred => [...new Set(all.filter(x => fHas('lang', x.lang || 'EN') && pred(x)).map(x => x.set).filter(Boolean))];
@@ -1922,7 +1923,11 @@ document.addEventListener('change', e => {
   const idx = [...document.querySelectorAll(`details.ms[data-ms="${key}"]`)].indexOf(d), q = d.querySelector('.ms-q').value;
   F[key] = [...d.querySelectorAll('[data-ms-v]:checked')].map(c => c.dataset.msV);
   // sets the picked languages do not have would leave an empty list
-  if (key === 'lang' && F.lang.length) F.set = F.set.filter(v => cardsOf(activeCol().id).some(x => x.set === v && F.lang.includes(x.lang || 'EN')));
+  if (key === 'lang' && F.lang.length) {
+    const inLang = cardsOf(activeCol().id).filter(x => F.lang.includes(x.lang || 'EN'));
+    F.set = F.set.filter(v => inLang.some(x => x.set === v));
+    F.rarity = F.rarity.filter(v => inLang.some(x => tierOf(x.rarity) === v));
+  }
   render();
   reopenMs(key, idx, q, cb.dataset.msV);
 });
