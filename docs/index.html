@@ -246,6 +246,11 @@
     background: radial-gradient(circle at 12px 50%, var(--bg) 0 5px, var(--line) 5.5px 10px, transparent 10.5px) 0 0 / 24px calc(100% / var(--rows, 4)) repeat-y; }
   .binder { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 14px; }
   .pocket { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); text-align: left; font-size: 13px; }
+  .pwrap { position: relative; display: flex; min-width: 0; }
+  .pwrap .pocket { flex: 1; }
+  .pk-pick { position: absolute; top: 12px; left: 12px; z-index: 1; width: 20px; height: 20px; margin: 0; cursor: pointer; accent-color: var(--accent); }
+  .pwrap.picked .pocket { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+  .pickbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 10px; }
   .pocket:hover { border-color: var(--accent); }
   .pocket[aria-current] { outline: 2px solid var(--accent); outline-offset: 1px; }
   .pocket img, .pk-no, .pocket.blank i { display: block; width: 100%; height: auto; aspect-ratio: 63 / 88; object-fit: cover; border-radius: 4px; background: var(--thumb); margin-bottom: 4px; }
@@ -1733,6 +1738,8 @@ function summaryHtml(c, all) {
 }
 // Binder view: the filtered rows as binder pages (2x2 to 4x4), one pocket per row (a row is one print + finish already).
 let bPage = 0, bSig = '';
+let pageIds = [];   // ids on the binder page now showing (binder order differs from shownIds)
+const picked = new Set();   // binder multi-select: card ids ticked on the pockets (kept across pages)
 // List view pages: ui.per rows a page ('all' = one page); other filters or another collection start at page 1.
 let lPage = 0, lSig = '';
 const PER = [25, 50, 100, 200, 'all'];
@@ -1763,19 +1770,23 @@ function binderHtml(cards) {
   const pages = Math.ceil(cards.length / per);
   bPage = Math.max(0, Math.min(bPage, pages - 1));
   const from = bPage * per, page = cards.slice(from, from + per);
+  pageIds = page.map(x => x.id);
   const pocket = x => {
     const src = thumbSrc(x), best = bestStores(x.id), l = !x.owned && listingsOf(x.id).find(k => best.has(k.key));
-    return `<button type="button" class="pocket${x.owned ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.owned ? ', owned' : ''}">
+    return `<div class="pwrap${picked.has(x.id) ? ' picked' : ''}"><input type="checkbox" class="pk-pick" data-pick="${x.id}"${picked.has(x.id) ? ' checked' : ''} aria-label="Select ${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}"><button type="button" class="pocket${x.owned ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.owned ? ', owned' : ''}">
       ${src ? `<img src="${esc(src)}" alt="" width="126" height="176" loading="lazy">` : '<span class="pk-no">no scan</span>'}
       <span class="pk-t">${esc(x.name)}</span><span class="pk-m">${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''}</span>
-      <span class="pk-b"><span>${badge(x)}</span>${l ? `<b>${esc(fmt(l.st, l.p))}</b>` : ''}</span></button>`;
+      <span class="pk-b"><span>${badge(x)}</span>${l ? `<b>${esc(fmt(l.st, l.p))}</b>` : ''}</span></button></div>`;
   };
+  for (const id of [...picked]) if (!cards.some(x => x.id === id)) picked.delete(id);   // filtered out: no longer selected
+  const n = picked.size;
+  const pickbar = `<div class="pickbar"><button type="button" data-act="pickpage">Select this page</button>${n ? `<span class="pg">${n} selected</span><button type="button" class="primary" data-act="pickown" data-id="1">Mark owned</button><button type="button" data-act="pickown" data-id="0">Mark not owned</button><button type="button" data-act="pickclear">Clear</button>` : '<span class="muted">Tick pockets to mark several cards owned at once.</span>'}</div>`;
   const blanks = '<span class="pocket blank" aria-hidden="true"><i></i></span>'.repeat(per - page.length);
   const nav = (d, label, off) => `<button type="button" data-act="bpage" data-id="${d}"${off ? ' disabled' : ''}>${label}</button>`;
   const size = `<label class="per">Page size <select data-bsize>${BSIZES.map(v => `<option value="${v}"${v === cols + 'x' + rows ? ' selected' : ''}>${v.replace('x', '×')} (${v.split('x')[0] * v.split('x')[1]})</option>`).join('')}</select></label>`;
   // same pager above and below the sheet (like the list's)
   const pager = where => `<div class="bpager ${where}">${nav(-1, '← Prev', bPage === 0)}<span class="pg">Page ${bPage + 1} / ${pages}</span>${size}<button type="button" data-act="export">Export…</button><span class="muted">pockets ${from + 1}–${from + page.length} of ${cards.length}</span>${nav(1, 'Next →', bPage >= pages - 1)}</div>`;
-  return `${pager('top')}<div class="bsheet" style="--cols:${cols};--rows:${rows}"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
+  return `${pickbar}${pager('top')}<div class="bsheet" style="--cols:${cols};--rows:${rows}"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
     ${pager('bottom')}
     <div class="best-note">Grey pocket = not owned yet. Click a pocket for details. ← → turn the page.</div>`;
 }
@@ -1808,7 +1819,6 @@ function renderDet() {
     <h3>Shops (${listingsOf(x.id).length})</h3>${x.owned && L ? '<p class="muted">Owned: these prices are kept as history.</p>' : ''}${L || '<p class="muted">No shops yet.</p>'}
     <button type="button" class="add-wide" data-act="addprice" data-card="${x.id}">+ Add shop or seller</button>
     ${o.length ? `<h3>Other languages</h3>${o.map(k => `<div class="ol"><span>${esc((LANGS.find(([c]) => c === k.lang) || [k.lang, k.lang])[1])}</span><span${k.best === low && low < own ? ' class="best"' : ''}>${k.best === Infinity ? 'no price' : rm(k.best)}</span></div>`).join('')}` : ''}
-    <label class="det-found"><input type="checkbox" data-owned="${x.id}"${x.owned ? ' checked' : ''}> I own this card</label>
     <label class="det-found"><input type="checkbox" data-found="${x.id}"${x.found ? ' checked' : ''}> Found / available</label>
     <div class="row" style="margin-top:16px"><button type="button" data-act="editcard" data-id="${x.id}">Edit card</button><button type="button" class="danger" data-act="delcard" data-id="${x.id}">Delete…</button></div>
     <p class="muted" style="margin-top:20px"><kbd>[</kbd> sidebar · <kbd>]</kbd> details · <kbd>↑</kbd> <kbd>↓</kbd> next card</p>`;
@@ -1962,6 +1972,12 @@ document.addEventListener('click', e => {
     ticked.forEach(x => { x.owned = true; x.found = false; });   // bought: owned now, no longer a find
     save(); render();
   }
+  else if (act === 'pickpage') { pageIds.forEach(k => picked.add(k)); render(); }
+  else if (act === 'pickclear') { picked.clear(); render(); }
+  else if (act === 'pickown') {
+    S.cards.filter(x => picked.has(x.id)).forEach(x => { x.owned = id === '1'; if (x.owned) x.found = false; });   // bought: owned now, no longer a find
+    picked.clear(); save(); render();
+  }
   else if (act === 'own') { const x = S.cards.find(k => k.id === id); if (x) { x.owned = !x.owned; save(); render(); } }
   else if (act === 'tickall') {
     const vis = shownIds.map(sid => S.cards.find(x => x.id === sid)).filter(Boolean);
@@ -1997,8 +2013,8 @@ document.addEventListener('change', e => {
     const card = S.cards.find(x => x.id === cb.dataset.found);
     if (card) { card.found = cb.checked; save(); render(); }
   }
-  const ob = e.target.closest('[data-owned]');
-  if (ob) { const card = S.cards.find(x => x.id === ob.dataset.owned); if (card) { card.owned = ob.checked; save(); render(); } }
+  const pk = e.target.closest('[data-pick]');
+  if (pk) { pk.checked ? picked.add(pk.dataset.pick) : picked.delete(pk.dataset.pick); render(); }
 });
 $('#imgFile').addEventListener('change', e => {
   const files = [...e.target.files];
