@@ -86,6 +86,26 @@
   dialog input, dialog select, dialog textarea { font: inherit; font-size: 14px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; width: 100%; }
   dialog textarea { min-height: 60px; resize: vertical; }
   dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+  dialog label.ex-chk { display: flex; gap: 8px; align-items: center; color: var(--text); }
+  dialog label.ex-chk input { width: auto; }
+  dialog [hidden] { display: none !important; }
+  /* export A: binder pages for print / PDF (#printArea, filled by printBinder); A4 portrait, one binder page a sheet */
+  #printArea { display: none; }
+  @media print {
+    @page { size: A4 portrait; margin: 10mm; }
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block; color: #000; }
+    .ppage { height: 275mm; display: flex; flex-direction: column; break-after: page; }
+    .ppage:last-child { break-after: auto; }
+    .ppage header { font: 9pt sans-serif; margin-bottom: 3mm; }
+    .pgrid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), minmax(0, 1fr)); gap: 3mm; }
+    .pgrid figure { margin: 0; min-height: 0; display: flex; flex-direction: column; align-items: center; }
+    .pgrid figure.blank { border: 0.3mm dashed #bbb; border-radius: 2mm; }
+    .pgrid img, .pgrid i { flex: 1; min-height: 0; max-width: 100%; aspect-ratio: 63 / 88; object-fit: contain; }
+    .pgrid i { display: grid; place-items: center; font: 8pt sans-serif; color: #888; border: 0.3mm solid #ddd; }
+    .pgrid .not img { filter: grayscale(1); opacity: .45; }
+    .pgrid figcaption { font: 7pt/1.2 sans-serif; text-align: center; padding-top: 1mm; }
+  }
   .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: 6px; vertical-align: middle; font-weight: 500; }
   .badge.lang { color: var(--text); border-color: var(--muted); font-weight: 600; }
   .badge.holo { color: var(--accent); border-color: var(--accent); }
@@ -241,6 +261,7 @@
   .pk-b b { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--best-text); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .bpager { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; margin: 14px 0 6px; }
   .bpager .pg { font-family: var(--mono); font-size: 13px; }
+  .bpager.top { margin: 0 0 12px; }
   .bpager .muted { order: 9; flex-basis: 100%; text-align: center; }
   .bpager button:disabled { opacity: .4; cursor: default; }
   .lpager.top { margin: 0 0 10px; }
@@ -1130,6 +1151,93 @@ function exportXlsx() {
   const fname = c.name.replace(/[\\/:*?"<>|]+/g, '').trim() || 'collection';
   XLSX.writeFile(wb, `${fname}.xlsx`);
 }
+// Export dialog (2026-10-25): A = binder pages to print / Save as PDF (scans, binder page size),
+// B = checklist .xlsx (one tab per era, one row per print, ☐ / ✅ per finish). Both use the binder order.
+function exportDlg() {
+  const c = activeCol(); if (!c) return;
+  const all = cardsOf(c.id), [cols, rows] = bDims();
+  const d = $('#dlg');
+  d.classList.remove('zoom-dlg');
+  d.innerHTML = `<form method="dialog"><h3 style="margin:0">Export ${esc(c.name)}</h3>
+    <label>Format<select name="fmt"><option value="print">Binder pages: print / Save as PDF (with scans)</option><option value="xlsx">Checklist .xlsx (☐ / ✅ per finish)</option></select></label>
+    <label>Cards<select name="which"><option value="filter">Current filter (${applyFilters(all).length})</option><option value="all">Whole collection (${all.length})</option>
+      <option value="missing">Not owned only (${all.filter(x => !x.owned).length})</option><option value="owned">Owned only (${all.filter(x => x.owned).length})</option></select></label>
+    <label class="ex-chk" data-for="print"><input type="checkbox" name="grey" checked> Grey out cards I don't own</label>
+    <label class="ex-chk" data-for="print"><input type="checkbox" name="price"> Show the cheapest price</label>
+    <p class="muted" data-for="print" style="margin:0">${cols}×${rows} pockets a page (the binder's Page size). In the print box pick "Save as PDF".</p>
+    <div class="actions"><button type="button" id="exNo">Cancel</button><button class="primary" type="submit">Export</button></div></form>`;
+  const f = d.querySelector('form'), v = n => f.elements[n];
+  const sync = () => d.querySelectorAll('[data-for]').forEach(el => { el.hidden = v('fmt').value !== el.dataset.for; });
+  v('fmt').onchange = sync; sync();
+  $('#exNo', d).onclick = () => d.close();
+  f.onsubmit = e => {
+    e.preventDefault();
+    const w = v('which').value;
+    const cards = binderOrder(w === 'filter' ? applyFilters(all) : w === 'missing' ? all.filter(x => !x.owned) : w === 'owned' ? all.filter(x => x.owned) : all);
+    d.close();
+    if (!cards.length) { infoBox('No cards to export.'); return; }
+    if (v('fmt').value === 'xlsx') exportChecklist(c, cards);
+    else printBinder(c, cards, v('grey').checked, v('price').checked);
+  };
+  if (d.open) d.close();
+  d.showModal();
+}
+async function printBinder(c, cards, grey, withPrice) {
+  const [cols, rows] = bDims(), per = cols * rows, n = Math.ceil(cards.length / per);
+  const fig = x => {
+    const src = fullSrc(x) || thumbSrc(x), pr = withPrice && !x.owned ? minPrice(x) : Infinity;
+    return `<figure class="${grey && !x.owned ? 'not' : ''}">${src ? `<img src="${esc(src)}" alt="">` : '<i>no scan</i>'}
+      <figcaption><b>${esc(x.name)}</b> ${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''} · ${esc(VARIANT_LABEL[x.variant] || '')}${x.lang && x.lang !== 'EN' ? ' · ' + esc(x.lang) : ''}${pr < Infinity ? ' · ' + rm(pr) : ''}</figcaption></figure>`;
+  };
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    const pg = cards.slice(i * per, i * per + per);
+    html += `<section class="ppage" style="--cols:${cols};--rows:${rows}"><header>${esc(c.name)} · page ${i + 1} / ${n}</header>
+      <div class="pgrid">${pg.map(fig).join('')}${'<figure class="blank"></figure>'.repeat(per - pg.length)}</div></section>`;
+  }
+  let area = $('#printArea');
+  if (!area) { area = document.createElement('div'); area.id = 'printArea'; document.body.append(area); }
+  area.innerHTML = html;
+  // the print box only shows images that have loaded; scans come from TCGdex or the PC's folders
+  const imgs = [...area.querySelectorAll('img')].filter(i => !i.complete);
+  if (imgs.length) {
+    infoBox(`Loading ${imgs.length} scans for printing…`);
+    await Promise.race([Promise.all(imgs.map(i => new Promise(r => { i.onload = i.onerror = r; }))), new Promise(r => setTimeout(r, 20000))]);
+    $('#dlg').close();
+  }
+  window.addEventListener('afterprint', () => { area.innerHTML = ''; }, { once: true });
+  window.print();
+}
+function exportChecklist(c, cards) {
+  if (typeof XLSX === 'undefined') { infoBox('Excel library did not load.'); return; }
+  const FIN = ['normal', 'holo', 'reverse', 'reverse2'];
+  const eras = new Map();   // era -> Map(print key -> row); cards arrive in binder order (newest era first)
+  cards.forEach(x => {
+    const era = x.era || 'Other';
+    if (!eras.has(era)) eras.set(era, new Map());
+    const k = [x.lang || 'EN', x.set, x.number, x.name, x.alt].join('|'), m = eras.get(era);
+    if (!m.has(k)) m.set(k, { x, fin: {} });
+    m.get(k).fin[FIN.includes(x.variant) ? x.variant : 'normal'] = x.owned ? '✅' : '☐';
+  });
+  const wb = XLSX.utils.book_new(), sum = [['Era', 'Prints', 'Printings', 'Owned', '% owned']];
+  const tab = name => { let t = name.replace(/[\\/?*[\]:]/g, '').slice(0, 31) || 'Other', i = 2; while (wb.SheetNames.includes(t)) t = t.slice(0, 28) + ' ' + i++; return t; };
+  eras.forEach((m, era) => {
+    const rowsE = [...m.values()], fins = FIN.filter(f => rowsE.some(r => r.fin[f]));
+    const aoa = [['Set', 'No.', 'Name', 'Local name', 'Language', 'Rarity', ...fins.map(f => VARIANT_LABEL[f])],
+      ...rowsE.map(({ x, fin }) => [x.set || '', x.number || '', x.name, x.alt || '', x.lang || 'EN', x.rarity || '', ...fins.map(f => fin[f] || '')])];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{ wch: 28 }, { wch: 8 }, { wch: 22 }, { wch: 16 }, { wch: 9 }, { wch: 14 }, ...fins.map(() => ({ wch: 13 }))];
+    XLSX.utils.book_append_sheet(wb, ws, tab(era));
+    const cells = rowsE.flatMap(r => Object.values(r.fin)), got = cells.filter(v => v === '✅').length;
+    sum.push([era, rowsE.length, cells.length, got, Math.round(got / cells.length * 100) + '%']);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(sum);
+  ws['!cols'] = [{ wch: 24 }, { wch: 8 }, { wch: 10 }, { wch: 8 }, { wch: 9 }];
+  XLSX.utils.book_append_sheet(wb, ws, tab('Summary'));
+  wb.SheetNames.unshift(wb.SheetNames.pop());   // Summary first
+  const fname = c.name.replace(/[\\/:*?"<>|]+/g, '').trim() || 'collection';
+  XLSX.writeFile(wb, `${fname} checklist.xlsx`);
+}
 function download(name, text) {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
   const a = Object.assign(document.createElement('a'), { href: url, download: name });
@@ -1555,7 +1663,7 @@ function sideHtml(c, all) {
     <nav class="rnav" aria-label="Collections">${cols}${a('newcol', '+ New collection', 'add')}</nav>
     ${c ? `<div class="side-sec rfilt"><h2>Filters</h2>${filterBar(all)}<button type="button" class="side-reset" data-act="resetf">Reset filters</button></div>` : ''}
     <details class="tools"><summary>Tools</summary>
-      ${a('json-out', 'Backup JSON')}${a('json-in', 'Import JSON')}${a('snaps', 'Restore snapshot')}${a('xlsx', 'Export .xlsx')}${a('rates', 'Exchange rates')}${a('addstore', '+ Add store')}
+      ${a('json-out', 'Backup JSON')}${a('json-in', 'Import JSON')}${a('snaps', 'Restore snapshot')}${a('xlsx', 'Export .xlsx')}${a('export', 'Export binder / checklist')}${a('rates', 'Exchange rates')}${a('addstore', '+ Add store')}
       ${c ? `${a('csv-in', 'Import card CSV')}${a('fill', 'Fill details + JP/CN/KR')}${a('img-in', 'Add scan images')}${a('img-dir', 'Scan a folder')}${a('renamecol', 'Rename collection')}${a('delcol', 'Delete collection…', 'danger')}` : ''}
       ${a('theme', 'Light / dark')}</details>
     <div class="rfx"><span class="${backupDue() ? 'due' : ''}">Backup ${esc(backupAge())}</span><br>Shops ${S.stores.length}<br>Cards ${S.cards.length}</div>`;
@@ -1611,8 +1719,10 @@ function binderHtml(cards) {
   const blanks = '<span class="pocket blank" aria-hidden="true"><i></i></span>'.repeat(per - page.length);
   const nav = (d, label, off) => `<button type="button" data-act="bpage" data-id="${d}"${off ? ' disabled' : ''}>${label}</button>`;
   const size = `<label class="per">Page size <select data-bsize>${BSIZES.map(v => `<option value="${v}"${v === cols + 'x' + rows ? ' selected' : ''}>${v.replace('x', '×')} (${v.split('x')[0] * v.split('x')[1]})</option>`).join('')}</select></label>`;
-  return `<div class="bsheet" style="--cols:${cols};--rows:${rows}"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
-    <div class="bpager">${nav(-1, '← Prev', bPage === 0)}<span class="pg">Page ${bPage + 1} / ${pages}</span>${size}<span class="muted">pockets ${from + 1}–${from + page.length} of ${cards.length}</span>${nav(1, 'Next →', bPage >= pages - 1)}</div>
+  // same pager above and below the sheet (like the list's)
+  const pager = where => `<div class="bpager ${where}">${nav(-1, '← Prev', bPage === 0)}<span class="pg">Page ${bPage + 1} / ${pages}</span>${size}<button type="button" data-act="export">Export…</button><span class="muted">pockets ${from + 1}–${from + page.length} of ${cards.length}</span>${nav(1, 'Next →', bPage >= pages - 1)}</div>`;
+  return `${pager('top')}<div class="bsheet" style="--cols:${cols};--rows:${rows}"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
+    ${pager('bottom')}
     <div class="best-note">Grey pocket = not owned yet. Click a pocket for details. ← → turn the page.</div>`;
 }
 // Card search, above the list: card fields plus the shops, venues and sellers on its listings. "/" jumps here.
@@ -1818,6 +1928,7 @@ document.addEventListener('click', e => {
   else if (act === 'zoom') { const x = S.cards.find(k => k.id === el.dataset.card); if (x) zoom(thumbSrc(x), fullSrc(x)); }
   else if (act === 'resetf') { resetFilters(); render(); }
   else if (act === 'xlsx') exportXlsx();
+  else if (act === 'export') exportDlg();
   else if (act === 'json-out') backupJson();
   else if (act === 'json-in') $('#importFile').click();
   else if (act === 'snaps') restoreDialog();
