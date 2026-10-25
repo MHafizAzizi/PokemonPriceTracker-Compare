@@ -221,11 +221,11 @@
   .seg button:first-child { border-radius: 6px 0 0 6px; }
   .seg button:last-child { border-radius: 0 6px 6px 0; margin-left: -1px; }
   .seg button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); position: relative; }
-  /* binder view: a 4x4 sheet with binder rings, after the collections' own 4x4 pocket pages */
-  .bsheet { position: relative; max-width: 720px; margin: 0 auto; padding: 20px 20px 20px 60px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  /* binder view: a sheet (2x2 to 4x4, --cols/--rows) with binder rings, after the collections' own 4x4 pocket pages */
+  .bsheet { position: relative; max-width: calc(var(--cols, 4) * 165px + 80px); margin: 0 auto; padding: 20px 20px 20px 60px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
   .bsheet::before { content: ""; position: absolute; left: 18px; top: 20px; bottom: 20px; width: 24px;
-    background: radial-gradient(circle at 12px 50%, var(--bg) 0 5px, var(--line) 5.5px 10px, transparent 10.5px) 0 0 / 24px 25% repeat-y; }
-  .binder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    background: radial-gradient(circle at 12px 50%, var(--bg) 0 5px, var(--line) 5.5px 10px, transparent 10.5px) 0 0 / 24px calc(100% / var(--rows, 4)) repeat-y; }
+  .binder { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 14px; }
   .pocket { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); text-align: left; font-size: 13px; }
   .pocket:hover { border-color: var(--accent); }
   .pocket[aria-current] { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -1528,7 +1528,7 @@ function layout() {
 }
 function setPane(which, on) {
   ui[which] = on ?? !ui[which];
-  if (!narrow()) try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, view: ui.view, per: ui.per })); } catch (e) { /* not saved, fine */ }
+  if (!narrow()) try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, view: ui.view, per: ui.per, bsize: ui.bsize })); } catch (e) { /* not saved, fine */ }
   layout();
 }
 const paneBtn = (w, d) => `<button type="button" class="icon pane" data-act="pane" data-id="${w}" aria-controls="${w}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="${d}"/></svg></button>`;
@@ -1569,7 +1569,7 @@ function summaryHtml(c, all) {
   return `<h2 class="secH"><span class="mono">01.</span>Summary<small>${esc(c.name)}</small></h2>
     <div class="kpis">${k('Cards', all.length, 'in this collection')}${k('Owned', owned, Math.round(owned / n * 100) + '% of cards', 'ok')}${k('Found', found, Math.round(found / n * 100) + '% of cards', 'ok')}${k('Priced', priced, Math.round(priced / n * 100) + '% of cards')}${k('Listings', listings, 'prices recorded')}${k('Shops', S.stores.length, 'all collections')}</div>`;
 }
-// Binder view: the filtered rows as 4x4 binder pages, one pocket per row (a row is one print + finish already).
+// Binder view: the filtered rows as binder pages (2x2 to 4x4), one pocket per row (a row is one print + finish already).
 let bPage = 0, bSig = '';
 // List view pages: ui.per rows a page ('all' = one page); other filters or another collection start at page 1.
 let lPage = 0, lSig = '';
@@ -1590,13 +1590,17 @@ const binderOrder = cards => [...cards].sort((a, b) => eraRank(b.era) - eraRank(
   || (a.set || '').localeCompare(b.set || '')
   || String(a.number).localeCompare(String(b.number), undefined, { numeric: true })
   || (VAR_RANK.indexOf(a.variant) >>> 0) - (VAR_RANK.indexOf(b.variant) >>> 0));
+// Binder page sizes, columns x rows (real 4-, 9-, 12- and 16-pocket pages); kept per device like the view
+const BSIZES = ['2x2', '3x3', '3x4', '4x3', '4x4'];
+const bDims = () => (BSIZES.includes(ui.bsize) ? ui.bsize : '4x4').split('x').map(Number);
 function binderHtml(cards) {
   if (!F.sort) cards = binderOrder(cards);
+  const [cols, rows] = bDims(), per = cols * rows;
   const sig = S.active + JSON.stringify(F);
   if (sig !== bSig) { bSig = sig; bPage = 0; }   // other filters = other pockets, so start at page 1
-  const pages = Math.ceil(cards.length / 16);
+  const pages = Math.ceil(cards.length / per);
   bPage = Math.max(0, Math.min(bPage, pages - 1));
-  const from = bPage * 16, page = cards.slice(from, from + 16);
+  const from = bPage * per, page = cards.slice(from, from + per);
   const pocket = x => {
     const src = thumbSrc(x), best = bestStores(x.id), l = !x.owned && listingsOf(x.id).find(k => best.has(k.key));
     return `<button type="button" class="pocket${x.owned ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.owned ? ', owned' : ''}">
@@ -1604,10 +1608,11 @@ function binderHtml(cards) {
       <span class="pk-t">${esc(x.name)}</span><span class="pk-m">${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''}</span>
       <span class="pk-b"><span>${badge(x)}</span>${l ? `<b>${esc(fmt(l.st, l.p))}</b>` : ''}</span></button>`;
   };
-  const blanks = '<span class="pocket blank" aria-hidden="true"><i></i></span>'.repeat(16 - page.length);
+  const blanks = '<span class="pocket blank" aria-hidden="true"><i></i></span>'.repeat(per - page.length);
   const nav = (d, label, off) => `<button type="button" data-act="bpage" data-id="${d}"${off ? ' disabled' : ''}>${label}</button>`;
-  return `<div class="bsheet"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
-    <div class="bpager">${nav(-1, '← Prev', bPage === 0)}<span class="pg">Page ${bPage + 1} / ${pages}</span><span class="muted">pockets ${from + 1}–${from + page.length} of ${cards.length}</span>${nav(1, 'Next →', bPage >= pages - 1)}</div>
+  const size = `<label class="per">Page size <select data-bsize>${BSIZES.map(v => `<option value="${v}"${v === cols + 'x' + rows ? ' selected' : ''}>${v.replace('x', '×')} (${v.split('x')[0] * v.split('x')[1]})</option>`).join('')}</select></label>`;
+  return `<div class="bsheet" style="--cols:${cols};--rows:${rows}"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
+    <div class="bpager">${nav(-1, '← Prev', bPage === 0)}<span class="pg">Page ${bPage + 1} / ${pages}</span>${size}<span class="muted">pockets ${from + 1}–${from + page.length} of ${cards.length}</span>${nav(1, 'Next →', bPage >= pages - 1)}</div>
     <div class="best-note">Grey pocket = not owned yet. Click a pocket for details. ← → turn the page.</div>`;
 }
 // Card search, above the list: card fields plus the shops, venues and sellers on its listings. "/" jumps here.
@@ -1618,7 +1623,7 @@ function topBar(c) {
   return `<div class="topbar">${paneBtn('side', 'M9 4v16')}<h1>${esc(c.name)}</h1>
     ${q('price', 'priced', 'Has price')}${q('price', 'unpriced', 'No price')}${q('owned', 'missing', 'Hide owned')}
     <span class="sp"></span>
-    ${trip.on ? '' : `<span class="seg" role="group" aria-label="View">${['list', 'binder'].map(v => `<button type="button" data-act="view" data-id="${v}" aria-pressed="${ui.view === v}">${v === 'list' ? 'List' : 'Binder 4×4'}</button>`).join('')}</span>`}
+    ${trip.on ? '' : `<span class="seg" role="group" aria-label="View">${['list', 'binder'].map(v => `<button type="button" data-act="view" data-id="${v}" aria-pressed="${ui.view === v}">${v === 'list' ? 'List' : 'Binder'}</button>`).join('')}</span>`}
     ${trip.on ? '<button type="button" data-act="tripback">Back to list</button>' : '<button type="button" data-act="trip">Shopping trip</button>'}
     <button type="button" data-act="addcard" class="primary">+ Add card</button>${paneBtn('det', 'M15 4v16')}</div>`;
 }
@@ -1723,7 +1728,7 @@ function render() {
   app.innerHTML = `
     ${topBar(c)}
     ${summaryHtml(c, all)}
-    <h2 class="secH"><span class="mono">02.</span>Cards<small>${ui.view === 'binder' ? 'binder, 16 pockets a page' : 'list'}</small></h2>
+    <h2 class="secH"><span class="mono">02.</span>Cards<small>${ui.view === 'binder' ? `binder, ${bDims()[0] * bDims()[1]} pockets a page` : 'list'}</small></h2>
     ${filterTool(all)}
     ${dueBanner}${fileTip}
     ${searchRow()}
@@ -1956,9 +1961,15 @@ document.addEventListener('change', e => {
 function toListTop() { const t = $('.lpager.top') || $('.tbl'); if (t) window.scrollTo(0, t.getBoundingClientRect().top + scrollY - 70); }
 document.addEventListener('change', e => {
   if (e.target.matches('select[data-lpage]')) { lPage = Number(e.target.value); render(); toListTop(); }
+  else if (e.target.matches('select[data-bsize]')) {
+    const first = bPage * bDims()[0] * bDims()[1];   // keep the first pocket on screen
+    ui.bsize = e.target.value; bPage = Math.floor(first / (bDims()[0] * bDims()[1]));
+    try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, view: ui.view, per: ui.per, bsize: ui.bsize })); } catch (err) { /* not saved, fine */ }
+    render();
+  }
   else if (e.target.matches('select[data-per]')) {
     ui.per = e.target.value === 'all' ? 'all' : Number(e.target.value); lPage = 0;
-    try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, view: ui.view, per: ui.per })); } catch (err) { /* not saved, fine */ }
+    try { localStorage.setItem(UI_KEY, JSON.stringify({ side: ui.side, view: ui.view, per: ui.per, bsize: ui.bsize })); } catch (err) { /* not saved, fine */ }
     render(); toListTop();
   }
 });
