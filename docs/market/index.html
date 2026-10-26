@@ -301,11 +301,11 @@ $('fx').innerHTML='USD/MYR '+MC.fx.usd_myr.toFixed(3)+'<br>USD/JPY '+MC.fx.usd_j
 /* 01 summary */
 var cnt={deal:0,fair:0,overpriced:0,bulk:0,'no market':0};R.forEach(function(r){cnt[r.verdict]++});
 var K=[['deal','Deals','deal'],['fair','Fair',''],['overpriced','Overpriced','over'],['bulk','Bulk',''],['no market','No market','']];
-$('kpis').innerHTML=K.map(function(k){return '<div class="kpi '+k[2]+'"><div class="label">'+k[1]+'</div><b>'+cnt[k[0]]+'</b><div class="pct">'+(cnt[k[0]]/R.length*100).toFixed(0)+'% of listings</div></div>'}).join('');
+$('kpis').innerHTML=K.map(function(k){return '<div class="kpi '+k[2]+'"><div class="label">'+k[1]+'</div><b>'+cnt[k[0]]+'</b><div class="pct">'+(R.length?cnt[k[0]]/R.length*100:0).toFixed(0)+'% of listings</div></div>'}).join('');
 var cmp=R.filter(function(r){return r.verdict==='deal'||r.verdict==='fair'||r.verdict==='overpriced'});
 var ask=0,mkt=0;cmp.forEach(function(r){ask+=r.price_rm;mkt+=r.market_rm});
 var cols={deal:'var(--best-text)',fair:'var(--accent)',overpriced:'var(--danger)',bulk:'var(--muted)','no market':'var(--line)'};
-$('totals').innerHTML='<div><div class="label">Comparable listings ('+cmp.length+')</div><div class="big">'+rm(ask)+' <span class="vs">asked vs '+rm(mkt)+' market</span></div><div class="mono" style="font-size:13px;color:'+(ask>mkt?'var(--danger)':'var(--best-text)')+'">'+pct((ask/mkt-1)*100)+' overall</div></div>'+
+$('totals').innerHTML='<div><div class="label">Comparable listings ('+cmp.length+')</div><div class="big">'+rm(ask)+' <span class="vs">asked vs '+rm(mkt)+' market</span></div><div class="mono" style="font-size:13px;color:'+(ask>mkt?'var(--danger)':'var(--best-text)')+'">'+(mkt?pct((ask/mkt-1)*100)+' overall':'no seller listings yet')+'</div></div>'+
   '<div><div class="split">'+K.map(function(k){return '<i style="width:'+(cnt[k[0]]/R.length*100)+'%;background:'+cols[k[0]]+'"></i>'}).join('')+'</div><div class="legend">'+K.map(function(k){return '<span style="--c:'+cols[k[0]]+'">'+k[1]+' '+cnt[k[0]]+'</span>'}).join('')+'</div></div>';
 $('sumNote').textContent='thresholds: deal '+MC.thresholds.deal_pct+'%, overpriced +'+MC.thresholds.over_pct+'%, bulk < RM '+MC.thresholds.bulk_rm;
 
