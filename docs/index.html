@@ -118,6 +118,8 @@
   .pill { font-size: 12px; line-height: 18px; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pill img { height: 12px; width: auto; max-width: 44px; object-fit: contain; }
   .pill.best { background: var(--best-bg); color: var(--best-text); border-color: transparent; }
+  .pills.sub { margin-top: 2px; }
+  .pills.sub .pill { font-size: 11px; line-height: 16px; padding: 0 6px; }
   .p-lang { font-family: var(--mono); font-weight: 600; color: var(--text); background: var(--line); border-color: transparent; }
   .p-lang.l-EN { color: #fff; background: #2f6fdb; }
   .p-lang.l-JP { color: #fff; background: #c0392b; }
@@ -757,14 +759,15 @@ const pills = x => {
   const lang = x.lang || 'EN';
   const logo = (SEED.logos || {})[`${lang}|${x.set}`];
   const num = (x.number || '').includes('/') ? x.number : (SEED.printed || {})[`${lang}|${x.set}|${x.number}|${x.name}`] || x.number || '';
+  const sub = (x.era ? `<span class="pill p-era">${esc(x.era)}</span>` : '')
+    + (x.type ? `<span class="pill p-type">${esc(x.type)}</span>` : '') + otherPills(x);
   return `<div class="pills"><span class="pill p-lang l-${esc(lang)}">${esc(lang)}</span>`
     + `<span class="pill p-set">${logo ? `<img alt="" loading="lazy" src="${esc(logo)}">` : ''}${esc(setCode(x))}</span>`
     + (num ? `<span class="pill p-no">${esc(num)}</span>` : '')
     + (x.rarity ? `<span class="pill p-rar r-${rarLetters(x.rarity)}" title="${esc(x.rarity)}">${esc(rarLetters(x.rarity))}</span>` : '')
     + (x.variant === 'holo' || x.variant === 'reverse' ? `<span class="pill p-fin ${x.variant}">${x.variant === 'holo' ? 'Holo' : 'Reverse holo'}</span>` : '')
-    + (x.era ? `<span class="pill p-era">${esc(x.era)}</span>` : '')
-    + (x.type ? `<span class="pill p-type">${esc(x.type)}</span>` : '')
-    + '</div>';
+    + '</div>'
+    + (sub ? `<div class="pills sub">${sub}</div>` : '');
 };
 
 // Multi-select filters hold a list of values; [] means all. The others hold one value; '' means all.
@@ -1519,12 +1522,12 @@ function otherLangs(x) {
     .sort((a, b) => LANGS.findIndex(([c]) => c === a.lang) - LANGS.findIndex(([c]) => c === b.lang));
 }
 const rm = v => `RM ${v.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
-const otherLine = x => {
+const otherPills = x => {
   const o = otherLangs(x);
-  if (!o.length) return '';
+  if (!o.some(k => k.best !== Infinity)) return '';
   const own = minPrice(x), low = Math.min(...o.map(k => k.best));
-  return `<div class="pills other-langs" title="Other languages">${o.map(k => k.best === Infinity ? `<span class="pill">${esc(k.lang)} no price</span>`
-    : `<span class="pill${k.best === low && low < own ? ' best' : ''}">${esc(k.lang)} ${rm(k.best)}</span>`).join('')}</div>`;
+  return o.map(k => k.best === Infinity ? `<span class="pill">${esc(k.lang)} no price</span>`
+    : `<span class="pill${k.best === low && low < own ? ' best' : ''}">${esc(k.lang)} ${rm(k.best)}</span>`).join('');
 };
 const refKey = x => [x.name, x.set, x.number].map(v => String(v || '').toLowerCase().trim()).join('|');
 const rowFrom = s => ({ name: s.name, set: s.set, number: s.number, era: s.era, type: s.type, rarity: s.rarity,
@@ -2146,7 +2149,7 @@ function render() {
       : `<div class="thumb">no scan</div>`;
     return `<tr data-row="${x.id}" aria-selected="${x.id === selId}"${x.owned ? ' class="owned"' : ''}>
       <td class="found"><input type="checkbox" data-found="${x.id}"${x.found ? ' checked' : ''} aria-label="Found: ${esc(x.name)}" title="Found / available"></td>
-      <td><button type="button" class="cardc" data-act="sel" data-id="${x.id}" aria-label="Details: ${esc(x.name)}">${thumb}<div><strong>${esc(x.name)}</strong>${x.owned ? '<span class="badge own">Owned</span>' : ''}${pills(x)}${altLine(x)}${otherLangs(x).some(k => k.best !== Infinity) ? otherLine(x) : ''}</div></button></td>
+      <td><button type="button" class="cardc" data-act="sel" data-id="${x.id}" aria-label="Details: ${esc(x.name)}">${thumb}<div><strong>${esc(x.name)}</strong>${x.owned ? '<span class="badge own">Owned</span>' : ''}${pills(x)}${altLine(x)}</div></button></td>
       <td class="where">${chipsFor(x)}</td><td class="acts"><button type="button" class="icon-btn" data-act="editcard" data-id="${x.id}" aria-label="Edit: ${esc(x.name)}" title="Edit card"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button><button type="button" class="icon-btn own${x.owned ? ' on' : ''}" data-act="own" data-id="${x.id}" aria-pressed="${!!x.owned}" aria-label="Owned: ${esc(x.name)}" title="${x.owned ? 'Owned. Click to undo' : 'I have this card: mark it owned (the row and its prices stay)'}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button></td></tr>`;
   }).join('');
 
