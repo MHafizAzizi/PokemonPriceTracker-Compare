@@ -134,6 +134,11 @@
   dialog.zoom-dlg { width: min(640px, 94vw); }
   .zoom-note { font-size: 12px; color: var(--muted); margin-right: auto; align-self: center; }
   dialog img.zoom { width: 100%; height: auto; border-radius: 8px; display: block; }
+  .rules-form fieldset.rule { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 8px 0; }
+  .rules-form fieldset.rule.not { opacity: .85; }
+  .rules-form label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+  #dlg:has(.rules-form) { width: min(760px, calc(100vw - 32px)); max-width: none; }
+  .rb-presets { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
   .empty { padding: 32px 16px; text-align: center; color: var(--muted); }
   h3 { font-size: 15px; margin: 14px 0 8px; }
   .trip-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 14px; }
@@ -679,10 +684,12 @@ const listingCount = id => Object.values(S.prices).reduce((n, r) => n + Object.k
 
 // ---------- variants, thumbnails, filters ----------
 const VARIANT_LABEL = { normal: 'Normal', holo: 'Holo', reverse: 'Reverse Holo', reverse2: 'Reverse Holo ★★' };
-const ERA_ORDER = ['Neo', 'VS', 'e-Card', 'EX', 'Diamond & Pearl', 'HeartGold & SoulSilver', 'Black & White', 'XY', 'Sun & Moon', 'Sword & Shield', 'Scarlet & Violet', 'Mega Evolution'];
+const ERA_ORDER = ['Base', 'Gym', 'Neo', 'Legendary Collection', 'VS', 'e-Card', 'EX', 'POP', 'Diamond & Pearl', 'Platinum', 'HeartGold & SoulSilver', 'Call of Legends', 'Black & White', 'XY', 'Sun & Moon', 'Sword & Shield', 'Scarlet & Violet', 'Mega Evolution'];
 const eraRank = e => { const i = ERA_ORDER.indexOf(e); return i < 0 ? 99 : i; };
-// EN scans TCGdex hosts come from its image server (SEED.remote = key -> image base URL, built by tcgdex_images.py)
-const remoteSrc = (x, size) => (SEED && SEED.remote && x.key && SEED.remote[x.key] ? `${SEED.remote[x.key]}/${size}.webp` : '');
+// EN scans TCGdex hosts come from its image server (SEED.remote = key -> image base URL, built by tcgdex_images.py;
+// rows built from rules carry their own base URL as x.remote)
+const remoteSrc = (x, size) => { const base = (SEED && SEED.remote && x.key && SEED.remote[x.key]) || x.remote; return base ? `${base}/${size}.webp` : ''; };
+const setDateOf = s => (SEED && SEED.setDates || {})[s] || (S.setDates || {})[s] || '';
 const fullSrc = x => (SEED && SEED.fulls && SEED.fulls[x.key]) || remoteSrc(x, 'high');
 const thumbSrc = x => (S.thumbs && S.thumbs[x.key]) || (SEED && SEED.thumbs && SEED.thumbs[x.key]) || remoteSrc(x, 'low')
   || (SEED && SEED.thumbDir && x.key ? `${SEED.thumbDir}/${encodeURIComponent(x.key)}.jpg` : '') || x.img || '';
@@ -768,7 +775,7 @@ function filterBar(all) {
   const opt = (v, label, cur) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
   // Set list follows the Language filter: only that language's sets, empty eras left out
   // in release order (SEED.setDates, EN), like the eras; undated sets (JP, CN) after them in first-seen order
-  const setDate = s => (SEED && SEED.setDates || {})[s] || '9999';
+  const setDate = s => setDateOf(s) || '9999';
   const setsOf = pred => [...new Set(all.filter(x => fHas('lang', x.lang || 'EN') && pred(x)).map(x => x.set).filter(Boolean))]
     .sort((a, b) => setDate(a).localeCompare(setDate(b)));
   const setItems = [...eras.map(e => [e, setsOf(x => x.era === e)]).filter(([, ss]) => ss.length)
@@ -854,13 +861,17 @@ function infoBox(msg) {
 
 // ---------- actions ----------
 function addCollection() {
-  openForm('New collection', [{ key: 'name', label: 'Name', placeholder: 'e.g. Team Rocket' }], {}, v => {
-    if (!v.name) return;
-    const c = { id: uid(), name: v.name };
-    S.collections.push(c);
-    S.active = c.id;
-    save(); render();
-  });
+  chooseBox('New collection', [
+    { label: 'Empty collection', primary: true, onClick: () => openForm('New collection', [{ key: 'name', label: 'Name', placeholder: 'e.g. Team Rocket' }], {}, v => {
+      if (!v.name) return;
+      const c = { id: uid(), name: v.name };
+      S.collections.push(c);
+      S.active = c.id;
+      save(); render();
+    }) },
+    { label: 'Build from rules', onClick: () => rulesDialog() },
+    { label: 'Cancel' },
+  ]);
 }
 function renameCollection() {
   const c = activeCol(); if (!c) return;
@@ -1493,6 +1504,215 @@ function enrichFromSeed(parsed) {
   });
   return out;
 }
+// ---------- build from rules ----------
+// A collection built from rules fetches its EN cards from TCGdex (user idea 2026-10-26; future_idea.md #7).
+// List endpoints take every filter; details come from cards/<id>. TCG Pocket sets are left out for now.
+// One-click starting points; each fills the dialog's rules (dex numbers checked on Bulbapedia, rarities on TCGdex 2026-10-26)
+const PRESETS = [
+  ['Eeveelutions', { any: [{ dex: [133, 134, 135, 136, 196, 197, 470, 471, 700] }] }],
+  ['Every Pikachu', { any: [{ dex: [25] }] }],
+  ['Kanto starters', { any: [{ dex: [1, 2, 3, 4, 5, 6, 7, 8, 9] }] }],
+  ['Full Art Trainers', { any: [{ rarity: 'Full Art Trainer' }] }],
+  ['SV Illustration Rares', { any: [{ era: 'sv', rarity: 'Illustration rare' }, { era: 'sv', rarity: 'Special illustration rare' }] }],
+];
+async function refreshRules() {
+  const c = activeCol(); if (!c || !c.rules) return;
+  infoBox(`Checking TCGdex for "${c.name}"…`);
+  tcgCache.clear();   // cached lists would hide cards released since the last lookup
+  try {
+    const r = applyRules(c, c.rules, await rulesRows(c.rules, { confirmed: true }));
+    save(); render();
+    infoBox(`"${c.name}": ${r.added} new card row(s), ${r.updated} filled in. Nothing is removed.`);
+  } catch (e) { infoBox('Could not reach TCGdex (needs internet): ' + e.message); }
+}
+const TCGDEX = 'https://api.tcgdex.net/v2/en/';
+const tcgCache = new Map();
+const tcgGet = path => {
+  if (!tcgCache.has(path)) tcgCache.set(path, fetch(TCGDEX + path)
+    .then(r => { if (!r.ok) throw new Error(`TCGdex ${r.status}: ${path}`); return r.json(); })
+    .catch(e => { tcgCache.delete(path); throw e; }));
+  return tcgCache.get(path);
+};
+// ponytail: 8 requests at a time; TCGdex served 252 card details in 0.9 s like this (2026-10-26)
+async function inPool(items, n, fn) {
+  const out = new Array(items.length); let i = 0;
+  await Promise.all(Array.from({ length: n }, async () => { while (i < items.length) { const k = i++; out[k] = await fn(items[k]); } }));
+  return out;
+}
+// ponytail: more matches than this wait for a second Preview (one request each, ~1.5 rows each, localStorage is ~5 MB); let so tests can lower it
+let RULES_BIG = 400;
+const RULES_HINT = 'English cards only; TCG Pocket left out.';
+const ERA_ALIAS = { 'E-Card': 'e-Card', Platinum: 'Diamond & Pearl' };   // TCGdex serie name -> this page's era name (the seed files Platinum under D&P)
+const ruleEmpty = r => !['set', 'era', 'name', 'type', 'artist', 'rarity', 'kind'].some(k => r[k]) && !(r.dex && r.dex.length);
+// One list path per dex number: plain dexId=25 is a substring match (250, 251, ...) and eq: does not take a|b.
+function ruleQueries(r) {
+  const enc = v => String(v).split('|').map(encodeURIComponent).join('|');
+  const p = [];
+  if (r.set) p.push('set.id=eq:' + enc(r.set));
+  if (r.name) p.push('name=' + encodeURIComponent(r.name));
+  if (r.type) p.push('types=' + encodeURIComponent(r.type));
+  if (r.artist) p.push('illustrator=eq:' + encodeURIComponent(r.artist));
+  if (r.rarity) p.push('rarity=eq:' + encodeURIComponent(r.rarity));
+  if (r.kind) p.push('category=eq:' + encodeURIComponent(r.kind));
+  return (r.dex && r.dex.length ? r.dex : [null]).map(d => 'cards?' + [...p, ...(d == null ? [] : ['dexId=eq:' + d])].join('&'));
+}
+async function ruleIds(r) {
+  const q = { ...r };
+  if (r.era && !r.set) q.set = (await tcgGet('series/' + encodeURIComponent(r.era))).sets.map(s => s.id).join('|');
+  return (await Promise.all(ruleQueries(q).map(tcgGet))).flat().map(c => c.id);
+}
+async function matchIds(rules) {
+  const pocket = (await tcgGet('series/tcgp')).sets.map(s => s.id);
+  const keep = new Set(), drop = new Set();
+  for (const r of rules.any) (await ruleIds(r)).forEach(id => keep.add(id));
+  for (const r of rules.not || []) if (!ruleEmpty(r)) (await ruleIds(r)).forEach(id => drop.add(id));
+  return [...keep].filter(id => !drop.has(id) && !pocket.some(s => id.startsWith(s + '-')));
+}
+// Rows in the shape scripts/tcgdex_set.py writes, so mergeCards / Fill / links treat them like imported sets.
+async function rulesRows(rules, opts = {}) {
+  const ids = await matchIds(rules);
+  if (ids.length > RULES_BIG && !opts.confirmed) return { cards: ids.length, rows: [], dates: {}, big: true };
+  let done = 0;
+  const cards = await inPool(ids, 8, async id => {
+    const c = await tcgGet('cards/' + encodeURIComponent(id));
+    if (opts.onProgress) opts.onProgress(++done, ids.length);
+    return c;
+  });
+  const sets = new Map();
+  await inPool([...new Set(cards.map(c => c.set.id))], 8, async id => sets.set(id, await tcgGet('sets/' + encodeURIComponent(id))));
+  const rows = [], dates = {};
+  cards.forEach(c => {
+    const s = sets.get(c.set.id), v = c.variants || {};
+    if (s.releaseDate) dates[s.name] = s.releaseDate;
+    const all = ['normal', 'holo', 'reverse'].filter(p => v[p]);
+    const printings = rules.depth === 'card' ? [all[0] || 'normal'] : (all.length ? all : ['normal']);
+    const era = (s.serie && s.serie.name) || '';
+    printings.forEach(variant => rows.push({ name: c.name, set: s.name, number: c.localId, era: ERA_ALIAS[era] || era,
+      type: (c.types || [c.trainerType || c.category || ''])[0], rarity: c.rarity && c.rarity !== 'None' ? c.rarity : '',
+      variant, lang: 'EN', alt: '', img: '', key: c.id.toLowerCase(), ...(c.image ? { remote: c.image } : {}) }));
+  });
+  return { cards: cards.length, rows, dates };
+}
+// TCG Pocket rarities (digital only); kept out of the Rarity list while Pocket is left out. An exact list: a
+// /star|shiny/ test would also drop real ones (Holo Rare VSTAR, Shiny rare).
+const POCKET_RARITIES = ['One Diamond', 'Two Diamond', 'Three Diamond', 'Four Diamond', 'One Star', 'Two Star', 'Three Star', 'One Shiny', 'Two Shiny', 'Crown'];
+const POCKET_OK = r => !POCKET_RARITIES.includes(r);
+// "Eevee" -> dex 133 (all its cards: Eevee, Eevee V, Eevee ex); "#133, 134" -> numbers; unknown text -> name contains
+async function pokemonDex(text) {
+  const dex = [], names = [];
+  for (const t of text.split(',').map(s => s.trim()).filter(Boolean)) {
+    if (/^#?\d+$/.test(t)) { dex.push(Number(t.replace('#', ''))); continue; }
+    const hit = (await tcgGet('cards?name=eq:' + encodeURIComponent(t)))[0];
+    const d = hit && (await tcgGet('cards/' + encodeURIComponent(hit.id))).dexId;
+    if (d && d.length) dex.push(d[0]); else names.push(t);
+  }
+  return { dex: [...new Set(dex)], name: names.join(' ') };
+}
+async function readRule(fs) {
+  const v = k => (fs.querySelector(`[name="${k}"]`).value || '').trim();
+  const r = {};
+  ['set', 'era', 'type', 'artist', 'rarity', 'kind'].forEach(k => { if (v(k)) r[k] = v(k); });
+  if (v('pokemon')) { const p = await pokemonDex(v('pokemon')); if (p.dex.length) r.dex = p.dex; if (p.name) r.name = p.name; }
+  return r;
+}
+async function readRules(form) {
+  const any = [];
+  for (const fs of form.querySelectorAll('fieldset.rule:not(.not)')) { const r = await readRule(fs); if (!ruleEmpty(r)) any.push(r); }
+  const not = await readRule(form.querySelector('fieldset.rule.not'));
+  return { any, ...(ruleEmpty(not) ? {} : { not: [not] }), depth: form.querySelector('[name="depth"]:checked').value };
+}
+function applyRules(col, rules, res) {
+  col.rules = rules;
+  S.setDates = { ...(S.setDates || {}), ...res.dates };
+  return mergeCards(col, res.rows);
+}
+// One rule = one fieldset; filled from a saved rule `r` (dex shown as "#133, #134")
+function ruleFieldset(lists, r = {}, not = false) {
+  const sel = (name, label, opts) => `<label>${label}<select name="${name}"><option value="">Any</option>${opts.map(([v, t]) =>
+    `<option value="${esc(v)}"${String(r[name] || '') === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>`;
+  const pk = [...(r.dex || []).map(d => '#' + d), ...(r.name ? [r.name] : [])].join(', ');
+  return `<fieldset class="rule${not ? ' not' : ''}"><legend>${not ? 'Leave out cards matching' : 'Cards matching all of'}</legend>
+    ${sel('set', 'Set', lists.sets)}${sel('era', 'Era', lists.eras)}
+    <label>Pokémon<input name="pokemon" value="${esc(pk)}" placeholder="Eevee, or #133"></label>
+    ${sel('type', 'Type', lists.types)}<label>Artist<input name="artist" value="${esc(r.artist || '')}" placeholder="exact, e.g. Asako Ito"></label>
+    ${sel('rarity', 'Rarity', lists.rarities)}${sel('kind', 'Card kind', lists.kinds)}</fieldset>`;
+}
+async function rulesDialog(start) {
+  const d = $('#dlg');
+  d.classList.remove('zoom-dlg');
+  d.innerHTML = '<form method="dialog"><p>Loading sets from TCGdex…</p></form>';
+  if (!d.open) d.showModal();
+  let lists;
+  try {
+    const pocket = (await tcgGet('series/tcgp')).sets.map(s => s.id);
+    const [sets, series, types, rarities, kinds] = await Promise.all(['sets', 'series', 'types', 'rarities', 'categories'].map(tcgGet));
+    lists = { sets: sets.filter(s => !pocket.includes(s.id)).reverse().map(s => [s.id, s.name]),
+      eras: series.filter(s => s.id !== 'tcgp').reverse().map(s => [s.id, s.name]),
+      types: types.map(t => [t, t]), rarities: rarities.filter(r => r !== 'None' && POCKET_OK(r)).map(r => [r, r]), kinds: kinds.map(k => [k, k]) };
+  } catch (e) { d.close(); infoBox('Could not reach TCGdex (needs internet): ' + e.message); return; }
+  const rules = (start && start.rules) || { any: [{}] };
+  d.innerHTML = `<form method="dialog" class="rules-form"><h2>Build from rules</h2>
+    <label>Name<input name="name" value="${esc((start && start.name) || '')}" placeholder="e.g. Eeveelutions"></label>
+    <div class="rb-presets">${PRESETS.map(([label], k) => `<button type="button" data-preset="${k}">${esc(label)}</button>`).join('')}</div>
+    <div class="rb-any">${rules.any.map(r => ruleFieldset(lists, r)).join('')}</div>
+    <button type="button" data-rb="add">+ Or another rule</button>
+    ${ruleFieldset(lists, (rules.not || [])[0], true)}
+    <div><label><input type="radio" name="depth" value="master"${rules.depth !== 'card' ? ' checked' : ''}> Every finish (master set)</label>
+      <label><input type="radio" name="depth" value="card"${rules.depth === 'card' ? ' checked' : ''}> One row per card</label></div>
+    <p class="rb-status muted">${RULES_HINT}</p>
+    <div class="actions"><button type="button" data-rb="cancel">Cancel</button><button type="button" data-rb="preview">Preview</button>
+      <button class="primary" type="button" data-rb="create" disabled>Create</button></div></form>`;
+  const form = $('form', d), status = $('.rb-status', d), create = $('[data-rb="create"]', d);
+  let res = null, rs = null, gen = 0, bigOk = '';
+  const stale = () => { gen++; res = null; create.disabled = true; status.textContent = RULES_HINT; };
+  form.addEventListener('input', stale);
+  form.addEventListener('change', stale);
+  $('[data-rb="cancel"]', d).onclick = () => d.close();
+  $('[data-rb="add"]', d).onclick = () => { $('.rb-any', d).insertAdjacentHTML('beforeend', ruleFieldset(lists)); stale(); };
+  form.querySelectorAll('[data-preset]').forEach(btn => btn.onclick = () => {
+    const [label, p] = PRESETS[Number(btn.dataset.preset)];
+    $('.rb-any', d).innerHTML = p.any.map(r => ruleFieldset(lists, r)).join('');
+    const nm = form.querySelector('[name="name"]'); if (!nm.value) nm.value = label;
+    stale();
+  });
+  $('[data-rb="preview"]', d).onclick = async () => {
+    stale();
+    const my = gen, btn = $('[data-rb="preview"]', d);
+    btn.disabled = true;
+    status.textContent = 'Looking up cards…';
+    try {
+      const nrs = await readRules(form);
+      if (my !== gen) return;
+      if (!nrs.any.length) { status.textContent = 'Pick at least one filter in a rule.'; return; }
+      const nres = await rulesRows(nrs, { confirmed: JSON.stringify(nrs) === bigOk,
+        onProgress: (d, t) => { if (my === gen) status.textContent = `Fetching ${d} / ${t} cards…`; } });
+      if (my !== gen) return;
+      if (nres.big) {
+        bigOk = JSON.stringify(nrs);
+        const n = nres.cards;
+        status.textContent = `${n} cards match — that is a lot (about ${Math.round(n * 1.5)} rows, ~${Math.ceil(n / 250)} s, and it uses browser storage). Press Preview again to fetch them, or narrow the rules.`;
+        return;
+      }
+      rs = nrs; res = nres;
+      const owned = new Set(S.cards.filter(x => x.owned).map(x => x.key + '|' + x.variant));
+      const have = res.rows.filter(r => owned.has(r.key + '|' + r.variant)).length;
+      status.textContent = `${res.cards} card${res.cards === 1 ? '' : 's'}, ${res.rows.length} rows, ${have} already owned in other collections.`;
+      create.disabled = !res.rows.length;
+    } catch (e) { if (my === gen) status.textContent = 'TCGdex error: ' + e.message; }
+    finally { btn.disabled = false; }
+  };
+  create.onclick = () => {
+    if (!res) return;
+    const name = form.querySelector('[name="name"]').value.trim() || 'New collection';
+    const c = { id: uid(), name };
+    S.collections.push(c);
+    S.active = c.id;
+    const r = applyRules(c, rs, res);
+    d.close();
+    save(); render();
+    infoBox(`"${name}": ${r.added} card row(s) added from TCGdex.`);
+  };
+}
 // One click: complete era/rarity/printings from the built-in data and add each card's JP and CN prints.
 function fillDetails() {
   const c = activeCol(); if (!c) return;
@@ -1723,7 +1943,7 @@ function sideHtml(c, all) {
     ${c ? `<div class="side-sec rfilt"><h2>Filters</h2>${filterBar(all)}<button type="button" class="side-reset" data-act="resetf">Reset filters</button></div>` : ''}
     <details class="tools"><summary>Tools</summary>
       ${a('json-out', 'Backup JSON')}${a('json-in', 'Import JSON')}${a('snaps', 'Restore snapshot')}${a('xlsx', 'Export .xlsx')}${a('export', 'Export binder / checklist')}${a('rates', 'Exchange rates')}${a('addstore', '+ Add store')}
-      ${c ? `${a('csv-in', 'Import card CSV')}${a('fill', 'Fill details + JP/CN/KR')}${a('img-in', 'Add scan images')}${a('img-dir', 'Scan a folder')}${a('renamecol', 'Rename collection')}${a('delcol', 'Delete collection…', 'danger')}` : ''}
+      ${c ? `${a('csv-in', 'Import card CSV')}${a('fill', 'Fill details + JP/CN/KR')}${c.rules ? a('rulesync', 'Refresh from rules') : ''}${a('img-in', 'Add scan images')}${a('img-dir', 'Scan a folder')}${a('renamecol', 'Rename collection')}${a('delcol', 'Delete collection…', 'danger')}` : ''}
       ${a('theme', 'Light / dark')}</details>
     <div class="rfx"><span class="${backupDue() ? 'due' : ''}">Backup ${esc(backupAge())}</span><br>Shops ${S.stores.length}<br>Cards ${S.cards.length}</div>`;
 }
@@ -1754,8 +1974,9 @@ function listPager(n, pages, from, to, where) {
 // Binder order (Default sort): newest era, newest set (SEED.setDates = EN set name -> TCGdex release date; sets
 // without a date, e.g. JP, follow the dated ones of their era), then number, then Normal before Holo / Reverse.
 const VAR_RANK = ['normal', 'holo', 'reverse', 'reverse2'];
-const binderOrder = cards => [...cards].sort((a, b) => eraRank(b.era) - eraRank(a.era)
-  || ((SEED && SEED.setDates || {})[b.set] || '').localeCompare((SEED && SEED.setDates || {})[a.set] || '')
+const binRank = e => { const r = eraRank(e); return r === 99 ? -1 : r; };   // eras not in ERA_ORDER (McDonald's, Trainer kits) go last
+const binderOrder = cards => [...cards].sort((a, b) => binRank(b.era) - binRank(a.era)
+  || setDateOf(b.set).localeCompare(setDateOf(a.set))
   || (a.set || '').localeCompare(b.set || '')
   || String(a.number).localeCompare(String(b.number), undefined, { numeric: true })
   || (VAR_RANK.indexOf(a.variant) >>> 0) - (VAR_RANK.indexOf(b.variant) >>> 0));
@@ -2004,6 +2225,7 @@ document.addEventListener('click', e => {
   else if (act === 'snaps') restoreDialog();
   else if (act === 'csv-in') $('#csvFile').click();
   else if (act === 'fill') fillDetails();
+  else if (act === 'rulesync') refreshRules();
   else if (act === 'img-in') $('#imgFile').click();
   else if (act === 'img-dir') $('#imgDir').click();
 });
