@@ -411,7 +411,7 @@ function draw(){
     return '<tr class="'+(g&&first?'grp':dup?'dup':'')+'"><td class="img">'+(dup?'':img(r))+'</td><td class="card"><span class="cname">'+esc(r.name)+'</span>'+(g&&first&&o[2]>1?'<span class="chip">CHEAPEST of '+o[2]+'</span>':'')+
     (dup?'':pills(r))+'</td>'+
     '<td class="hide-s">'+(r.url?'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.seller)+'</a>':esc(r.seller))+'<div class="sm">'+esc(r.venue)+'</div></td>'+
-    '<td class="n">'+rm(r.price_rm)+'</td><td class="n hide-s">'+rm(r.market_rm)+(r.market_rm==null?'<div class="sm">'+esc(r.market_src)+'</div>':'<div class="sm">'+esc(r.market_src)+'</div>')+'</td>'+
+    '<td class="n">'+rm(r.price_rm)+'</td><td class="n hide-s">'+rm(r.market_rm)+(r.market_rm==null?'<div class="sm">'+esc(r.market_src)+'</div>':'<div class="sm">'+esc(r.market_src)+'</div>')+(r.lang==='EN'&&r.jp_rm?'<div class="sm" title="JP print in Japan, '+esc(r.jp_src)+'">Japan '+rm(r.jp_rm)+'</div>':'')+'</td>'+
     // bulk: % is meaningless (footer), so the badge says bulk and the % moves to the tooltip
     '<td class="n"><div class="pg">'+(r.verdict==='bulk'?'':'<span class="hide-s">'+gap(r)+'</span>')+'<span class="badge '+VC[r.verdict]+'" title="'+pct(r.diff_pct)+'">'+(r.diff_pct==null||r.verdict==='bulk'?esc(r.verdict):pct(r.diff_pct))+'</span></div></td></tr>'}).join('');
 }
