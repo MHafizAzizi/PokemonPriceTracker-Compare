@@ -1988,7 +1988,9 @@ function sideHtml(c, all) {
   // market/ on GitHub Pages (thumbDir is set only there), market_report.html on the PC. ?collection= is the name slug
   // (market_compare.py COLLECTIONS keys), not the collection id: ids are random
   const market = `<a class="pageswitch" href="${(SEED && SEED.thumbDir ? 'market/' : 'market_report.html') + '?collection=' + (c ? c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '')}">Market report →</a>`;
-  return `<div>${market}<div class="side-title">Card Price Tracker</div>
+  // JP vs EN page (Wobbuffet/scripts/build_jp_en_trends.py): jp-en/ on GitHub Pages, the Wobbuffet folder's copy on the PC
+  const jpen = c && c.name === 'Wobbuffet' ? `<a class="pageswitch" href="${SEED && SEED.thumbDir ? 'jp-en/' : '../Wobbuffet/jp_en_trends.html'}">JP vs EN →</a>` : '';
+  return `<div>${market}${jpen}<div class="side-title">Card Price Tracker</div>
       <div class="rail-sub">${c ? `${esc(c.name)} · ${all.length} cards · ${all.filter(x => x.found).length} found` : 'No collection yet'}</div></div>
     <nav class="rnav" aria-label="Collections">${cols}${a('newcol', '+ New collection', 'add')}</nav>
     ${c ? `<div class="side-sec rfilt"><h2>Filters</h2>${filterBar(all)}<button type="button" class="side-reset" data-act="resetf">Reset filters</button></div>` : ''}
