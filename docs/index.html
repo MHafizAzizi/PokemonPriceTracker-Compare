@@ -2407,8 +2407,11 @@ document.addEventListener('change', e => {
     F.set = F.set.filter(v => inLang.some(x => x.set === v));
     F.rarity = F.rarity.filter(v => inLang.some(x => tierOf(x.rarity) === v));
   }
+  // render() rebuilds the list, which resets its scroll; keep the scroll where the tick was made
+  const scrollAt = d.querySelector('.ms-list').scrollTop;
   render();
   reopenMs(key, idx, q, cb.dataset.msV);
+  document.querySelectorAll(`details.ms[data-ms="${key}"]`)[idx].querySelector('.ms-list').scrollTop = scrollAt;
 });
 
 // List pages: jump to a page, or change rows a page (kept like the List / Binder choice).
