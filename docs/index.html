@@ -1282,11 +1282,11 @@ function printImg1(src, w, grey) {
 }
 async function printBinder(c, cards, grey, withPrice) {
   const [cols, rows] = bDims(), per = cols * rows, n = Math.ceil(cards.length / per);
-  // pocket width on A4 (190 x 262 mm usable, 8 mm caption) -> pixels at 150 dpi. 3+ columns use the small scan
-  // (TCGdex low, ~110 dpi at 3x3): its large scans took up to 10 s each, ~6 min for a whole collection
+  // pocket width on A4 (190 x 262 mm usable, 8 mm caption) -> pixels at 300 dpi, capped at the large scan's 600 px.
+  // Every size uses the large scan (the small one, ~245 px, printed blurry at 3x3); the small one is the fallback
   const mm = Math.min((190 - 3 * (cols - 1)) / cols, ((262 - 3 * (rows - 1)) / rows - 8) * 63 / 88);
-  const w = Math.min(420, Math.round(mm / 25.4 * 150));
-  const srcs = cards.map(x => (cols >= 3 ? thumbSrc(x) : fullSrc(x) || thumbSrc(x)));
+  const w = Math.min(600, Math.round(mm / 25.4 * 300));
+  const srcs = cards.map(x => fullSrc(x) || thumbSrc(x));
   const out = new Array(cards.length);
   infoBox(`Preparing scans for printing… 0 / ${cards.length}`);
   const note = $('#dlg p');
@@ -1294,7 +1294,8 @@ async function printBinder(c, cards, grey, withPrice) {
   await Promise.all(Array.from({ length: 6 }, async () => {
     while (next < cards.length) {
       const i = next++, x = cards[i];
-      out[i] = srcs[i] ? (await printImg(srcs[i], w, grey && !x.owned)) || srcs[i] : '';
+      const g = grey && !x.owned, th = thumbSrc(x);
+      out[i] = srcs[i] ? (await printImg(srcs[i], w, g)) || (th && th !== srcs[i] && await printImg(th, w, g)) || srcs[i] : '';
       if (note) note.textContent = `Preparing scans for printing… ${++ready} / ${cards.length}`;
     }
   }));
