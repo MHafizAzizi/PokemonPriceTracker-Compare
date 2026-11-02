@@ -869,13 +869,13 @@ function filterBar(all, sealed) {
   // Rarity list follows the Language filter, like the Set list: only the picked languages' tiers
   const rars = [...new Set(all.filter(x => fHas('lang', x.lang || 'EN')).map(x => tierOf(x.rarity)).filter(Boolean))].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   const opt = (v, label, cur) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(label)}</option>`;
-  // Set list follows the Language filter: only that language's sets, empty eras left out
+  // Set list follows the Language and Era filters: only those sets, empty eras left out
   // in release order (SEED.setDates, EN), like the eras; undated sets (JP, CN) after them in first-seen order
   const setDate = s => setDateOf(s) || '9999';
   const setsOf = pred => [...new Set(all.filter(x => fHas('lang', x.lang || 'EN') && pred(x)).map(x => x.set).filter(Boolean))]
     .sort((a, b) => setDate(a).localeCompare(setDate(b)));
-  const setItems = [...eras.map(e => [e, setsOf(x => x.era === e)]).filter(([, ss]) => ss.length)
-    .flatMap(([e, ss]) => [['', e, true], ...ss.map(v => [v, v])]), ...setsOf(x => !x.era).map(v => [v, v])];
+  const setItems = [...eras.filter(e => fHas('era', e)).map(e => [e, setsOf(x => x.era === e)]).filter(([, ss]) => ss.length)
+    .flatMap(([e, ss]) => [['', e, true], ...ss.map(v => [v, v])]), ...(F.era.length ? [] : setsOf(x => !x.era).map(v => [v, v]))];
   const sel = (key, label, body) => `<label>${label}<select data-filter="${key}">${body}</select></label>`;
   // Multi-select with a search box: <details> opens it, each tick applies at once. items: [value, label] or ['', heading, true]
   const ms = (key, label, allLabel, items) => {
@@ -2641,6 +2641,10 @@ document.addEventListener('change', e => {
     const inLang = (sealedOn ? sealedRows() : cardsOf(activeCol().id)).filter(x => F.lang.includes(x.lang || 'EN'));
     F.set = F.set.filter(v => inLang.some(x => x.set === v));
     F.rarity = F.rarity.filter(v => inLang.some(x => tierOf(x.rarity) === v));
+  }
+  if (key === 'era' && F.era.length) {
+    const inEra = (sealedOn ? sealedRows() : cardsOf(activeCol().id)).filter(x => F.era.includes(x.era));
+    F.set = F.set.filter(v => inEra.some(x => x.set === v));
   }
   // render() rebuilds the list, which resets its scroll; keep the scroll where the tick was made
   const scrollAt = d.querySelector('.ms-list').scrollTop;
