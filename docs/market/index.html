@@ -258,6 +258,7 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
         <select id="fF" aria-label="Finish"><option value="">All finishes</option><option value="normal">Normal</option><option value="holo">Holo</option><option value="reverse">Reverse holo</option></select>
         <input type="search" id="fS" placeholder="Search seller or card…" aria-label="Search seller or card">
         <label><input type="checkbox" id="fG" checked> Group by card</label>
+        <label><input type="checkbox" id="fO" checked> Hide owned</label>
         <span class="count num" id="count" aria-live="polite"></span>
       </div>
       <div class="tbl"><table>
@@ -276,7 +277,7 @@ var CID=new URLSearchParams(location.search).get('collection')||'yuka-morii';
 var MCS=window.MCS||{collections:{}};
 var COL=MCS.collections[CID];
 if(!COL){document.getElementById('main').innerHTML='<div class="empty">No market report for this collection yet.</div>';return;}
-var MC=Object.assign({fx:MCS.fx,thresholds:MCS.thresholds,logos:MCS.logos},COL),R=MC.rows,S=MC.sellers;
+var MC=Object.assign({fx:MCS.fx,thresholds:MCS.thresholds,logos:MCS.logos},COL),RA=MC.rows,S=MC.sellers,R=RA.filter(function(r){return !r.owned}); // summary, eras and deals skip owned cards; the table can show them
 document.title=MC.name+' Market Report';document.getElementById('colName').textContent=MC.name+' market report';
 var $=function(id){return document.getElementById(id)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
@@ -325,7 +326,7 @@ var curEra=ERAS.length?ERAS.reduce(function(a,b){return b.rows.length>a.rows.len
 /* ?era=<era>&set=<lang|set> in the URL, so a link opens the same era and set; the default era is left out */
 // set param = EN:<name> or JP:<code> (SV2a), short instead of the whole Japanese name
 var code=function(r){return r.lang!=='EN'&&(r.set.match(/\(([^()]+)\)$/)||[])[1]||r.set};
-var P2K={},K2P={};R.forEach(function(r){var p=r.lang+':'+code(r);if(!(p in P2K)){P2K[p]=skey(r);K2P[skey(r)]=p}});
+var P2K={},K2P={};RA.forEach(function(r){var p=r.lang+':'+code(r);if(!(p in P2K)){P2K[p]=skey(r);K2P[skey(r)]=p}});
 var DEF_ERA=curEra,Q=new URLSearchParams(location.search),qSet=P2K[Q.get('set')]||'';
 var qE=ERAS.filter(function(e){return e.sets[qSet]})[0];
 if(E[Q.get('era')])curEra=Q.get('era');else if(qE)curEra=qE.name;
@@ -393,7 +394,7 @@ var st={k:'diff_pct',d:1},LIMIT=60,shown=LIMIT;
 var key=function(r){return r.lang+'|'+r.set+'|'+r.number+'|'+r.variant};
 function draw(){
   var v=$('fV').value,l=$('fL').value,ve=$('fVen').value,se=$('fSet').value,ra=$('fR').value,fi=$('fF').value,q=$('fS').value.trim().toLowerCase(),g=$('fG').checked;
-  var rows=R.filter(function(r){return(!v||r.verdict===v)&&(!l||r.lang===l)&&(!ve||r.venue===ve)&&(!se||skey(r)===se)&&(!ra||r.rarity===ra)&&(!fi||r.variant===fi)&&(!q||(r.seller+' '+r.name+' '+r.store).toLowerCase().indexOf(q)>=0)});
+  var rows=($('fO').checked?R:RA).filter(function(r){return(!v||r.verdict===v)&&(!l||r.lang===l)&&(!ve||r.venue===ve)&&(!se||skey(r)===se)&&(!ra||r.rarity===ra)&&(!fi||r.variant===fi)&&(!q||(r.seller+' '+r.name+' '+r.store).toLowerCase().indexOf(q)>=0)});
   var byPct=cmpBy(st.k,st.d);
   var out=[];
   if(g){
@@ -402,7 +403,7 @@ function draw(){
     groups.sort(function(a,b){return byPct(a[0],b[0])});
     groups.forEach(function(gr){gr.forEach(function(r,i){out.push([r,i===0,gr.length])})});
   } else rows.sort(byPct).forEach(function(r){out.push([r,true,1])});
-  $('count').textContent=rows.length+' of '+R.length+' listings';
+  $('count').textContent=rows.length+' of '+RA.length+' listings'+(RA.length>R.length?' ('+(RA.length-R.length)+' owned)':'');
   syncUrl();
   var total=out.length;out=out.slice(0,shown);
   $('moreRows').hidden=total<=shown;$('moreRows').textContent='Show '+Math.min(LIMIT,total-shown)+' more ('+(total-shown)+' left)';
@@ -423,7 +424,7 @@ function pills(r){var k=skey(r);
   '<span class="pill p-no">'+esc(r.printed||r.number)+'</span>'+
   (r.rarity?pb('fR',r.rarity,esc(abbr(r.rarity)),'p-rar r-'+abbr(r.rarity)+(r.rarity==='Common'?' common':''),r.rarity):'')+
   (r.variant!=='normal'?pb('fF',r.variant,r.variant==='holo'?'Holo':'Reverse holo','p-fin '+esc(r.variant),r.variant==='holo'?'holo':'reverse holo'):'')+'</div>'}
-var RC={};R.forEach(function(r){if(r.rarity)RC[r.rarity]=(RC[r.rarity]||0)+1});
+var RC={};RA.forEach(function(r){if(r.rarity)RC[r.rarity]=(RC[r.rarity]||0)+1});
 $('fR').innerHTML+=Object.keys(RC).sort(function(a,b){return RC[b]-RC[a]}).map(function(k){return '<option value="'+esc(k)+'">'+esc(k)+' ('+RC[k]+')</option>'}).join('');
 // a pill click sets its filter; a set pill also sets Language so the Set list has the set
 $('tBody').addEventListener('click',function(e){var b=e.target.closest('button[data-f]');if(!b)return;
@@ -431,7 +432,7 @@ $('tBody').addEventListener('click',function(e){var b=e.target.closest('button[d
   if(b.dataset.f==='fL'){$('fL').value=b.dataset.v;fillSets()}else $(b.dataset.f).value=b.dataset.v;
   redraw();$('all').scrollIntoView({block:'start'})});
 var redraw=function(){shown=LIMIT;draw()};
-['fV','fL','fVen','fSet','fR','fF','fG'].forEach(function(id){$(id).addEventListener('change',redraw)});
+['fV','fL','fVen','fSet','fR','fF','fG','fO'].forEach(function(id){$(id).addEventListener('change',redraw)});
 $('fS').addEventListener('input',redraw);
 var markT=sortHead('tHead',st,redraw);
 $('moreRows').addEventListener('click',function(){shown+=LIMIT;draw()});
