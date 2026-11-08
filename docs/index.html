@@ -897,7 +897,18 @@ function applyFilters(all) {
   else if (F.sort === 'found') out = [...out].sort((a, b) => (b.found ? 1 : 0) - (a.found ? 1 : 0));
   else if (F.sort === 'set') out = bySet(out, F.dir === 'desc');
   if (F.dir === 'desc' && F.sort !== 'set') out = [...out].reverse();   // by set flips the set order only, numbers stay 1, 2, 3
+  if (!F.sort || F.sort === 'set') out = followEn(out);
   return [...out.filter(x => !x.owned), ...out.filter(x => x.owned)];   // owned cards sink to the bottom
+}
+// Prints follow their English card (user, 2026-11-08; Default order and By set only): a row whose ref names an English
+// row in the list moves right after that card's rows, languages in LANGS order (EN, JP, CN, ...); unlinked rows stay put.
+function followEn(list) {
+  const first = {}; list.forEach((x, i) => { if ((x.lang || 'EN') === 'EN') { const k = refKey(x); if (!(k in first)) first[k] = i; } });
+  const lr = l => { const i = LANGS.findIndex(([c]) => c === l); return i < 0 ? LANGS.length : i; };
+  const key = list.map((x, i) => { const l = x.lang || 'EN';
+    const k = l === 'EN' ? refKey(x) : [].concat(x.ref || []).map(t => String(t).toLowerCase().trim()).find(t => t in first);
+    return k !== undefined && k in first ? [first[k], l === 'EN' ? 0 : 1 + lr(l), i] : [i, 0, i]; });
+  return list.map((x, i) => [x, key[i]]).sort((a, b) => a[1][0] - b[1][0] || a[1][1] - b[1][1] || a[1][2] - b[1][2]).map(p => p[0]);
 }
 // By set: release date, then set name, number, finish. JP / CN sets have no date in setDates, so a set takes the
 // earliest date of the English sets its rows are prints of (ref); one-language sets with no ref go last in their era.
