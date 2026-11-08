@@ -838,7 +838,7 @@ const isSpecial = (raw, x) => { const t = tierHit(raw, x); return !!(t && t[1]);
 // Product (user, 2026-11-06): which product a card's set is, from the set name. Same rules as card_set.kind in
 // scripts/build_catalog.py (keep in sync): gallery / vault > promo > deck > special set > main set.
 const KIND_DECK = /deck|starter|battle academy|trainer kit|スターター|デッキ|卡组|起始|嗨皮/i;
-const KIND_SPECIAL = /\b151\b|收集啦151|shiny treasure|terastal festival|vstar universe|shiny star v|gx ultra shiny|tag team gx all stars|dream league|mega dream|宝石包|gem pack|generations|dragon vault|shining fates|hidden fates|celebrations|crown zenith|paldean fates|prismatic|shrouded fable|pok[eé]mon go|champion's path|shining legends|dragon majesty|legendary treasures|mega evolution energy|30th|classic collection|ascended heroes|vmax climax|eevee heroes|25th/i;
+const KIND_SPECIAL = /\b151\b|收集啦151|shiny treasure|terastal festival|vstar universe|shiny star v|gx ultra shiny|tag team gx all stars|dream league|mega dream|宝石包|gem pack|generations|dragon vault|shining fates|hidden fates|celebrations|crown zenith|paldean fates|prismatic|shrouded fable|pok[eé]mon go|champion's path|shining legends|dragon majesty|legendary treasures|mega evolution energy|classic collection|ascended heroes|vmax climax|eevee heroes|25th/i;
 const PRODUCT_LABEL = { main: 'Main set', special: 'Special set', subset: 'Gallery / vault', promo: 'Promo', deck: 'Deck' };
 const productOf = x => { const n = String((x && x.set) || '');
   return /gallery|shiny vault|radiant collection/i.test(n) ? 'subset' : /promo/i.test(n) ? 'promo' : KIND_DECK.test(n) ? 'deck' : KIND_SPECIAL.test(n) ? 'special' : 'main'; };
