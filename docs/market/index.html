@@ -8,6 +8,7 @@
 <title>Market Report</title>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('cpt-theme')||''}catch(e){}</script>
 <style>
+
 :root{
   --bg:#f6f6f4;--surface:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e2dd;--accent:#2f6fdb;
   --best-bg:#e3f4e8;--best-text:#1d7a3a;--danger:#b3261e;--danger-bg:#fbe9e7;--fair-bg:#eef3fc;
@@ -32,10 +33,7 @@ a:hover,a:focus-visible{background-size:100% 1px}
 .mono{font-family:var(--mono)}
 
 /* layout: Dark-Editorial sticky side rail + scrolling main */
-.shell{display:grid;grid-template-columns:240px minmax(0,1fr);max-width:1440px;margin:0 auto}
 .rail{position:sticky;top:0;height:100vh;padding:40px 28px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:28px}
-.rail .back{display:inline-block;font-size:13px;margin-bottom:14px;padding:4px 12px;border:1px solid var(--accent);border-radius:999px;background:none}
-.rail .back:hover{background:var(--accent);color:var(--surface)}
 .rail h1{font-size:20px;line-height:1.25;margin:0}
 .rail .sub{color:var(--muted);font-size:13px;margin-top:6px}
 .rail nav{display:flex;flex-direction:column;gap:2px}
@@ -50,17 +48,9 @@ section{scroll-margin-top:16px}
 .skip{position:absolute;left:-9999px;top:8px;z-index:10;padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px}
 .skip:focus{left:8px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-.sec-h{display:flex;align-items:baseline;gap:12px;margin:0 0 16px;font-size:18px}
-.sec-h .mono{font-size:13px;color:var(--accent);font-weight:500}
-.sec-h small{font-size:13px;color:var(--muted);font-weight:400;margin-left:auto}
 .label{font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 
 /* 01 summary */
-.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
-.kpi{padding:16px 18px;border-right:1px solid var(--line);min-width:0}
-.kpi:last-child{border-right:0}
-.kpi b{display:block;font-size:30px;line-height:1.1;margin-top:6px;font-variant-numeric:tabular-nums}
-.kpi .pct{font-size:12px;color:var(--muted);font-family:var(--mono)}
 .kpi.deal b{color:var(--best-text)} .kpi.over b{color:var(--danger)}
 .totals{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
 .totals .big{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
@@ -79,11 +69,7 @@ section{scroll-margin-top:16px}
 .era:focus-visible,.set:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .era .t{font-weight:600;font-size:14px;line-height:1.3}
 .era b{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
-.vc{display:flex;flex-wrap:wrap;gap:4px}
-.vc .badge{font-size:11px}
 .era .split,.set .split{height:6px;margin-top:0}
-.sets-h{display:flex;align-items:baseline;gap:12px;margin:20px 0 10px;font-size:15px}
-.sets-h small{font-size:13px;color:var(--muted);font-weight:400}
 .sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
 .set .logo{height:64px;display:grid;place-items:center}
 .set .logo img{max-width:100%;max-height:64px;object-fit:contain}
@@ -91,16 +77,8 @@ section{scroll-margin-top:16px}
 .set .m{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* three columns */
-.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:40px}
 #sellers{margin-top:48px}
-.col{min-width:0}
 .list{display:flex;flex-direction:column;gap:10px}
-.item{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
-.thumb{width:100%;height:auto;aspect-ratio:63/88;object-fit:cover;border-radius:3px;background:var(--line);display:block}
-.ph{display:grid;place-items:center;font-size:11px;color:var(--muted);text-align:center;padding:2px}
-.item .t{font-weight:600;font-size:14px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.item .m{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row2{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:4px;font-size:13px}
 .badge{font-family:var(--mono);font-size:12px;padding:1px 6px;border-radius:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .b-deal{background:var(--best-bg);color:var(--best-text)}
 .b-over{background:var(--danger-bg);color:var(--danger)}
@@ -111,68 +89,36 @@ section{scroll-margin-top:16px}
 .gap::before{content:"";position:absolute;left:0;right:0;top:6px;height:2px;background:var(--line);border-radius:1px}
 .gap .mk{position:absolute;left:50%;top:1px;width:2px;height:12px;background:var(--muted)}
 .gap .bar{position:absolute;top:6px;height:2px}
-.gap .dot{position:absolute;top:2px;width:10px;height:10px;border-radius:50%;margin-left:-5px;border:2px solid var(--surface)}
 .more{margin-top:10px;font-size:13px}
 
 /* sellers */
-.sel{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden}
-.sel table{width:100%;border-collapse:collapse;font-size:13px}
-.sel th,.sel td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-.sel th:first-child,.sel td:first-child{text-align:left;white-space:normal;overflow-wrap:anywhere}
-.sel th{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted);background:var(--surface);position:sticky;top:0}
-.sel .scroll{max-height:720px;overflow:auto}
-.sel .v{font-size:12px;color:var(--muted);text-align:left}
-.sel tr.bulk td{color:var(--muted)}
 .dn{color:var(--best-text)} .up{color:var(--danger)}
 
 /* 05 table */
 .all{margin-top:48px}
-.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
-.toolbar select,.toolbar input[type=search]{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text)}
-.toolbar input[type=search]{min-width:200px}
 #fSet{width:240px;max-width:100%;min-width:0;text-overflow:ellipsis} /* fixed: a select grows to its longest option (JP set names) */
-.toolbar label{font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center}
 .toolbar .count{flex-basis:100%;text-align:right;font-size:13px;color:var(--muted)} /* own line always, so the row looks the same for every filter */
-.tbl{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:auto}
-.tbl table{width:100%;border-collapse:collapse;font-size:14px}
-.tbl th{position:sticky;top:0;background:var(--surface);text-align:left;font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
 th button{all:unset;cursor:pointer}
 th button:hover,th[aria-sort] button{color:var(--accent)}
 th button:focus-visible{outline:2px solid var(--accent)}
 th[aria-sort=ascending] button::after{content:" \2191"}
 th[aria-sort=descending] button::after{content:" \2193"}
-.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
-.tbl td.n{text-align:right;white-space:nowrap}
-.tbl td.img{width:44px}
-.tbl td.img .thumb{width:36px}
-.tbl tr.grp td{border-top:2px solid var(--line)}
-.tbl .cname{font-weight:600}
-.tbl .sm{font-size:12px;color:var(--muted)}
 .chip{font-family:var(--mono);font-size:11px;padding:1px 5px;border-radius:3px;background:var(--best-bg);color:var(--best-text);margin-left:6px}
 /* % vs market: badge and gap bar share one cell so the eye reads them as one unit */
 .pg{display:flex;align-items:center;justify-content:flex-end;gap:10px}
 .pg .gap{width:110px;margin:0;flex:none}
 .pg .badge{min-width:64px;text-align:right}
 /* tag pills under the card name; language, set, rarity and finish are buttons that set that filter */
-.pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .pill{font:12px/18px var(--font);display:inline-flex;align-items:center;gap:4px;padding:0 7px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 button.pill{cursor:pointer}
 button.pill:hover{border-color:var(--muted);color:var(--text)}
 button.pill:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .pill img{height:12px;width:auto;max-width:44px;object-fit:contain}
 .p-lang{font-family:var(--mono);font-weight:600;color:var(--text);background:var(--line);border-color:transparent}
-.p-no{font-family:var(--mono);border-color:transparent;padding:0 2px}
 .p-rar{font-family:var(--mono)}
-.p-rar.common{display:none}
-.p-fin{color:#3d2f00;font-weight:600;border-color:transparent;background:linear-gradient(110deg,#ffe28a,#bfeaff 50%,#ffd0a8)}
-.p-fin.reverse{color:var(--text);border:1px solid transparent;background:linear-gradient(var(--surface),var(--surface)) padding-box,linear-gradient(110deg,#e0b400,#38a8d8 50%,#e07a30) border-box}
-.tbl tr.dup .cname{font-weight:400;color:var(--muted);font-size:13px}
 /* pill colours (demo B, picked 2026-10-24): language, set, rarity tier; white on each language colour is >= 4.5:1 */
 .p-lang{color:#fff;border-color:transparent}
 .l-EN{background:#2f6fdb}.l-JP{background:#c0392b}.l-CN{background:#8a5a12}
-.p-set{border-color:var(--accent);color:var(--accent)}
-.p-no{color:var(--text)}
-.p-rar.common{display:inline-flex;opacity:.75}
 .p-rar{--u:#1d7a3a;--r:#2f6fdb;--g:#7a5400;--gbg:#fff6d6}
 .r-U{color:var(--u);border-color:var(--u)}.r-R{color:var(--r);border-color:var(--r)}
 .r-IR,.r-HR,.r-P{color:var(--g);border-color:#d4a300;background:var(--gbg)}
@@ -184,7 +130,6 @@ button.pill:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
 
 @media (max-width:820px){
-  .shell{grid-template-columns:1fr}
   .rail{min-width:0;position:sticky;height:auto;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line);background:var(--bg);z-index:5;gap:8px}
   .rail .sub,.rail .fx{display:none}
   .rail h1{font-size:16px}
@@ -193,260 +138,446 @@ footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-
   .rail nav a::after{display:none}
   main{padding:20px 16px 48px}
   section{scroll-margin-top:96px}
-  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .kpi{border-bottom:1px solid var(--line)}
-  .kpi b{font-size:24px}
   .totals{grid-template-columns:1fr;gap:10px}
-  .cols{grid-template-columns:1fr;gap:32px;margin-top:32px}
-  .toolbar select{flex:1 1 140px;min-width:0}
-  #fSet{width:auto}
-  .toolbar input[type=search]{min-width:0;flex:1 1 100%}
-  .tbl td,.tbl th{padding:6px}
-  .tbl td.img .thumb{width:30px}
   .pill img{display:none}
   .pg .badge{min-width:0}
-  .toolbar .count{text-align:left}
-  .hide-s{display:none}
-  .sel th:first-child,.sel td:first-child{min-width:110px;overflow-wrap:normal;word-break:break-word}
 }
+
+/* facet rail (2026-11-09) */
+/* Market report mock · facet rail (after the Tracker's direction 2) */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.muted { color: var(--muted); }
+.sp { flex: 1; }
+.up { color: var(--danger); } .dn { color: var(--best-text); }
+button { font: inherit; color: inherit; }
+.linkish { border: 0; background: none; padding: 4px 2px; color: var(--accent); font-size: 13px; cursor: pointer; }
+.linkish:hover { text-decoration: underline; }
+.mshell { display: grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1600px; margin: 0 auto; }
+.mrail { position: sticky; top: 0; height: 100vh; overflow: auto; overscroll-behavior: contain; padding: 20px 16px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px; background: var(--bg); }
+.links { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill-link { font-size: 12px; padding: 3px 10px; border: 1px solid var(--accent); border-radius: 999px; background: none; }
+.pill-link:hover { background: var(--accent); color: var(--surface); }
+.colp { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.colp select { font: 600 15px var(--font); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
+.fh { display: flex; justify-content: space-between; align-items: baseline; }
+.fh h2 { margin: 0; font: 500 12px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.tg { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 8px 2px; cursor: pointer; }
+.tg small { margin-left: auto; font: 11px var(--mono); color: var(--muted); }
+.facet { border-top: 1px solid var(--line); padding: 8px 0; }
+.facet > summary { list-style: none; cursor: pointer; display: flex; gap: 8px; align-items: center; font: 600 13px var(--font); padding: 4px 2px; }
+.facet > summary::-webkit-details-marker { display: none; }
+.facet > summary small { font: 11px var(--mono); color: var(--muted); font-weight: 400; }
+.facet > summary::after { content: '+'; margin-left: auto; color: var(--muted); font-weight: 400; }
+.facet[open] > summary::after { content: '−'; }
+.facet .on { font: 11px var(--mono); background: var(--accent); color: #fff; border-radius: 999px; padding: 0 6px; }
+.fq { width: 100%; margin: 4px 0; font: 13px var(--font); padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
+.fl { display: grid; max-height: 220px; overflow: auto; overscroll-behavior: contain; }
+.fo { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 3px 2px; cursor: pointer; border-radius: 4px; }
+.fo:hover { background: color-mix(in srgb, var(--line) 60%, transparent); }
+.fo span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fo small { font: 11px var(--mono); color: var(--muted); }
+.fo.zero { opacity: .55; }
+.fo[hidden] { display: none; }
+.sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.fx { margin-top: auto; font-size: 11px; color: var(--muted); line-height: 1.6; }
+main { padding: 18px 28px 64px; min-width: 0; }
+.mhead { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mhead h1 { font-size: 22px; margin: 0; }
+.mhead .sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.fopen, .scrim { display: none; }
+.h2 { display: flex; align-items: baseline; gap: 10px; font-size: 16px; margin: 0 0 10px; }
+.h2 small { margin-left: auto; font: 12px var(--mono); color: var(--muted); font-weight: 400; }
+section { margin-bottom: 28px; }
+/* summary */
+.sum { display: grid; grid-template-columns: minmax(260px, auto) 1fr; gap: 28px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; }
+.sum .big { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sum .big span { font-size: 14px; font-weight: 400; color: var(--muted); }
+.split { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; background: var(--line); }
+.split i { display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 8px; }
+.lg-b { display: inline-flex; gap: 6px; align-items: center; border: 1px solid transparent; background: none; border-radius: 999px; padding: 2px 10px; font-size: 13px; cursor: pointer; color: var(--muted); }
+.lg-b b { color: var(--text); font-variant-numeric: tabular-nums; }
+.lg-b i { width: 10px; height: 10px; border-radius: 2px; }
+.lg-b:hover:not(:disabled), .lg-b.on { border-color: var(--accent); }
+.lg-b.on { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.lg-b:disabled { opacity: .4; cursor: default; }
+.note { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+.b-check { background: #fdf3e1; color: #8a5a00; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .b-check { background: #3a2e14; color: #f0c870; } }
+:root[data-theme="dark"] .b-check { background: #3a2e14; color: #f0c870; }
+/* two columns */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.eras2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+.erow { display: grid; grid-template-columns: 150px 1fr 44px 64px; gap: 10px; align-items: center; border: 0; background: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; text-align: left; font-size: 13px; }
+.erow:hover { background: color-mix(in srgb, var(--line) 50%, transparent); }
+.erow.on { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.erow .en { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eb { height: 10px; }
+.eb > span { display: flex; height: 100%; border-radius: 3px; overflow: hidden; gap: 1px; }
+.ec { font: 12px var(--mono); text-align: right; }
+.ed { font-size: 12px; }
+#main, .mshell > * { min-width: 0; }   /* a wide table scrolls inside its box, not the page */
+@media (max-width: 900px) { .tw { overflow-x: auto; } }
+.selw { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; max-height: 420px; overflow: auto; overscroll-behavior: contain; }
+.dt { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dt th, .dt td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.dt th { position: sticky; top: 0; background: var(--surface); z-index: 2; font: 500 12px var(--mono); letter-spacing: .03em; color: var(--muted); box-shadow: 0 1px 0 var(--line); }
+.dt .r { text-align: right; } .dt th.r .sh { justify-content: flex-end; width: 100%; }
+.sh { border: 0; background: none; padding: 2px 0; font: inherit; color: inherit; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; white-space: nowrap; }
+.sh span { opacity: .35; font-family: var(--font); }
+.sh:hover { color: var(--text); } .sh:hover span { opacity: .8; }
+.sh.on { color: var(--accent); } .sh.on span { opacity: 1; }
+.dt tr.bulk td { color: var(--muted); }
+.its { display: grid; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.it { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); color: var(--text); background: none; }
+.it:hover { background: color-mix(in srgb, var(--line) 40%, transparent); }
+.itm { display: grid; gap: 2px; min-width: 0; }
+.itm b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); min-width: 0; flex-wrap: wrap; }
+.m.s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.m .mono { font-size: 12px; }
+.lg { height: 12px; width: auto; max-width: 36px; object-fit: contain; vertical-align: -2px; margin-right: 4px; }
+.fin { font-size: 11px; color: var(--best-text); }
+.itp { display: grid; justify-items: end; gap: 2px; font-variant-numeric: tabular-nums; }
+.itp .muted { font-size: 12px; }
+.its .more { justify-self: start; margin: 6px 10px; }
+.th { border-radius: 3px; object-fit: cover; background: var(--line); display: block; }
+/* listings */
+.tbar { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 8px 0; }
+.tbar input[type=search] { flex: 0 1 360px; font: 14px var(--font); padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); }
+.tbar .cnt { font-size: 14px; color: var(--muted); } .tbar .cnt b { color: var(--text); }
+.ftag { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 4px 2px 10px; background: var(--surface); }
+.ftag button { border: 0; background: none; cursor: pointer; padding: 2px 6px; color: var(--muted); }
+.tw { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.lt th { top: var(--tbar-h, 0px); }
+.lt td.img { width: 46px; }
+.lt .cn { font-weight: 600; margin-right: 6px; }
+.lt .m { margin-top: 3px; }
+.lt tr.dup td { border-top: 0; } .lt tr.dup .cn { font-weight: 400; color: var(--muted); }
+.lt .chip { font: 11px var(--mono); color: var(--best-text); background: var(--best-bg); border-radius: 4px; padding: 1px 6px; }
+.sm { font-size: 12px; color: var(--muted); }
+.pg { display: inline-flex; gap: 10px; align-items: center; justify-content: flex-end; }
+.gap { position: relative; display: inline-block; width: 110px; height: 8px; background: var(--line); border-radius: 4px; }
+.gap .bar { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.gap .mk { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--text); opacity: .5; }
+.morebtn { margin: 12px 0; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+.foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+@media (max-width: 1200px) { .two { grid-template-columns: 1fr; } .sum { grid-template-columns: 1fr; gap: 12px; } }
+@media (max-width: 900px) {
+  .mshell { grid-template-columns: minmax(0, 1fr); }
+  .mrail { position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); z-index: 30; transform: translateX(-100%); box-shadow: 0 0 40px #0005; }
+  body.fopen .mrail { transform: none; }
+  body.fopen .scrim { display: block; position: fixed; inset: 0; z-index: 25; background: #0006; border: 0; }
+  .fopen { display: inline-flex; margin-left: auto; border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: 6px; padding: 8px 14px; min-height: 44px; }
+  main { padding: 12px 14px 48px; }
+  .hs { display: none; }
+  .erow { grid-template-columns: 110px 1fr 36px; } .era .ed { display: none; }
+  .gap { display: none; }
+  .lt td.img { width: 36px; }
+  .tbar input[type=search] { flex: 1 1 100%; }
+}
+
+.colp select { width: 100%; }
+.dt th[aria-sort] button::after, .dt th button::after { content: none !important; }
+.dt td.r, .itp b { white-space: nowrap; }
+.erow .ed b { font-size: 12px; font-weight: 600; }
+.selw { max-height: 360px; }
+.mrail, .mrail label, .facet > summary { color: var(--text); }
+.dt .linkish { text-align: left; }
+.dt td.hs { white-space: nowrap; }
+@media (max-width: 900px) { .eras2 { grid-template-columns: 1fr; } .erow { grid-template-columns: 110px 1fr 36px; } .erow .ed { display: none; } }
+
+/* round 2: eras with logos, 100% bars, sets under an open era; empty-state padding */
+.eras2 { grid-template-columns: 1fr !important; gap: 0; padding: 4px 0; }
+.egrp + .egrp { border-top: 1px solid var(--line); }
+.erow, .srow { display: grid; grid-template-columns: 96px 170px minmax(0, 1fr) 48px 72px 16px; gap: 14px; align-items: center; width: 100%; border: 0; background: none; padding: 8px 14px; cursor: pointer; text-align: left; font-size: 14px; border-radius: 0; }
+.erow .en { font-weight: 600; }
+.elogo, .slogo { height: 28px; display: flex; align-items: center; }
+.elogo img, .slogo img { max-height: 28px; max-width: 96px; object-fit: contain; }
+.eb { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 1px; background: var(--line); }
+.eb > span { display: contents; }
+.ex { color: var(--muted); font-size: 12px; }
+.egrp.open { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.esets { padding: 2px 0 8px; }
+.srow { grid-template-columns: 96px 170px minmax(0, 1fr) 48px 72px 16px; padding: 5px 14px 5px 14px; font-size: 13px; }
+.srow .slogo { height: 22px; } .srow .slogo img { max-height: 22px; max-width: 80px; }
+.srow .sn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srow .sn .muted { font-size: 12px; }
+.srow:hover, .erow:hover { background: color-mix(in srgb, var(--line) 45%, transparent); }
+.srow.on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.its > p { margin: 0; padding: 14px 16px; }
+@media (max-width: 900px) {
+  .erow, .srow { grid-template-columns: 64px minmax(0, 1fr) 70px 36px; gap: 8px; padding: 8px 10px; }
+  .erow .ed, .erow .ex, .srow .ed, .srow .sn .muted { display: none; }
+  .elogo img { max-width: 64px; } .srow .slogo img { max-width: 60px; }
+}
+
 </style>
 </head>
 <body>
-<a class="skip" href="#summary">Skip to report</a>
-<div class="shell">
-  <aside class="rail">
-    <div>
-      <a class="back" href="../">← Card Price Tracker</a>
-      <h1 id="colName">Market report</h1>
-      <div class="sub" id="sub"></div>
-    </div>
-    <nav id="nav">
-      <a href="#summary"><span class="mono">01</span>Summary</a>
-      <a href="#eras"><span class="mono">02</span>Eras and sets</a>
-      <a href="#deals"><span class="mono">03</span>Best deals</a>
-      <a href="#over"><span class="mono">04</span>Most overpriced</a>
-      <a href="#sellers"><span class="mono">05</span>Sellers</a>
-      <a href="#all"><span class="mono">06</span>All listings</a>
-    </nav>
-    <div class="fx" id="fx"></div>
+<a class="skip" href="#main">Skip to report</a>
+<div class="mshell">
+  <aside class="mrail" id="rail" aria-label="Collection and filters">
+    <div class="links"><a class="pill-link" href="../">← Card Price Tracker</a><a class="pill-link" id="jpen" hidden>JP vs EN</a></div>
+    <label class="colp"><span>Collection</span><select id="colPick"></select></label>
+    <div id="facets"></div>
+    <div class="fx mono" id="fx"></div>
   </aside>
+  <button type="button" class="scrim" aria-label="Close filters" onclick="document.body.classList.remove('fopen')"></button>
   <main id="main">
-    <section id="summary">
-      <h2 class="sec-h"><span class="mono">01.</span>Summary<small id="sumNote"></small></h2>
-      <div class="kpis" id="kpis"></div>
-      <div class="totals" id="totals"></div>
+    <header class="mhead"><div><h1><span id="colName"></span> market report</h1><p class="sub" id="sub"></p></div>
+      <button type="button" id="fopen" class="fopen">Filters</button></header>
+    <section id="summary-s"><div id="summary"></div></section>
+    <section><h2 class="h2">Eras<small>click a row to filter</small></h2><div id="eraRows" class="eras2"></div></section>
+    <section class="two">
+      <div><h2 class="h2">Best deals<small id="dealsN"></small></h2><div id="dealList" class="its"></div></div>
+      <div><h2 class="h2">Most overpriced<small id="overN"></small></h2><div id="overList" class="its"></div></div>
     </section>
-    <section id="eras">
-      <h2 class="sec-h"><span class="mono">02.</span>Eras and sets<small>pick an era, then a set to see its listings</small></h2>
-      <div class="eras" id="eraList"></div>
-      <h3 class="sets-h" id="setsH"></h3>
-      <div class="sets" id="setList"></div>
-    </section>
-    <div class="cols">
-      <section class="col" id="deals"><h2 class="sec-h"><span class="mono">03.</span>Best deals<small id="dealsN"></small></h2><div class="list" id="dealList"></div><div class="more"><a href="#all" data-v="deal">See all deals in the table</a></div></section>
-      <section class="col" id="over"><h2 class="sec-h"><span class="mono">04.</span>Most overpriced<small id="overN"></small></h2><div class="list" id="overList"></div><div class="more"><a href="#all" data-v="overpriced">See all overpriced in the table</a></div></section>
-    </div>
-    <section id="sellers"><h2 class="sec-h"><span class="mono">05.</span>Sellers<small>median vs market, click a column to sort</small></h2><div class="sel"><div class="scroll"><table><thead id="selHead"><tr><th><button type="button" data-k="seller">Seller</button></th><th class="hide-s"><button type="button" data-k="venue">Venue</button></th><th aria-sort="ascending"><button type="button" data-k="median_pct">Median</button></th><th><button type="button" data-k="compared">Compared / listings</button></th><th><button type="button" data-k="deals">Deals</button></th><th><button type="button" data-k="overpriced">Overpriced</button></th><th class="hide-s"><button type="button" data-k="cmp_ask">Asked (compared)</button></th><th class="hide-s"><button type="button" data-k="cmp_mkt">Market (compared)</button></th></tr></thead><tbody id="selBody"></tbody></table></div></div></section>
-    <section class="all" id="all">
-      <h2 class="sec-h"><span class="mono">06.</span>All listings</h2>
-      <div class="toolbar">
-        <select id="fV" aria-label="Verdict"><option value="">All verdicts</option><option value="deal">Deal</option><option value="fair">Fair</option><option value="overpriced">Overpriced</option><option value="bulk">Bulk</option><option value="no market">No market</option></select>
-        <select id="fL" aria-label="Language"><option value="">All languages</option><option>EN</option><option>JP</option><option>CN</option></select>
-        <select id="fVen" aria-label="Venue"><option value="">All venues</option><option>Carousell</option><option>Facebook</option><option>Amcorp Mall</option></select>
-        <select id="fSet" aria-label="Set"><option value="">All sets</option></select>
-        <select id="fR" aria-label="Rarity"><option value="">All rarities</option></select>
-        <select id="fF" aria-label="Finish"><option value="">All finishes</option><option value="normal">Normal</option><option value="holo">Holo</option><option value="reverse">Reverse holo</option></select>
-        <input type="search" id="fS" placeholder="Search seller or card…" aria-label="Search seller or card">
-        <label><input type="checkbox" id="fG" checked> Group by card</label>
-        <label><input type="checkbox" id="fO" checked> Hide owned</label>
-        <span class="count num" id="count" aria-live="polite"></span>
-      </div>
-      <div class="tbl"><table>
-        <thead id="tHead"><tr><th></th><th><button type="button" data-k="name">Card</button></th><th class="hide-s"><button type="button" data-k="seller">Seller</button></th><th style="text-align:right"><button type="button" data-k="price_rm">Price</button></th><th style="text-align:right" class="hide-s"><button type="button" data-k="market_rm">Market</button></th><th style="text-align:right" aria-sort="ascending"><button type="button" data-k="diff_pct">% vs market</button></th></tr></thead>
-        <tbody id="tBody"></tbody>
-      </table></div>
+    <section><h2 class="h2">Sellers<small id="selN"></small></h2><div class="selw"><table class="dt"><thead id="selHead"></thead><tbody id="selBody"></tbody></table></div></section>
+    <section id="all">
+      <h2 class="h2">All listings</h2>
+      <div class="tbar" id="tbar"></div>
+      <div class="tw"><table class="dt lt"><thead id="tHead"></thead><tbody id="tBody"></tbody></table></div>
       <button type="button" id="moreRows" class="morebtn" hidden></button>
     </section>
-    <footer id="foot"></footer>
+    <footer id="foot" class="foot"></footer>
   </main>
 </div>
 <script src="market_compare.js"></script>
 <script>
-(function(){
-var CID=new URLSearchParams(location.search).get('collection')||'yuka-morii';
-var MCS=window.MCS||{collections:{}};
-var COL=MCS.collections[CID];
-if(!COL){document.getElementById('main').innerHTML='<div class="empty">No market report for this collection yet.</div>';return;}
-var MC=Object.assign({fx:MCS.fx,thresholds:MCS.thresholds,logos:MCS.logos},COL),RA=MC.rows,S=MC.sellers,R=RA.filter(function(r){return !r.owned}); // summary, eras and deals skip owned cards; the table can show them
-document.title=MC.name+' Market Report';document.getElementById('colName').textContent=MC.name+' market report';
-var $=function(id){return document.getElementById(id)};
-var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
-var rm=function(v){return v==null?'-':v>0&&v<1?'RM '+v.toFixed(2):'RM '+Math.round(v).toLocaleString('en-US')};
-var pct=function(p){return p==null?'-':(p>0?'+':'')+(Math.abs(p)>=100?Math.round(p).toLocaleString('en-US'):p.toFixed(1))+'%'};
-var VC={deal:'b-deal',overpriced:'b-over',fair:'b-fair',bulk:'b-bulk','no market':'b-none'};
-var img=function(r){var a='alt="'+esc(r.name)+'"';return r.image?'<img class="thumb" loading="lazy" width="63" height="88" '+a+' src="'+esc(r.image)+'" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'thumb ph\',textContent:\'no scan\'}))">':'<div class="thumb ph" role="img" aria-label="'+esc(r.name)+'">no scan</div>'};
-var fin=function(r){return r.lang+' '+r.variant};
-function gap(r){
-  if(r.market_rm==null||!r.market_rm)return '';
-  // ponytail: log2 scale, 1 step = 2x; clamps at 1/4x and 4x
-  var x=50+25*Math.log2(r.price_rm/r.market_rm);x=Math.max(2,Math.min(98,x));
-  var c=r.price_rm<=r.market_rm?'var(--best-text)':'var(--danger)';
-  var l=Math.min(x,50),w=Math.abs(x-50);
-  return '<div class="gap" title="Price '+rm(r.price_rm)+' vs market '+rm(r.market_rm)+'"><span class="bar" style="left:'+l+'%;width:'+w+'%;background:'+c+'"></span><span class="mk"></span><span class="dot" style="left:'+x+'%;background:'+c+'"></span></div>';
+// Market report · facet rail (2026-11-09; mock design-demos/market-2.html). One filter state drives every section: summary, eras, deals,
+// overpriced, sellers and the listings table. Listings over +CHECK% are tagged "Check" and kept out of the
+// overpriced totals (user: "tag the extreme percentages").
+(function () {
+const CHECK = 500;
+const MCS = window.MCS || { collections: {} };
+const Q = new URLSearchParams(location.search);
+const CID = Q.get('collection') || 'yuka-morii';
+const COL = MCS.collections[CID];
+const $ = id => document.getElementById(id);
+if (!COL || !COL.rows.length) {   // still offer the other collections and the way back
+  $('colPick').innerHTML = Object.keys(MCS.collections).filter(k => MCS.collections[k].rows.length).map(k => `<option value="${k}">${MCS.collections[k].name} (${MCS.collections[k].rows.length})</option>`).join('');
+  $('colPick').insertAdjacentHTML('afterbegin', '<option value="" selected>Pick a collection</option>');
+  $('colPick').onchange = e => { if (e.target.value) location.search = '?collection=' + e.target.value; };
+  $('main').innerHTML = '<div class="empty">No market report for this collection yet. <a data-back>← Card Price Tracker</a></div>';
+  document.querySelector('[data-back]').href = document.querySelector('.mrail .links a').getAttribute('href');   // publish() rewrites that one link
+  return;
+}
+const LOGO = MCS.logos || {}, SD = MCS.set_dates || {}, TH = MCS.thresholds;
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const n = v => v.toLocaleString('en-US');
+const rm = v => (v == null ? '–' : v > 0 && v < 1 ? 'RM ' + v.toFixed(2) : 'RM ' + n(Math.round(v)));
+const pct = p => (p == null ? '–' : (p > 0 ? '+' : '') + (Math.abs(p) >= 100 ? n(Math.round(p)) : p.toFixed(1)) + '%');
+const code = r => (r.lang !== 'EN' && (r.set.match(/\(([^()]+)\)$/) || [])[1]) || (r.lang === 'EN' && (MCS.set_codes || {})[r.set]) || r.set;
+const skey = r => r.lang + '|' + r.set;
+const abbr = s => s.split(/\s+/).map(w => w[0]).join('').toUpperCase();
+const ERA_ORDER = ['Base', 'Gym', 'Neo', 'Legendary Collection', 'e-Card', 'EX', 'Diamond & Pearl', 'Platinum', 'HeartGold & SoulSilver', 'Black & White', 'XY', 'Sun & Moon', 'Sword & Shield', 'Scarlet & Violet', 'Mega Evolution'];
+const ERA_SET = { Base: 'Base Set', Gym: 'Gym Heroes', Neo: 'Neo Genesis', 'e-Card': 'Expedition', EX: 'Ruby & Sapphire', 'Diamond & Pearl': 'Diamond & Pearl', Platinum: 'Platinum', 'HeartGold & SoulSilver': 'HeartGold & SoulSilver', 'Black & White': 'Black & White', XY: 'XY', 'Sun & Moon': 'Sun & Moon', 'Sword & Shield': 'Sword & Shield', 'Scarlet & Violet': 'Scarlet & Violet', 'Mega Evolution': 'Mega Evolution' };
+// ponytail: stand-in era logo = a set logo from data/set_logos.json; real era marks need set_logos.py to fetch them
+const eraLogo = e => { if (LOGO['EN|' + ERA_SET[e]]) return LOGO['EN|' + ERA_SET[e]];
+  const ks = [...new Set(COL.rows.filter(r => (r.era || 'Other') === e).map(r => r.lang + '|' + r.set))].filter(k => LOGO[k]);
+  return LOGO[ks.filter(k => k.startsWith('EN|')).sort((a, b) => (SD[a.slice(3)] || '9999').localeCompare(SD[b.slice(3)] || '9999'))[0] || ks[0]] || ''; };
+const eraIx = e => { const i = ERA_ORDER.indexOf(e); return i < 0 ? 99 : i; };
+// verdicts: "check" = over +CHECK%, probably a slab or a mis-recorded price; out of the overpriced totals
+const RA = COL.rows.map(r => ({ ...r, era: r.era || 'Other', verdict: r.verdict === 'overpriced' && r.diff_pct > CHECK ? 'check' : r.verdict }));
+const V = [['deal', 'Deal', 'var(--best-text)'], ['fair', 'Fair', 'var(--accent)'], ['overpriced', 'Overpriced', 'var(--danger)'], ['check', 'Check', '#b7791f'], ['bulk', 'Bulk', 'var(--muted)'], ['no market', 'No market', 'var(--line)']];
+const VC = { deal: 'b-deal', fair: 'b-fair', overpriced: 'b-over', check: 'b-check', bulk: 'b-bulk', 'no market': 'b-none' };
+
+// ---------- filter state ----------
+const FK = ['verdict', 'lang', 'venue', 'era', 'set', 'rarity', 'variant', 'seller'];
+const F = { q: '', hideOwned: true, group: true }; FK.forEach(k => { F[k] = []; });
+const getv = { verdict: r => r.verdict, lang: r => r.lang, venue: r => r.venue, era: r => r.era, set: skey, rarity: r => r.rarity, variant: r => r.variant, seller: r => r.seller };
+const match = (r, skip) => (!F.hideOwned || !r.owned) && FK.every(k => k === skip || !F[k].length || F[k].includes(getv[k](r)))
+  && (!F.q || (r.seller + ' ' + r.name + ' ' + r.store + ' ' + r.set + ' ' + r.number).toLowerCase().includes(F.q));
+const rowsBut = skip => RA.filter(r => match(r, skip));
+let UI = { open: { verdict: true, lang: true } };
+try { UI = { ...UI, ...JSON.parse(localStorage.getItem('cpt-market-ui') || '{}') }; } catch (e) { /* fine */ }
+const saveUI = () => { try { localStorage.setItem('cpt-market-ui', JSON.stringify(UI)); } catch (e) { /* fine */ } };
+
+// ---------- rail ----------
+const FACETS = [
+  ['verdict', 'Verdict', (a, b) => V.findIndex(v => v[0] === a) - V.findIndex(v => v[0] === b), v => (V.find(x => x[0] === v) || [v, v])[1]],
+  ['lang', 'Language', (a, b) => ['EN', 'JP', 'CN', 'KR'].indexOf(a) - ['EN', 'JP', 'CN', 'KR'].indexOf(b), v => v],
+  ['venue', 'Venue', null, v => v],
+  ['era', 'Era', (a, b) => eraIx(a) - eraIx(b), v => v],
+  ['set', 'Set', (a, b) => (SD[a.split('|')[1]] || '9999').localeCompare(SD[b.split('|')[1]] || '9999') || a.localeCompare(b),
+    v => { const r = RA.find(x => skey(x) === v); const c = r ? code(r) : ''; const nm = v.replace('|', ' '); return c && !nm.includes(`(${c})`) && c !== v.split('|')[1] ? `${nm} (${c})` : nm; }],
+  ['rarity', 'Rarity', null, v => v],
+  ['variant', 'Finish', null, v => ({ normal: 'Normal', holo: 'Holo', reverse: 'Reverse holo' }[v] || v)],
+  ['seller', 'Seller', null, v => v],
+];
+function facet([key, label, order, lab]) {
+  const m = new Map(); rowsBut(key).forEach(r => { const v = getv[key](r); if (v) m.set(v, (m.get(v) || 0) + 1); });
+  const cur = F[key];
+  const vals = [...new Set([...m.keys(), ...cur])].sort(order || ((a, b) => (m.get(b) || 0) - (m.get(a) || 0) || String(a).localeCompare(b)));
+  if (!vals.length) return '';
+  const open = UI.open[key] || false;
+  return `<details class="facet" data-k="${key}"${open ? ' open' : ''}><summary>${label}${cur.length ? `<span class="on">${cur.length}</span>` : ''}<small>${vals.length}</small></summary>
+    ${vals.length > 12 ? `<input type="search" class="fq" placeholder="Search ${label.toLowerCase()}…" aria-label="Search ${label}" autocomplete="off">` : ''}
+    <div class="fl" role="group" aria-label="${label}">${vals.map(v => { const c = m.get(v) || 0;
+      return `<label class="fo${c ? '' : ' zero'}"><input type="checkbox" data-k="${key}" data-v="${esc(v)}"${cur.includes(v) ? ' checked' : ''}>${key === 'verdict' ? `<i class="sw" style="background:${(V.find(x => x[0] === v) || [])[2]}"></i>` : ''}<span>${esc(lab(v))}</span><small>${n(c)}</small></label>`; }).join('')}</div>
+    ${cur.length ? `<button type="button" class="linkish" data-clear="${key}">Clear</button>` : ''}</details>`;
+}
+function drawRail() {
+  const nOn = FK.filter(k => F[k].length).length;
+  $('facets').innerHTML = `<div class="fh"><h2>Filters</h2>${nOn || F.q || !F.hideOwned ? '<button type="button" class="linkish" data-reset>Reset all</button>' : ''}</div>
+    <label class="tg"><input type="checkbox" id="hideOwned"${F.hideOwned ? ' checked' : ''}> Hide cards I own <small>${n(RA.filter(r => r.owned).length)}</small></label>
+    ${FACETS.map(facet).join('')}`;
+  $('fopen').textContent = 'Filters' + (nOn ? ' · ' + nOn : '');
 }
 
-/* rail + header */
-$('sub').textContent=R.length+' listings from '+S.length+' sellers';
-$('fx').innerHTML='USD/MYR '+MC.fx.usd_myr.toFixed(3)+'<br>USD/JPY '+MC.fx.usd_jpy.toFixed(2)+'<br>FX '+esc(MC.fx.usd_myr_date)+'<br>Data '+esc(MC.fx.date);
+// ---------- main sections ----------
+const st = { k: 'diff_pct', d: 1, def: true }, sst = { k: 'median_pct', d: 1 };
+const LIMIT = 60; let shown = LIMIT;
+const img = (r, w = 30, h = 42) => (r.image ? `<img class="th" loading="lazy" width="${w}" height="${h}" alt="" src="${esc(r.image)}" onerror="this.style.visibility='hidden'">` : `<span class="th" style="width:${w}px;height:${h}px"></span>`);
+const gap = r => {
+  if (!r.market_rm) return '';
+  const x = Math.max(2, Math.min(98, 50 + 25 * Math.log2(r.price_rm / r.market_rm)));
+  const c = r.price_rm <= r.market_rm ? 'var(--best-text)' : r.verdict === 'check' ? '#b7791f' : 'var(--danger)';
+  return `<span class="gap" title="${rm(r.price_rm)} vs market ${rm(r.market_rm)}"><span class="bar" style="left:${Math.min(x, 50)}%;width:${Math.abs(x - 50)}%;background:${c}"></span><span class="mk"></span></span>`;
+};
+const badge = r => `<span class="badge ${VC[r.verdict]}" title="${esc(r.verdict)} ${pct(r.diff_pct)}">${r.verdict === 'bulk' || r.diff_pct == null ? esc(r.verdict) : (r.verdict === 'check' ? 'Check ' : '') + pct(r.diff_pct)}</span>`;
+const meta = r => `<span class="pill p-lang l-${esc(r.lang)}">${esc(r.lang)}</span><span class="mono">${LOGO[skey(r)] ? `<img class="lg" alt="" loading="lazy" src="${esc(LOGO[skey(r)])}">` : ''}${esc(code(r))} ${esc(r.printed || r.number)}</span>${r.rarity ? `<span class="pill p-rar r-${abbr(r.rarity)}" title="${esc(r.rarity)}">${abbr(r.rarity)}</span>` : ''}${r.variant !== 'normal' ? `<span class="fin">${r.variant === 'holo' ? 'Holo' : 'Reverse'}</span>` : ''}`;
+const cmpBy = (k, d) => (a, b) => { const x = a[k], y = b[k]; if (x == null || y == null) return (x == null) - (y == null); return (typeof x === 'string' ? x.localeCompare(y) : x - y) * d; };
+const th = (state, k, label, cls = '') => { const on = state.k === k && !state.def; return `<th class="${cls}"${on ? ` aria-sort="${state.d > 0 ? 'ascending' : 'descending'}"` : ''}><button type="button" class="sh${on ? ' on' : ''}" data-k="${k}">${label}<span aria-hidden="true">${on ? (state.d > 0 ? '↑' : '↓') : '↕'}</span></button></th>`; };
 
-/* 01 summary */
-var cnt={deal:0,fair:0,overpriced:0,bulk:0,'no market':0};R.forEach(function(r){cnt[r.verdict]++});
-var K=[['deal','Deals','deal'],['fair','Fair',''],['overpriced','Overpriced','over'],['bulk','Bulk',''],['no market','No market','']];
-$('kpis').innerHTML=K.map(function(k){return '<div class="kpi '+k[2]+'"><div class="label">'+k[1]+'</div><b>'+cnt[k[0]]+'</b><div class="pct">'+(R.length?cnt[k[0]]/R.length*100:0).toFixed(0)+'% of listings</div></div>'}).join('');
-var cmp=R.filter(function(r){return r.verdict==='deal'||r.verdict==='fair'||r.verdict==='overpriced'});
-var ask=0,mkt=0;cmp.forEach(function(r){ask+=r.price_rm;mkt+=r.market_rm});
-var cols={deal:'var(--best-text)',fair:'var(--accent)',overpriced:'var(--danger)',bulk:'var(--muted)','no market':'var(--line)'};
-$('totals').innerHTML='<div><div class="label">Comparable listings ('+cmp.length+')</div><div class="big">'+rm(ask)+' <span class="vs">asked vs '+rm(mkt)+' market</span></div><div class="mono" style="font-size:13px;color:'+(ask>mkt?'var(--danger)':'var(--best-text)')+'">'+(mkt?pct((ask/mkt-1)*100)+' overall':'no seller listings yet')+'</div></div>'+
-  '<div><div class="split">'+K.map(function(k){return '<i style="width:'+(cnt[k[0]]/R.length*100)+'%;background:'+cols[k[0]]+'"></i>'}).join('')+'</div><div class="legend">'+K.map(function(k){return '<span style="--c:'+cols[k[0]]+'">'+k[1]+' '+cnt[k[0]]+'</span>'}).join('')+'</div></div>';
-$('sumNote').textContent='thresholds: deal '+MC.thresholds.deal_pct+'%, overpriced +'+MC.thresholds.over_pct+'%, bulk < RM '+MC.thresholds.bulk_rm;
-
-/* 02 eras and sets */
-var ERA_ORDER=['Base','Gym','Neo','Legendary Collection','e-Card','EX','Diamond & Pearl','Platinum','HeartGold & SoulSilver','Black & White','XY','Sun & Moon','Sword & Shield','Scarlet & Violet','Mega Evolution'];
-var LOGO=MC.logos||{};
-// EN set release dates (market_compare.py); undated sets (JP) after them by name
-var SD=MCS.set_dates||{};function byRelease(a,b){return (SD[a]||'9999').localeCompare(SD[b]||'9999')||a.localeCompare(b)}
-var skey=function(r){return r.lang+'|'+r.set};
-var E={};R.forEach(function(r){var e=E[r.era||'Other']=E[r.era||'Other']||{name:r.era||'Other',rows:[],sets:{}};e.rows.push(r);(e.sets[skey(r)]=e.sets[skey(r)]||[]).push(r)});
-var eraIx=function(n){var i=ERA_ORDER.indexOf(n);return i<0?99:i};
-var ERAS=Object.keys(E).map(function(k){return E[k]}).sort(function(a,b){return eraIx(a.name)-eraIx(b.name)});
-function vsum(rows){var c={deal:0,fair:0,overpriced:0,bulk:0,'no market':0};rows.forEach(function(r){c[r.verdict]++});
-  return '<span class="split" aria-hidden="true">'+K.map(function(k){return c[k[0]]?'<i style="width:'+(c[k[0]]/rows.length*100)+'%;background:'+cols[k[0]]+'"></i>':''}).join('')+'</span>'+
-  '<span class="vc">'+[['deal','deal','b-deal'],['fair','fair','b-fair'],['overpriced','over','b-over'],['bulk','bulk','b-bulk']].map(function(k){return c[k[0]]?'<span class="badge '+k[2]+'">'+c[k[0]]+' '+k[1]+'</span>':''}).join('')+'</span>'}
-var curEra=ERAS.length?ERAS.reduce(function(a,b){return b.rows.length>a.rows.length?b:a}).name:'';
-/* ?era=<era>&set=<lang|set> in the URL, so a link opens the same era and set; the default era is left out */
-// set param = EN:<name> or JP:<code> (SV2a), short instead of the whole Japanese name
-var code=function(r){return r.lang!=='EN'&&(r.set.match(/\(([^()]+)\)$/)||[])[1]||r.set};
-var P2K={},K2P={};RA.forEach(function(r){var p=r.lang+':'+code(r);if(!(p in P2K)){P2K[p]=skey(r);K2P[skey(r)]=p}});
-var DEF_ERA=curEra,Q=new URLSearchParams(location.search),qSet=P2K[Q.get('set')]||'';
-var qE=ERAS.filter(function(e){return e.sets[qSet]})[0];
-if(E[Q.get('era')])curEra=Q.get('era');else if(qE)curEra=qE.name;
-function syncUrl(){
-  var u=new URLSearchParams(location.search),se=$('fSet').value;
-  if(curEra&&curEra!==DEF_ERA)u.set('era',curEra);else u.delete('era');
-  if(se)u.set('set',K2P[se]);else u.delete('set');
-  var q=u.toString();history.replaceState(null,'',location.pathname+(q?'?'+q:'')+location.hash);
+function draw() {
+  drawRail();
+  const rows = rowsBut(null);
+  const cnt = {}; V.forEach(v => { cnt[v[0]] = 0; }); rows.forEach(r => { cnt[r.verdict]++; });
+  const cmp = rows.filter(r => ['deal', 'fair', 'overpriced'].includes(r.verdict));
+  const ask = cmp.reduce((t, r) => t + r.price_rm, 0), mkt = cmp.reduce((t, r) => t + r.market_rm, 0);
+  const sellers = new Set(rows.map(r => r.seller)).size;
+  $('sub').textContent = `${n(rows.length)} listings · ${n(sellers)} sellers`;
+  // summary: one split bar, legend doubles as the verdict filter
+  $('summary').innerHTML = `<div class="sum"><div class="sum-a"><div class="label">Comparable listings (${n(cmp.length)})</div>
+      <div class="big">${rm(ask)} <span>asked vs ${rm(mkt)} market</span></div>
+      <div class="mono ${ask > mkt ? 'up' : 'dn'}">${mkt ? pct((ask / mkt - 1) * 100) : '–'} overall</div></div>
+    <div class="sum-b"><div class="split">${V.map(v => cnt[v[0]] ? `<i style="width:${cnt[v[0]] / (rows.length || 1) * 100}%;background:${v[2]}" title="${v[1]} ${cnt[v[0]]}"></i>` : '').join('')}</div>
+      <div class="legend">${V.map(v => `<button type="button" class="lg-b${F.verdict.includes(v[0]) ? ' on' : ''}" data-verdict="${v[0]}"${cnt[v[0]] ? '' : ' disabled'}><i style="background:${v[2]}"></i>${v[1]} <b>${n(cnt[v[0]])}</b></button>`).join('')}</div>
+      ${cnt.check ? `<p class="note">${n(cnt.check)} listing${cnt.check > 1 ? 's are' : ' is'} over +${CHECK}% against market, tagged <b>Check</b> and left out of the overpriced totals: likely slabs, a different print, or a mis-typed price.</p>` : ''}</div></div>`;
+  // eras: 100% verdict bar per era (the mix, not the size), logo, click = era filter + its sets open underneath.
+  // Era rows come from rows matching every filter but Era, so the other eras stay listed after a pick.
+  const er = rowsBut('era'), E = {}; er.forEach(r => { (E[r.era] = E[r.era] || []).push(r); });
+  const mix = rs => { const c = {}; rs.forEach(r => { c[r.verdict] = (c[r.verdict] || 0) + 1; });
+    return [`<span class="eb">${V.map(v => c[v[0]] ? `<i style="flex:${c[v[0]]};background:${v[2]}" title="${v[1]} ${c[v[0]]}"></i>` : '').join('')}</span>`, c]; };
+  const setRows = rowsBut('set');
+  $('eraRows').innerHTML = Object.keys(E).sort((a, b) => eraIx(a) - eraIx(b)).map(e => {
+    const [bar, c] = mix(E[e]), open = F.era.includes(e), logo = eraLogo(e);
+    let sets = '';
+    if (open) {
+      const SS = {}; setRows.filter(r => r.era === e).forEach(r => { (SS[skey(r)] = SS[skey(r)] || []).push(r); });
+      sets = `<div class="esets">${Object.keys(SS).sort((a, b) => (SD[a.split('|')[1]] || '9999').localeCompare(SD[b.split('|')[1]] || '9999') || a.localeCompare(b)).map(k => {
+        const rs = SS[k], r = rs[0], [sb, sc] = mix(rs);
+        return `<button type="button" class="srow${F.set.includes(k) ? ' on' : ''}" data-set="${esc(k)}" title="${esc(r.lang + ' ' + r.set)}"><span class="slogo">${LOGO[k] ? `<img alt="" loading="lazy" src="${esc(LOGO[k])}">` : ''}</span>
+          <span class="sn"><span class="pill p-lang l-${esc(r.lang)}">${esc(r.lang)}</span> <b>${esc(code(r))}</b> <span class="muted">${esc(r.set.replace(/\s*\([^()]+\)$/, ''))}</span></span>${sb}<span class="ec">${n(rs.length)}</span><span class="ed">${sc.deal ? `<b class="dn">${sc.deal} deal${sc.deal > 1 ? 's' : ''}</b>` : ''}</span></button>`; }).join('')}</div>`;
+    }
+    return `<div class="egrp${open ? ' open' : ''}"><button type="button" class="erow${open ? ' on' : ''}" data-era="${esc(e)}" aria-expanded="${open}"><span class="elogo">${logo ? `<img alt="" loading="lazy" src="${esc(logo)}">` : ''}</span><span class="en">${esc(e)}</span>
+      ${bar}<span class="ec">${n(E[e].length)}</span><span class="ed">${c.deal ? `<b class="dn">${c.deal} deal${c.deal > 1 ? 's' : ''}</b>` : ''}</span><span class="ex" aria-hidden="true">${open ? '▴' : '▾'}</span></button>${sets}</div>`;
+  }).join('') || '<p class="muted">No listings.</p>';
+  // deals / overpriced: compact top lists
+  const line = r => `<a class="it" ${r.url ? `href="${esc(r.url)}" target="_blank" rel="noopener"` : ''}>${img(r)}<span class="itm"><b title="${esc(r.name)}">${esc(r.name)}</b><span class="m">${meta(r)}</span><span class="m s">${esc(r.seller)} · ${esc(r.venue)}</span></span>
+    <span class="itp"><b>${rm(r.price_rm)}</b><span class="muted">vs ${rm(r.market_rm)}</span>${badge(r)}</span></a>`;
+  const deals = rows.filter(r => r.verdict === 'deal').sort((a, b) => a.diff_pct - b.diff_pct);
+  const over = rows.filter(r => r.verdict === 'overpriced').sort((a, b) => b.diff_pct - a.diff_pct);
+  $('dealsN').textContent = deals.length ? `top ${Math.min(8, deals.length)} of ${n(deals.length)}` : '';
+  $('overN').textContent = over.length ? `top ${Math.min(8, over.length)} of ${n(over.length)}` : '';
+  $('dealList').innerHTML = deals.slice(0, 8).map(line).join('') + (deals.length > 8 ? `<button type="button" class="linkish more" data-show="deal">Show all ${n(deals.length)} deals in the table</button>` : '') || '<p class="muted">No deals in this filter.</p>';
+  $('overList').innerHTML = over.slice(0, 8).map(line).join('') + (over.length > 8 ? `<button type="button" class="linkish more" data-show="overpriced">Show all ${n(over.length)} overpriced in the table</button>` : '') || '<p class="muted">Nothing overpriced in this filter.</p>';
+  drawSellers(rows);
+  drawTable(rows);
 }
-$('eraList').innerHTML=ERAS.map(function(e){return '<button type="button" class="era" data-era="'+esc(e.name)+'" aria-pressed="'+(e.name===curEra)+'"><span class="t">'+esc(e.name)+'</span><b>'+e.rows.length+'</b><span class="label">'+Object.keys(e.sets).length+' sets</span>'+vsum(e.rows)+'</button>'}).join('');
-function drawSets(){
-  if(!curEra)return;
-  var e=E[curEra],ks=Object.keys(e.sets).sort(function(a,b){return e.sets[b].length-e.sets[a].length||a.localeCompare(b)});
-  $('setsH').innerHTML=esc(curEra)+' <small>'+ks.length+' sets, '+e.rows.length+' listings</small>';
-  $('setList').innerHTML=ks.map(function(k){var rs=e.sets[k],r=rs[0];
-    return '<button type="button" class="set" data-set="'+esc(k)+'" title="'+esc(r.lang+' '+r.set)+'"><span class="logo">'+(LOGO[k]?'<img loading="lazy" alt="'+esc(r.set)+'" src="'+esc(LOGO[k])+'">':'<span>'+esc(r.set)+'</span>')+'</span>'+
-    '<span class="m"><span class="mono">'+r.lang+'</span> '+esc(code(r))+'</span><span class="label">'+rs.length+' listing'+(rs.length>1?'s':'')+'</span>'+vsum(rs)+'</button>'}).join('');
-}
-$('eraList').addEventListener('click',function(ev){var b=ev.target.closest('[data-era]');if(!b)return;curEra=b.dataset.era;$('eraList').querySelectorAll('[data-era]').forEach(function(x){x.setAttribute('aria-pressed',x===b)});drawSets();syncUrl()});
-$('setList').addEventListener('click',function(ev){var b=ev.target.closest('[data-set]');if(!b)return;$('fV').value=$('fL').value=$('fVen').value=$('fS').value='';fillSets();$('fSet').value=b.dataset.set;redraw();$('all').scrollIntoView()});
-// Set list follows the Language filter; a set the language lacks is dropped
-function fillSets(){var l=$('fL').value,cur=$('fSet').value,keep=false;
-  $('fSet').innerHTML='<option value="">All sets</option>'+ERAS.map(function(e){var ks=Object.keys(e.sets).filter(function(k){return !l||k.indexOf(l+'|')===0}).sort(byRelease);
-    if(ks.indexOf(cur)>=0)keep=true;
-    return ks.length?'<optgroup label="'+esc(e.name)+'">'+ks.map(function(k){return '<option value="'+esc(k)+'">'+esc(k.replace('|',' '))+'</option>'}).join('')+'</optgroup>':''}).join('');
-  $('fSet').value=keep?cur:''}
-fillSets();
-$('fL').addEventListener('change',fillSets);
-if(qE)$('fSet').value=qSet;
-drawSets();
 
-/* 03 / 04 */
-function card(r){
-  return '<article class="item">'+img(r)+'<div style="min-width:0"><div class="t" title="'+esc(r.name)+'">'+esc(r.name)+'</div>'+
-  '<div class="m">'+esc(r.set)+' '+esc(r.number)+' - '+fin(r)+'</div>'+
-  '<div class="m">'+esc(r.seller)+' - '+esc(r.venue)+'</div>'+
-  '<div class="row2"><span class="num">'+rm(r.price_rm)+' <span style="color:var(--muted)">/ '+rm(r.market_rm)+'</span></span><span class="badge '+VC[r.verdict]+'">'+pct(r.diff_pct)+'</span></div>'+
-  gap(r)+(r.url?'<div class="m" style="margin-top:4px"><a href="'+esc(r.url)+'" target="_blank" rel="noopener">Open listing</a></div>':'')+'</div></article>';
+function drawSellers(rows) {
+  const S = {};
+  rows.forEach(r => { const s = S[r.seller] = S[r.seller] || { seller: r.seller, venue: r.venue, listings: 0, compared: 0, deals: 0, overpriced: 0, check: 0, bulk: 0, ask: 0, mkt: 0, pcts: [] };
+    s.listings++; if (r.verdict === 'deal') s.deals++; if (r.verdict === 'overpriced') s.overpriced++; if (r.verdict === 'check') s.check++; if (r.verdict === 'bulk') s.bulk++;
+    if (['deal', 'fair', 'overpriced'].includes(r.verdict)) { s.compared++; s.ask += r.price_rm; s.mkt += r.market_rm; s.pcts.push(r.diff_pct); } });
+  const list = Object.values(S).map(s => { const p = s.pcts.sort((a, b) => a - b), m = p.length >> 1;
+    return { ...s, median_pct: p.length ? (p.length % 2 ? p[m] : (p[m - 1] + p[m]) / 2) : null, ask: s.compared ? s.ask : null, mkt: s.compared ? s.mkt : null }; });
+  $('selN').textContent = `${n(list.length)} sellers`;
+  $('selHead').innerHTML = `<tr>${th(sst, 'seller', 'Seller')}${th(sst, 'venue', 'Venue', 'hs')}${th(sst, 'median_pct', 'Median vs market', 'r')}${th(sst, 'compared', 'Compared', 'r hs')}${th(sst, 'listings', 'Listings', 'r')}${th(sst, 'deals', 'Deals', 'r')}${th(sst, 'overpriced', 'Over', 'r')}${th(sst, 'check', 'Check', 'r hs')}${th(sst, 'ask', 'Asked', 'r hs')}${th(sst, 'mkt', 'Market', 'r hs')}</tr>`;
+  $('selBody').innerHTML = list.sort(cmpBy(sst.k, sst.d)).map(s => `<tr class="${s.compared ? '' : 'bulk'}"><td><button type="button" class="linkish" data-seller="${esc(s.seller)}">${esc(s.seller)}</button></td><td class="hs muted">${esc(s.venue)}${s.bulk === s.listings ? ' · bulk only' : ''}</td>
+    <td class="r mono ${s.median_pct == null ? '' : s.median_pct < 0 ? 'dn' : 'up'}">${pct(s.median_pct)}</td><td class="r hs">${s.compared}</td><td class="r">${s.listings}</td><td class="r">${s.deals || ''}</td><td class="r">${s.overpriced || ''}</td><td class="r hs">${s.check || ''}</td><td class="r hs">${rm(s.ask)}</td><td class="r hs">${rm(s.mkt)}</td></tr>`).join('');
 }
-var deals=R.filter(function(r){return r.verdict==='deal'}).sort(function(a,b){return a.diff_pct-b.diff_pct});
-var over=R.filter(function(r){return r.verdict==='overpriced'}).sort(function(a,b){return b.diff_pct-a.diff_pct});
-$('dealsN').textContent='top 8 of '+deals.length;$('overN').textContent='top 8 of '+over.length;
-$('dealList').innerHTML=deals.slice(0,8).map(card).join('');
-$('overList').innerHTML=over.slice(0,8).map(card).join('');
 
-/* sortable headers: click a column to sort by it, click again to flip; blanks always last */
-function cmpBy(k,d){return function(a,b){var x=a[k],y=b[k];if(x==null||y==null)return (x==null)-(y==null);return (typeof x==='string'?x.localeCompare(y):x-y)*d}}
-function sortHead(id,st,cb){var head=$(id);head.addEventListener('click',function(e){var bt=e.target.closest('button[data-k]');if(!bt)return;
-  st.d=st.k===bt.dataset.k?-st.d:1;st.k=bt.dataset.k;mark(head,st);cb()});return function(){mark(head,st)}}
-function mark(head,st){head.querySelectorAll('button[data-k]').forEach(function(b){var th=b.parentNode;if(b.dataset.k===st.k)th.setAttribute('aria-sort',st.d>0?'ascending':'descending');else th.removeAttribute('aria-sort')})}
-
-/* 04 sellers */
-var SB={};S.forEach(function(s){s.cmp_ask=0;s.cmp_mkt=0;SB[s.seller]=s});
-cmp.forEach(function(r){var s=SB[r.seller];if(s){s.cmp_ask+=r.price_rm;s.cmp_mkt+=r.market_rm}});
-S.forEach(function(s){if(!s.compared){s.cmp_ask=s.cmp_mkt=null}});
-var selSt={k:'median_pct',d:1};
-function drawSel(){
-$('selBody').innerHTML=S.slice().sort(cmpBy(selSt.k,selSt.d)).map(function(s){var b=!s.compared;
-  return '<tr class="'+(b?'bulk':'')+'"><td>'+esc(s.seller)+'</td><td class="v hide-s">'+esc(s.venue)+(b?' - bulk only':'')+'</td><td class="mono '+(b?'':s.median_pct<0?'dn':'up')+'">'+(b?'-':pct(s.median_pct))+'</td><td class="num">'+s.compared+'/'+s.listings+'</td><td class="num">'+s.deals+'</td><td class="num">'+s.overpriced+'</td><td class="num hide-s">'+(b?'-':rm(s.cmp_ask))+'</td><td class="num hide-s">'+(b?'-':rm(s.cmp_mkt))+'</td></tr>'}).join('');
+function drawTable(rows) {
+  const key = r => r.lang + '|' + r.set + '|' + r.number + '|' + r.variant;
+  const by = st.def ? cmpBy('diff_pct', 1) : cmpBy(st.k, st.d);
+  let out = [];
+  if (F.group) {
+    const G = {}; rows.forEach(r => { (G[key(r)] = G[key(r)] || []).push(r); });
+    Object.values(G).map(g => g.sort((a, b) => a.price_rm - b.price_rm)).sort((a, b) => by(a[0], b[0])).forEach(g => g.forEach((r, i) => out.push([r, i === 0, g.length])));
+  } else rows.slice().sort(by).forEach(r => out.push([r, true, 1]));
+  const sortName = st.def ? '' : { name: 'Card', seller: 'Seller', price_rm: 'Price', market_rm: 'Market', diff_pct: 'vs market' }[st.k];
+  $('tbar').innerHTML = `<input type="search" id="q" placeholder="Search card, set, seller…" aria-label="Search listings" value="${esc(F.q)}" autocomplete="off">
+    <span class="cnt" aria-live="polite"><b>${n(rows.length)}</b> listings</span>
+    <label class="tg"><input type="checkbox" id="grp"${F.group ? ' checked' : ''}> Group by card</label><span class="sp"></span>
+    ${sortName ? `<span class="ftag">Sort: ${sortName} ${st.d > 0 ? '↑' : '↓'}<button type="button" data-sortreset aria-label="Back to default order">×</button></span>` : ''}`;
+  $('tHead').innerHTML = `<tr><th class="img"><span class="vh">Scan</span></th>${th(st, 'name', 'Card')}${th(st, 'seller', 'Seller')}${th(st, 'price_rm', 'Price', 'r')}${th(st, 'market_rm', 'Market', 'r hs')}${th(st, 'diff_pct', 'vs market', 'r')}</tr>`;
+  const total = out.length; out = out.slice(0, shown);
+  $('tBody').innerHTML = out.map(([r, first, gn]) => { const dup = F.group && !first;
+    return `<tr class="${F.group && first ? 'grp' : dup ? 'dup' : ''}"><td class="img">${dup ? '' : img(r)}</td>
+      <td class="card"><span class="cn">${esc(r.name)}</span>${F.group && first && gn > 1 ? `<span class="chip">cheapest of ${gn}</span>` : ''}${dup ? '' : `<span class="m">${meta(r)}</span>`}</td>
+      <td>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.seller)}</a>` : esc(r.seller)}<div class="sm">${esc(r.venue)}</div></td>
+      <td class="r num">${rm(r.price_rm)}</td><td class="r num hs">${rm(r.market_rm)}<div class="sm">${esc(r.market_src || '')}</div></td>
+      <td class="r"><span class="pg">${r.verdict === 'bulk' ? '' : gap(r)}${badge(r)}</span></td></tr>`; }).join('') || '<tr><td colspan="6" class="muted">No listings match. <button type="button" class="linkish" data-reset>Reset filters</button></td></tr>';
+  $('moreRows').hidden = total <= shown;
+  $('moreRows').textContent = `Show ${Math.min(LIMIT, total - shown)} more (${total - shown} left)`;
+  const tb = $('tbar'); document.documentElement.style.setProperty('--tbar-h', tb.offsetHeight + 'px');
 }
-sortHead('selHead',selSt,drawSel);drawSel();
 
-/* 05 table */
-var st={k:'diff_pct',d:1},LIMIT=60,shown=LIMIT;
-var key=function(r){return r.lang+'|'+r.set+'|'+r.number+'|'+r.variant};
-function draw(){
-  var v=$('fV').value,l=$('fL').value,ve=$('fVen').value,se=$('fSet').value,ra=$('fR').value,fi=$('fF').value,q=$('fS').value.trim().toLowerCase(),g=$('fG').checked;
-  var rows=($('fO').checked?R:RA).filter(function(r){return(!v||r.verdict===v)&&(!l||r.lang===l)&&(!ve||r.venue===ve)&&(!se||skey(r)===se)&&(!ra||r.rarity===ra)&&(!fi||r.variant===fi)&&(!q||(r.seller+' '+r.name+' '+r.store).toLowerCase().indexOf(q)>=0)});
-  var byPct=cmpBy(st.k,st.d);
-  var out=[];
-  if(g){
-    var G={};rows.forEach(function(r){(G[key(r)]=G[key(r)]||[]).push(r)});
-    var groups=Object.keys(G).map(function(k){return G[k].sort(function(a,b){return a.price_rm-b.price_rm})});
-    groups.sort(function(a,b){return byPct(a[0],b[0])});
-    groups.forEach(function(gr){gr.forEach(function(r,i){out.push([r,i===0,gr.length])})});
-  } else rows.sort(byPct).forEach(function(r){out.push([r,true,1])});
-  $('count').textContent=rows.length+' of '+RA.length+' listings'+(RA.length>R.length?' ('+(RA.length-R.length)+' owned)':'');
-  syncUrl();
-  var total=out.length;out=out.slice(0,shown);
-  $('moreRows').hidden=total<=shown;$('moreRows').textContent='Show '+Math.min(LIMIT,total-shown)+' more ('+(total-shown)+' left)';
-  $('tBody').innerHTML=out.map(function(o){var r=o[0],first=o[1];
-    var dup=g&&!first; // later rows of a group: seller and price only, the first row carries the card
-    return '<tr class="'+(g&&first?'grp':dup?'dup':'')+'"><td class="img">'+(dup?'':img(r))+'</td><td class="card"><span class="cname">'+esc(r.name)+'</span>'+(g&&first&&o[2]>1?'<span class="chip">CHEAPEST of '+o[2]+'</span>':'')+
-    (dup?'':pills(r))+'</td>'+
-    '<td class="hide-s">'+(r.url?'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.seller)+'</a>':esc(r.seller))+'<div class="sm">'+esc(r.venue)+'</div></td>'+
-    '<td class="n">'+rm(r.price_rm)+'</td><td class="n hide-s">'+rm(r.market_rm)+(r.market_rm==null?'<div class="sm">'+esc(r.market_src)+'</div>':'<div class="sm">'+esc(r.market_src)+'</div>')+(r.lang==='EN'&&r.jp_rm?'<div class="sm" title="JP print in Japan, '+esc(r.jp_src)+'">Japan '+rm(r.jp_rm)+'</div>':'')+'</td>'+
-    // bulk: % is meaningless (footer), so the badge says bulk and the % moves to the tooltip
-    '<td class="n"><div class="pg">'+(r.verdict==='bulk'?'':'<span class="hide-s">'+gap(r)+'</span>')+'<span class="badge '+VC[r.verdict]+'" title="'+pct(r.diff_pct)+'">'+(r.diff_pct==null||r.verdict==='bulk'?esc(r.verdict):pct(r.diff_pct))+'</span></div></td></tr>'}).join('');
-}
-var abbr=function(s){return s.split(/\s+/).map(function(w){return w[0]}).join('').toUpperCase()};
-function pb(f,v,html,cls,what){return '<button type="button" class="pill '+cls+'" data-f="'+f+'" data-v="'+esc(v)+'" title="Show only '+esc(what)+'">'+html+'</button>'}
-function pills(r){var k=skey(r);
-  return '<div class="pills">'+pb('fL',r.lang,esc(r.lang),'p-lang l-'+r.lang,r.lang+' cards')+
-  pb('fSet',k,(LOGO[k]?'<img alt="" loading="lazy" src="'+esc(LOGO[k])+'">':'')+esc(code(r)),'p-set',r.set)+
-  '<span class="pill p-no">'+esc(r.printed||r.number)+'</span>'+
-  (r.rarity?pb('fR',r.rarity,esc(abbr(r.rarity)),'p-rar r-'+abbr(r.rarity)+(r.rarity==='Common'?' common':''),r.rarity):'')+
-  (r.variant!=='normal'?pb('fF',r.variant,r.variant==='holo'?'Holo':'Reverse holo','p-fin '+esc(r.variant),r.variant==='holo'?'holo':'reverse holo'):'')+'</div>'}
-var RC={};RA.forEach(function(r){if(r.rarity)RC[r.rarity]=(RC[r.rarity]||0)+1});
-$('fR').innerHTML+=Object.keys(RC).sort(function(a,b){return RC[b]-RC[a]}).map(function(k){return '<option value="'+esc(k)+'">'+esc(k)+' ('+RC[k]+')</option>'}).join('');
-// a pill click sets its filter; a set pill also sets Language so the Set list has the set
-$('tBody').addEventListener('click',function(e){var b=e.target.closest('button[data-f]');if(!b)return;
-  if(b.dataset.f==='fSet'){$('fL').value=b.dataset.v.split('|')[0];fillSets()}
-  if(b.dataset.f==='fL'){$('fL').value=b.dataset.v;fillSets()}else $(b.dataset.f).value=b.dataset.v;
-  redraw();$('all').scrollIntoView({block:'start'})});
-var redraw=function(){shown=LIMIT;draw()};
-['fV','fL','fVen','fSet','fR','fF','fG','fO'].forEach(function(id){$(id).addEventListener('change',redraw)});
-$('fS').addEventListener('input',redraw);
-var markT=sortHead('tHead',st,redraw);
-$('moreRows').addEventListener('click',function(){shown+=LIMIT;draw()});
-if(qE&&!location.hash)setTimeout(function(){$('all').scrollIntoView()});
-document.querySelectorAll('.more a').forEach(function(a){a.addEventListener('click',function(){$('fV').value=a.dataset.v;$('fSet').value='';st.k='diff_pct';st.d=a.dataset.v==='overpriced'?-1:1;markT();redraw()})});
+// ---------- events ----------
+const redraw = () => { shown = LIMIT; draw(); };
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('.facet input[data-k]')) { const k = t.dataset.k, v = t.dataset.v; F[k] = t.checked ? [...F[k], v] : F[k].filter(x => x !== v); redraw(); const again = document.querySelector(`.facet input[data-k="${k}"][data-v="${CSS.escape(v)}"]`); if (again) again.focus(); }
+  else if (t.id === 'hideOwned') { F.hideOwned = t.checked; redraw(); }
+  else if (t.id === 'grp') { F.group = t.checked; redraw(); }
+  else if (t.id === 'colPick') { location.search = '?collection=' + t.value; }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'q') { F.q = e.target.value.trim().toLowerCase(); clearTimeout(draw.t); draw.t = setTimeout(() => { redraw(); const q = $('q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 200); }
+  if (e.target.matches('.fq')) { const s = e.target.value.toLowerCase(); e.target.parentNode.querySelectorAll('.fo').forEach(o => { o.hidden = !o.textContent.toLowerCase().includes(s); }); }
+});
+document.addEventListener('toggle', e => { if (e.target.matches && e.target.matches('.facet')) { UI.open[e.target.dataset.k] = e.target.open; saveUI(); } }, true);
+document.addEventListener('click', e => {
+  const t = e.target, b = t.closest('button');
+  if (!b) return;
+  if (b.dataset.clear) { F[b.dataset.clear] = []; redraw(); }
+  else if (b.hasAttribute('data-reset')) { FK.forEach(k => { F[k] = []; }); F.q = ''; F.hideOwned = true; redraw(); }
+  else if (b.dataset.verdict) { const v = b.dataset.verdict; F.verdict = F.verdict.includes(v) ? F.verdict.filter(x => x !== v) : [...F.verdict, v]; redraw(); }
+  else if (b.dataset.set) { const v = b.dataset.set; F.set = F.set.includes(v) ? F.set.filter(x => x !== v) : [...F.set, v]; redraw(); }
+  else if (b.dataset.era) { const v = b.dataset.era; F.era = F.era.includes(v) ? F.era.filter(x => x !== v) : [...F.era, v]; redraw(); }
+  else if (b.dataset.seller) { F.seller = [b.dataset.seller]; redraw(); $('all').scrollIntoView(); }
+  else if (b.dataset.show) { F.verdict = [b.dataset.show]; Object.assign(st, { k: 'diff_pct', d: b.dataset.show === 'deal' ? 1 : -1, def: false }); redraw(); $('all').scrollIntoView(); }
+  else if (b.hasAttribute('data-sortreset')) { Object.assign(st, { k: 'diff_pct', d: 1, def: true }); redraw(); }
+  else if (b.classList.contains('sh')) {
+    const k = b.dataset.k, s = b.closest('#selHead') ? sst : st;
+    if (s === sst) { sst.d = sst.k === k ? -sst.d : 1; sst.k = k; draw(); return; }
+    if (st.def || st.k !== k) Object.assign(st, { k, d: 1, def: false }); else if (st.d > 0) st.d = -1; else Object.assign(st, { k: 'diff_pct', d: 1, def: true });
+    redraw();
+  }
+  else if (b.id === 'moreRows') { shown += LIMIT; draw(); }
+  else if (b.id === 'fopen') document.body.classList.toggle('fopen');
+});
+
+// ---------- URL: ?era=<era>&set=<LANG:code or EN:name> pre-fill the Era and Set filters (old links keep working) ----------
+if (Q.get('era') && RA.some(r => r.era === Q.get('era'))) F.era = [Q.get('era')];
+if (Q.get('set')) { const [l, c] = Q.get('set').split(/:(.*)/s); const r = RA.find(x => x.lang === l && (code(x) === c || x.set === c)); if (r) F.set = [skey(r)]; }
+// JP vs EN page (Wobbuffet / Yuka Morii): jp-en/<slug>/ next to market/ on GitHub Pages, the collection folder's copy on the PC
+if (['wobbuffet', 'yuka-morii'].includes(CID)) { const a = $('jpen'); a.hidden = false;
+  a.href = /\/market\//.test(location.pathname) ? '../jp-en/' + CID + '/' : '../' + COL.name + '/jp_en_trends.html'; }
+
+// ---------- static parts ----------
+$('colPick').innerHTML = Object.keys(MCS.collections).filter(k => MCS.collections[k].rows.length).map(k => `<option value="${k}"${k === CID ? ' selected' : ''}>${esc(MCS.collections[k].name)} (${MCS.collections[k].rows.length})</option>`).join('');
+document.title = COL.name + ' Market Report';
+$('colName').textContent = COL.name;
+$('fx').innerHTML = `Prices ${esc(MCS.fx.date)} · USD 1 = RM ${MCS.fx.usd_myr.toFixed(2)} · ¥${MCS.fx.usd_jpy.toFixed(0)} · backup ${esc((MCS.backup || '').replace('card-tracker-backup-', '').replace('.json', ''))}`;
+$('foot').innerHTML = `<b>How market is set.</b> EN = TCGplayer price for the listing's finish. JP = Mercari median (else Cardmarket), normal finish only. Deal ≤ ${TH.deal_pct}%, overpriced ≥ +${TH.over_pct}%, Check > +${CHECK}%, bulk = market under RM ${TH.bulk_rm} (% is meaningless there).`;
 draw();
-
-/* rail highlight */
-var links=[].slice.call(document.querySelectorAll('#nav a'));
-if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)links.forEach(function(a){a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)})})},{rootMargin:'-20% 0px -70% 0px'});
-['summary','eras','deals','over','sellers','all'].forEach(function(id){io.observe($(id))});}
-
-$('foot').innerHTML='<b>How market is set.</b> EN = TCGplayer price for the listing\'s finish. JP = Mercari median (else Cardmarket), normal finish only; in rules collections JP = TCGplayer Japan price for the listing\'s finish (TCGCSV). Bulk = market under RM '+MC.thresholds.bulk_rm+', where % is meaningless (local floor RM 1-3). Gap bar: centre tick = market, dot = asking price, log scale (each quarter = 2x). FX USD/MYR '+MC.fx.usd_myr.toFixed(3)+' on '+esc(MC.fx.usd_myr_date)+'. Some % are huge (+3,000%): likely graded or mis-recorded, shown as-is. Source: '+esc(MC.backup)+'.';
 })();
+
 </script>
 </body>
 </html>
