@@ -607,7 +607,7 @@ document.title = `JP vs EN Prices · ${D.collection}`;
 $('sub').textContent = `${D.collection} · every Japanese print: the Japan sold price (Mercari) against the English card on TCGplayer`;
 $('fxn').textContent = `¥1 = $${lastFx.toFixed(5)}`;
 $('fx').textContent = `Prices to ${mon(D.months.at(-1))} · FX ${mon(Object.keys(D.fx).filter(k => D.fx[k]).at(-1))}${D.built ? ' · built ' + D.built : ''}`;
-$('foot').innerHTML = '<b>How it is compared.</b> Japan = Mercari sold median (JP TCGplayer when Mercari has no sales), EN = TCGplayer for the matching finish. Under 0.8× = cheaper in Japan, over 1.25× = dearer. Flags: thin data (under 5 sales), the ¥300 Mercari floor, a match by name + set only.';
+$('foot').innerHTML = '<b>How it is compared.</b> Japan = Mercari sold median (JP TCGplayer when Mercari has no sales), EN = TCGplayer for the matching finish. Under 0.8× = cheaper in Japan, over 1.25× = dearer. Flags: thin data (under 5 sales), the ¥300 Mercari floor, a match by name + set only. EN price history: <a href="https://tickermint.cards" target="_blank" rel="noopener">TickerMint</a> (Yuka Morii) and <a href="https://cardprice.com" target="_blank" rel="noopener">cardprice.com</a>; Japan: Mercari.';
 draw();
 })();
 
