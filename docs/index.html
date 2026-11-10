@@ -319,6 +319,10 @@
 
   @container (max-width: 1100px) { .ctbl th:nth-child(5), .ctbl th:nth-child(7) { width: 0 !important; } .ctbl th:nth-child(5), .ctbl td.clang, .ctbl th:nth-child(7), .ctbl td.cfin { visibility: hidden; padding: 0; overflow: hidden; } }
   @container (max-width: 860px) { .ctbl th:nth-child(4), .ctbl th:nth-child(6) { width: 0 !important; } .ctbl th:nth-child(4), .ctbl td.cno, .ctbl th:nth-child(6), .ctbl td.crar { visibility: hidden; padding: 0; overflow: hidden; } }
+  /* narrower still (2026-11-10, user screenshot): Cheapest, then Set, go too, so Card never shrinks to 0 and its thumbnail never lands on the Set text; Card clips instead of overflowing */
+  .ctbl td.cname { overflow: hidden; }
+  @container (max-width: 640px) { .ctbl th:nth-child(8) { width: 0 !important; } .ctbl th:nth-child(8), .ctbl td.ccheap { visibility: hidden; padding: 0; overflow: hidden; } }
+  @container (max-width: 500px) { .ctbl th:nth-child(3) { width: 0 !important; } .ctbl th:nth-child(3), .ctbl td.cset { visibility: hidden; padding: 0; overflow: hidden; } }
   /* facet rail (2026-11-09) */
   .linkish { border: 0; background: none; padding: 4px 2px; color: var(--accent); font-size: 13px; }
   .linkish:hover { text-decoration: underline; }
