@@ -7,284 +7,610 @@
 <meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
 <title>JP vs EN Prices · Wobbuffet</title>
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('cpt-theme')||''}catch(e){}</script>
+<!-- Built by Wobbuffet/scripts/build_jp_en_trends.py; facet-rail design 2026-11-10 (styles shared with Tracker/market_report.html) -->
 <style>
-/* tokens match the tracker and market report, which share the cpt-theme light/dark choice */
-:root { --bg:#f6f6f4; --card:#fff; --ink:#1d1d1b; --mute:#6b6b66; --line:#e2e2dd; --accent:#2f6fdb; --sel:#eaf0fc;
-        --en:#2f6fde; --jptcg:#c2410c; --merc:#1d7a3a; --cheap-bg:#e3f4e8; --dear-bg:#fbe9e7; --det-w:400px; color-scheme: light dark; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg:#141416; --card:#1c1c1f; --ink:#ececE8; --mute:#9a9a94; --line:#2e2e33; --accent:#6d9cff; --sel:#232c3d;
-  --en:#6b9cff; --jptcg:#f08a4b; --merc:#7fd39a; --cheap-bg:#1d3626; --dear-bg:#3a2020; } }
-:root[data-theme="dark"] { color-scheme: dark;
-  --bg:#141416; --card:#1c1c1f; --ink:#ececE8; --mute:#9a9a94; --line:#2e2e33; --accent:#6d9cff; --sel:#232c3d;
-  --en:#6b9cff; --jptcg:#f08a4b; --merc:#7fd39a; --cheap-bg:#1d3626; --dear-bg:#3a2020; }
-:root[data-theme="light"] { color-scheme: light; }
-* { box-sizing: border-box; }
-body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-.wrap { display:grid; grid-template-columns: minmax(0, 1fr) var(--det-w); }
-main { padding: 24px 20px 48px; min-width: 0; }
-a { color: var(--accent); }
-a:hover { text-decoration-thickness: 2px; }
-a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.back { display:inline-block; margin-bottom: 14px; padding: 4px 12px; border: 1px solid var(--accent); border-radius: 999px;
-        font-size: 13px; text-decoration: none; }
-.back:hover { background: var(--accent); color: var(--card); }
-h1 { font-size: 22px; margin: 0 0 4px; text-wrap: balance; }
-.sub { color: var(--mute); margin: 0 0 16px; max-width: 70ch; }
-.bar { display:flex; gap:8px; align-items:center; margin-bottom: 16px; flex-wrap: wrap; }
-.bar button { border:1px solid var(--line); background:var(--card); color:var(--ink); padding:6px 14px; min-height: 32px;
-              border-radius: 999px; cursor:pointer; font: inherit; touch-action: manipulation; }
-.bar button:hover { border-color: var(--accent); }
-.bar button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.panel { background:var(--card); border:1px solid var(--line); border-radius: 12px; margin-bottom: 16px; }
-/* the table scrolls in its own box so the header row can stay put */
-.scroll { overflow: auto; max-height: calc(100vh - 48px); overscroll-behavior: contain; }
-table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
-caption { text-align: left; font-weight: 600; font-size: 15px; padding: 14px 12px 8px; }
-th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-thead th { position: sticky; top: 0; z-index: 1; background: var(--card); color: var(--mute); font-weight: 600; }
-th.n, td.n { text-align: right; }
-td.verdict { white-space: normal; min-width: 150px; }
-td.verdict .note { display: block; }
-tbody tr { cursor: pointer; }
-tbody tr:hover { background: var(--bg); }
-tbody tr[aria-current="true"] { background: var(--sel); }
-tbody th { font-weight: 500; }
-.thumb { width: 32px; height: 45px; border-radius: 3px; object-fit: cover; background: var(--line); display: block; }
-.v { display:inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-.v.cheap { background: var(--cheap-bg); color: var(--merc); }
-.v.dear { background: var(--dear-bg); color: var(--jptcg); }
-.v.same { background: var(--bg); color: var(--mute); }
-.note { color: var(--mute); font-size: 12px; }
-/* card detail sidebar, same pattern as the tracker's .det panel */
-.det { position: sticky; top: 0; align-self: start; height: 100vh; overflow: hidden auto; overscroll-behavior: contain;
-       background: var(--card); border-left: 1px solid var(--line); padding: 14px 16px 24px; }
-.det-top { display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px;
-           letter-spacing: .06em; text-transform: uppercase; color: var(--mute); }
-.det-top button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px;
-                  padding: 2px 10px; min-height: 28px; font: inherit; text-transform: none; letter-spacing: 0; cursor: pointer; }
-.det-top button:hover { border-color: var(--accent); }
-.scans { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-.scans figure { margin: 0; }
-.scans img, .noscan { width: 100%; aspect-ratio: 5 / 7; border-radius: 6px; object-fit: cover; background: var(--line); display:block; }
-.noscan { display:grid; place-items:center; font-size: 12px; color: var(--mute); }
-.scans figcaption { font-size: 12px; color: var(--mute); margin-top: 4px; text-align: center; }
-.det h2 { font-size: 18px; margin: 0 0 2px; text-wrap: balance; }
-.det h3 { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--mute); margin: 18px 0 8px; }
-.det .en { color: var(--mute); font-size: 13px; margin-bottom: 8px; }
-.tiles { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
-.tile { border:1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; }
-.tile b { font-size: 17px; display:block; font-variant-numeric: tabular-nums; }
-.tile span { color: var(--mute); font-size: 12px; }
-.legend { display:flex; gap:12px; flex-wrap: wrap; font-size: 12px; color: var(--mute); margin: 6px 0; }
-.legend i { display:inline-block; width:12px; height:3px; border-radius:2px; vertical-align: middle; margin-right: 5px; }
-svg { width: 100%; height: auto; display:block; }
-svg text { fill: var(--mute); font-size: 11px; }
-.det table { font-size: 12px; }
-.det td, .det th { padding: 4px 6px; }
-.empty { color: var(--mute); padding: 40px 8px; text-align: center; }
-.foot { max-width: 90ch; }
-@media (max-width: 900px) {
-  .wrap { display:block; }
-  .det { position: fixed; top: 0; right: 0; bottom: 0; height: auto; width: min(100vw, var(--det-w)); z-index: 20;
-         box-shadow: 0 0 40px #0005; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
-  .det[data-empty] { display: none; }
+
+
+:root{
+  --bg:#f6f6f4;--surface:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e2dd;--accent:#2f6fdb;
+  --best-bg:#e3f4e8;--best-text:#1d7a3a;--danger:#b3261e;--danger-bg:#fbe9e7;--fair-bg:#eef3fc;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+  color-scheme:light dark;
 }
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141416;--surface:#1c1c1f;--text:#ececE8;--muted:#9a9a94;--line:#2e2e33;--accent:#6d9cff;
+  --best-bg:#1d3626;--best-text:#7fd39a;--danger:#f2877f;--danger-bg:#3a2020;--fair-bg:#1f2738;
+}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#141416;--surface:#1c1c1f;--text:#ececE8;--muted:#9a9a94;--line:#2e2e33;--accent:#6d9cff;
+  --best-bg:#1d3626;--best-text:#7fd39a;--danger:#f2877f;--danger-bg:#3a2020;--fair-bg:#1f2738;
+}
+:root[data-theme="light"]{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font)}
+a{color:var(--accent);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .2s}
+a:hover,a:focus-visible{background-size:100% 1px}
+.num,td.n{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono)}
+
+/* layout: Dark-Editorial sticky side rail + scrolling main */
+.rail{position:sticky;top:0;height:100vh;padding:40px 28px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:28px}
+.rail h1{font-size:20px;line-height:1.25;margin:0}
+.rail .sub{color:var(--muted);font-size:13px;margin-top:6px}
+.rail nav{display:flex;flex-direction:column;gap:2px}
+.rail nav a{display:flex;gap:12px;align-items:baseline;padding:7px 0;color:var(--muted);font-size:14px;background:none}
+.rail nav a .mono{font-size:12px;color:var(--accent)}
+.rail nav a::after{content:"";flex:1;height:1px;background:var(--line);align-self:center;transition:background .2s}
+.rail nav a.on,.rail nav a:hover{color:var(--text)}
+.rail nav a.on::after{background:var(--accent)}
+.rail .fx{margin-top:auto;font-size:12px;color:var(--muted);font-family:var(--mono);line-height:1.7}
+main{padding:40px 40px 64px;min-width:0}
+section{scroll-margin-top:16px}
+.skip{position:absolute;left:-9999px;top:8px;z-index:10;padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.skip:focus{left:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.label{font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+
+/* 01 summary */
+.kpi.deal b{color:var(--best-text)} .kpi.over b{color:var(--danger)}
+.totals{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.totals .big{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.totals .vs{color:var(--muted);font-size:14px}
+.split{display:flex;height:10px;border-radius:5px;overflow:hidden;margin-top:10px;background:var(--line)}
+.split i{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;background:var(--c)}
+
+/* 02 eras and sets */
+#eras{margin-top:40px}
+.eras{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.era,.set{font:inherit;color:inherit;text-align:left;cursor:pointer;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0;display:flex;flex-direction:column;gap:6px}
+.era:hover,.set:hover{border-color:var(--muted)}
+.era[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.era:focus-visible,.set:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.era .t{font-weight:600;font-size:14px;line-height:1.3}
+.era b{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.era .split,.set .split{height:6px;margin-top:0}
+.sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.set .logo{height:64px;display:grid;place-items:center}
+.set .logo img{max-width:100%;max-height:64px;object-fit:contain}
+.set .logo span{font-weight:600;font-size:13px;text-align:center;line-height:1.3}
+.set .m{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* three columns */
+#sellers{margin-top:48px}
+.list{display:flex;flex-direction:column;gap:10px}
+.badge{font-family:var(--mono);font-size:12px;padding:1px 6px;border-radius:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.b-deal{background:var(--best-bg);color:var(--best-text)}
+.b-over{background:var(--danger-bg);color:var(--danger)}
+.b-fair{background:var(--fair-bg);color:var(--accent)}
+.b-bulk,.b-none{background:var(--line);color:var(--muted)}
+/* gap motif: market tick at centre, price dot on log scale */
+.gap{position:relative;height:14px;margin-top:6px}
+.gap::before{content:"";position:absolute;left:0;right:0;top:6px;height:2px;background:var(--line);border-radius:1px}
+.gap .mk{position:absolute;left:50%;top:1px;width:2px;height:12px;background:var(--muted)}
+.gap .bar{position:absolute;top:6px;height:2px}
+.more{margin-top:10px;font-size:13px}
+
+/* sellers */
+.dn{color:var(--best-text)} .up{color:var(--danger)}
+
+/* 05 table */
+.all{margin-top:48px}
+#fSet{width:240px;max-width:100%;min-width:0;text-overflow:ellipsis} /* fixed: a select grows to its longest option (JP set names) */
+.toolbar .count{flex-basis:100%;text-align:right;font-size:13px;color:var(--muted)} /* own line always, so the row looks the same for every filter */
+th button{all:unset;cursor:pointer}
+th button:hover,th[aria-sort] button{color:var(--accent)}
+th button:focus-visible{outline:2px solid var(--accent)}
+th[aria-sort=ascending] button::after{content:" \2191"}
+th[aria-sort=descending] button::after{content:" \2193"}
+.chip{font-family:var(--mono);font-size:11px;padding:1px 5px;border-radius:3px;background:var(--best-bg);color:var(--best-text);margin-left:6px}
+/* % vs market: badge and gap bar share one cell so the eye reads them as one unit */
+.pg{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.pg .gap{width:110px;margin:0;flex:none}
+.pg .badge{min-width:64px;text-align:right}
+/* tag pills under the card name; language, set, rarity and finish are buttons that set that filter */
+.pill{font:12px/18px var(--font);display:inline-flex;align-items:center;gap:4px;padding:0 7px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+button.pill{cursor:pointer}
+button.pill:hover{border-color:var(--muted);color:var(--text)}
+button.pill:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.pill img{height:12px;width:auto;max-width:44px;object-fit:contain}
+.p-lang{font-family:var(--mono);font-weight:600;color:var(--text);background:var(--line);border-color:transparent}
+.p-rar{font-family:var(--mono)}
+/* pill colours (demo B, picked 2026-10-24): language, set, rarity tier; white on each language colour is >= 4.5:1 */
+.p-lang{color:#fff;border-color:transparent}
+.l-EN{background:#2f6fdb}.l-JP{background:#c0392b}.l-CN{background:#8a5a12}
+.p-rar{--u:#1d7a3a;--r:#2f6fdb;--g:#7a5400;--gbg:#fff6d6}
+.r-U{color:var(--u);border-color:var(--u)}.r-R{color:var(--r);border-color:var(--r)}
+.r-IR,.r-HR,.r-P{color:var(--g);border-color:#d4a300;background:var(--gbg)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .p-rar{--u:#7fd39a;--r:#6d9cff;--g:#f0c850;--gbg:#3a3010}}
+:root[data-theme="dark"] .p-rar{--u:#7fd39a;--r:#6d9cff;--g:#f0c850;--gbg:#3a3010}
+.morebtn{display:block;margin:12px auto 0;font:inherit;font-size:14px;padding:8px 16px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--accent);cursor:pointer}
+.morebtn[hidden]{display:none}
+.morebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+
+@media (max-width:820px){
+  .rail{min-width:0;position:sticky;height:auto;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line);background:var(--bg);z-index:5;gap:8px}
+  .rail .sub,.rail .fx{display:none}
+  .rail h1{font-size:16px}
+  .rail nav{flex-direction:row;overflow-x:auto;gap:16px}
+  .rail nav a{white-space:nowrap;padding:2px 0}
+  .rail nav a::after{display:none}
+  main{padding:20px 16px 48px}
+  section{scroll-margin-top:96px}
+  .totals{grid-template-columns:1fr;gap:10px}
+  .pill img{display:none}
+  .pg .badge{min-width:0}
+}
+
+/* facet rail (2026-11-09) */
+/* Market report mock · facet rail (after the Tracker's direction 2) */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.muted { color: var(--muted); }
+.sp { flex: 1; }
+.up { color: var(--danger); } .dn { color: var(--best-text); }
+button { font: inherit; color: inherit; }
+.linkish { border: 0; background: none; padding: 4px 2px; color: var(--accent); font-size: 13px; cursor: pointer; }
+.linkish:hover { text-decoration: underline; }
+.mshell { display: grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1600px; margin: 0 auto; }
+.mrail { position: sticky; top: 0; height: 100vh; overflow: auto; overscroll-behavior: contain; padding: 20px 16px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px; background: var(--bg); }
+.links { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill-link { font-size: 12px; padding: 3px 10px; border: 1px solid var(--accent); border-radius: 999px; background: none; }
+.pill-link:hover { background: var(--accent); color: var(--surface); }
+.colp { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.colp select { font: 600 15px var(--font); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
+.fh { display: flex; justify-content: space-between; align-items: baseline; }
+.fh h2 { margin: 0; font: 500 12px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.tg { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 8px 2px; cursor: pointer; }
+.tg small { margin-left: auto; font: 11px var(--mono); color: var(--muted); }
+.facet { border-top: 1px solid var(--line); padding: 8px 0; }
+.facet > summary { list-style: none; cursor: pointer; display: flex; gap: 8px; align-items: center; font: 600 13px var(--font); padding: 4px 2px; }
+.facet > summary::-webkit-details-marker { display: none; }
+.facet > summary small { font: 11px var(--mono); color: var(--muted); font-weight: 400; }
+.facet > summary::after { content: '+'; margin-left: auto; color: var(--muted); font-weight: 400; }
+.facet[open] > summary::after { content: '−'; }
+.facet .on { font: 11px var(--mono); background: var(--accent); color: #fff; border-radius: 999px; padding: 0 6px; }
+.fq { width: 100%; margin: 4px 0; font: 13px var(--font); padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
+.fl { display: grid; max-height: 220px; overflow: auto; overscroll-behavior: contain; }
+.fo { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 3px 2px; cursor: pointer; border-radius: 4px; }
+.fo:hover { background: color-mix(in srgb, var(--line) 60%, transparent); }
+.fo span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fo small { font: 11px var(--mono); color: var(--muted); }
+.fo.zero { opacity: .55; }
+.fo[hidden] { display: none; }
+.sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.fx { margin-top: auto; font-size: 11px; color: var(--muted); line-height: 1.6; }
+main { padding: 18px 28px 64px; min-width: 0; }
+.mhead { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mhead h1 { font-size: 22px; margin: 0; }
+.mhead .sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.fopen, .scrim { display: none; }
+.h2 { display: flex; align-items: baseline; gap: 10px; font-size: 16px; margin: 0 0 10px; }
+.h2 small { margin-left: auto; font: 12px var(--mono); color: var(--muted); font-weight: 400; }
+section { margin-bottom: 28px; }
+/* summary */
+.sum { display: grid; grid-template-columns: minmax(260px, auto) 1fr; gap: 28px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; }
+.sum .big { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sum .big span { font-size: 14px; font-weight: 400; color: var(--muted); }
+.split { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; background: var(--line); }
+.split i { display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 8px; }
+.lg-b { display: inline-flex; gap: 6px; align-items: center; border: 1px solid transparent; background: none; border-radius: 999px; padding: 2px 10px; font-size: 13px; cursor: pointer; color: var(--muted); }
+.lg-b b { color: var(--text); font-variant-numeric: tabular-nums; }
+.lg-b i { width: 10px; height: 10px; border-radius: 2px; }
+.lg-b:hover:not(:disabled), .lg-b.on { border-color: var(--accent); }
+.lg-b.on { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.lg-b:disabled { opacity: .4; cursor: default; }
+.note { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+.b-check { background: #fdf3e1; color: #8a5a00; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .b-check { background: #3a2e14; color: #f0c870; } }
+:root[data-theme="dark"] .b-check { background: #3a2e14; color: #f0c870; }
+/* two columns */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.eras2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+.erow { display: grid; grid-template-columns: 150px 1fr 44px 64px; gap: 10px; align-items: center; border: 0; background: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; text-align: left; font-size: 13px; }
+.erow:hover { background: color-mix(in srgb, var(--line) 50%, transparent); }
+.erow.on { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.erow .en { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eb { height: 10px; }
+.eb > span { display: flex; height: 100%; border-radius: 3px; overflow: hidden; gap: 1px; }
+.ec { font: 12px var(--mono); text-align: right; }
+.ed { font-size: 12px; }
+#main, .mshell > * { min-width: 0; }   /* a wide table scrolls inside its box, not the page */
+@media (max-width: 900px) { .tw { overflow-x: auto; } }
+.selw { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; max-height: 420px; overflow: auto; overscroll-behavior: contain; }
+.dt { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dt th, .dt td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.dt th { position: sticky; top: 0; background: var(--surface); z-index: 2; font: 500 12px var(--mono); letter-spacing: .03em; color: var(--muted); box-shadow: 0 1px 0 var(--line); }
+.dt .r { text-align: right; } .dt th.r .sh { justify-content: flex-end; width: 100%; }
+.sh { border: 0; background: none; padding: 2px 0; font: inherit; color: inherit; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; white-space: nowrap; }
+.sh span { opacity: .35; font-family: var(--font); }
+.sh:hover { color: var(--text); } .sh:hover span { opacity: .8; }
+.sh.on { color: var(--accent); } .sh.on span { opacity: 1; }
+.dt tr.bulk td { color: var(--muted); }
+.its { display: grid; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.it { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); color: var(--text); background: none; }
+.it:hover { background: color-mix(in srgb, var(--line) 40%, transparent); }
+.itm { display: grid; gap: 2px; min-width: 0; }
+.itm b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); min-width: 0; flex-wrap: wrap; }
+.m.s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.m .mono { font-size: 12px; }
+.lg { height: 12px; width: auto; max-width: 36px; object-fit: contain; vertical-align: -2px; margin-right: 4px; }
+.fin { font-size: 11px; color: var(--best-text); }
+.itp { display: grid; justify-items: end; gap: 2px; font-variant-numeric: tabular-nums; }
+.itp .muted { font-size: 12px; }
+.its .more { justify-self: start; margin: 6px 10px; }
+.th { border-radius: 3px; object-fit: cover; background: var(--line); display: block; }
+/* listings */
+.tbar { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 8px 0; }
+.tbar input[type=search] { flex: 0 1 360px; font: 14px var(--font); padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); }
+.tbar .cnt { font-size: 14px; color: var(--muted); } .tbar .cnt b { color: var(--text); }
+.ftag { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 4px 2px 10px; background: var(--surface); }
+.ftag button { border: 0; background: none; cursor: pointer; padding: 2px 6px; color: var(--muted); }
+.tw { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.lt th { top: var(--tbar-h, 0px); }
+.lt td.img { width: 46px; }
+.lt .cn { font-weight: 600; margin-right: 6px; }
+.lt .m { margin-top: 3px; }
+.lt tr.dup td { border-top: 0; } .lt tr.dup .cn { font-weight: 400; color: var(--muted); }
+.lt .chip { font: 11px var(--mono); color: var(--best-text); background: var(--best-bg); border-radius: 4px; padding: 1px 6px; }
+.sm { font-size: 12px; color: var(--muted); }
+.pg { display: inline-flex; gap: 10px; align-items: center; justify-content: flex-end; }
+.gap { position: relative; display: inline-block; width: 110px; height: 8px; background: var(--line); border-radius: 4px; }
+.gap .bar { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.gap .mk { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--text); opacity: .5; }
+.morebtn { margin: 12px 0; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+.foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+@media (max-width: 1200px) { .two { grid-template-columns: 1fr; } .sum { grid-template-columns: 1fr; gap: 12px; } }
+@media (max-width: 900px) {
+  .mshell { grid-template-columns: minmax(0, 1fr); }
+  .mrail { position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); z-index: 30; transform: translateX(-100%); box-shadow: 0 0 40px #0005; }
+  body.fopen .mrail { transform: none; }
+  body.fopen .scrim { display: block; position: fixed; inset: 0; z-index: 25; background: #0006; border: 0; }
+  .fopen { display: inline-flex; margin-left: auto; border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: 6px; padding: 8px 14px; min-height: 44px; }
+  main { padding: 12px 14px 48px; }
+  .hs { display: none; }
+  .erow { grid-template-columns: 110px 1fr 36px; } .era .ed { display: none; }
+  .gap { display: none; }
+  .lt td.img { width: 36px; }
+  .tbar input[type=search] { flex: 1 1 100%; }
+}
+
+.colp select { width: 100%; }
+.dt th[aria-sort] button::after, .dt th button::after { content: none !important; }
+.dt td.r, .itp b { white-space: nowrap; }
+.erow .ed b { font-size: 12px; font-weight: 600; }
+.selw { max-height: 360px; }
+.mrail, .mrail label, .facet > summary { color: var(--text); }
+.dt .linkish { text-align: left; }
+.dt td.hs { white-space: nowrap; }
+@media (max-width: 900px) { .eras2 { grid-template-columns: 1fr; } .erow { grid-template-columns: 110px 1fr 36px; } .erow .ed { display: none; } }
+
+/* round 2: eras with logos, 100% bars, sets under an open era; empty-state padding */
+.eras2 { grid-template-columns: 1fr !important; gap: 0; padding: 4px 0; }
+.egrp + .egrp { border-top: 1px solid var(--line); }
+.erow, .srow { display: grid; grid-template-columns: 96px 170px minmax(0, 1fr) 48px 72px 16px; gap: 14px; align-items: center; width: 100%; border: 0; background: none; padding: 8px 14px; cursor: pointer; text-align: left; font-size: 14px; border-radius: 0; }
+.erow .en { font-weight: 600; }
+.elogo, .slogo { height: 28px; display: flex; align-items: center; }
+.elogo img, .slogo img { max-height: 28px; max-width: 96px; object-fit: contain; }
+.eb { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 1px; background: var(--line); }
+.eb > span { display: contents; }
+.ex { color: var(--muted); font-size: 12px; }
+.egrp.open { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.esets { padding: 2px 0 8px; }
+.srow { grid-template-columns: 96px 170px minmax(0, 1fr) 48px 72px 16px; padding: 5px 14px 5px 14px; font-size: 13px; }
+.srow .slogo { height: 22px; } .srow .slogo img { max-height: 22px; max-width: 80px; }
+.srow .sn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srow .sn .muted { font-size: 12px; }
+.srow:hover, .erow:hover { background: color-mix(in srgb, var(--line) 45%, transparent); }
+.srow.on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.its > p { margin: 0; padding: 14px 16px; }
+@media (max-width: 900px) {
+  .erow, .srow { grid-template-columns: 64px minmax(0, 1fr) 70px 36px; gap: 8px; padding: 8px 10px; }
+  .erow .ed, .erow .ex, .srow .ed, .srow .sn .muted { display: none; }
+  .elogo img { max-width: 64px; } .srow .slogo img { max-width: 60px; }
+}
+
+
+/* JP vs EN */
+/* JP vs EN mock (2026-11-10): the market report's facet rail + a gap bar centred on 1x + a detail drawer */
+:root { --en: #2f6fde; --jptcg: #c2410c; --merc: #1d7a3a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --en: #6b9cff; --jptcg: #f08a4b; --merc: #7fd39a; } }
+:root[data-theme="dark"] { --en: #6b9cff; --jptcg: #f08a4b; --merc: #7fd39a; }
+.cur { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.cur button { border: 1px solid var(--line); background: var(--surface); color: var(--text); padding: 4px 12px; font-size: 13px; border-radius: 6px; }
+.cur button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.fxn { font: 11px var(--mono); color: var(--muted); margin-left: 4px; }
+.jsum { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 20px; align-items: center; margin-bottom: 20px; }
+.jsum .big { font: 600 26px var(--font); }
+.jsum .big span { font-size: 14px; color: var(--muted); font-weight: 400; }
+.jsum .med { font: 13px var(--mono); color: var(--muted); margin-top: 4px; }
+.jt td { vertical-align: middle; }
+.jt .card { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.jt .card .t { display: grid; min-width: 0; }
+.jt .card .t b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jt .card .t span { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jt tr.row { cursor: pointer; }
+.jt tr.row:hover td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.jt tr.row[aria-selected="true"] td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.jt td:first-child { min-width: 220px; }
+.jt .card .t .mp { display: none; }
+.jt .jset { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 13px var(--mono); }
+.jt .jset img { height: 14px; width: auto; max-width: 40px; object-fit: contain; vertical-align: -2px; margin-right: 6px; }
+.jt .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.jt .num small { color: var(--muted); }
+.gapc { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.gbar { position: relative; width: 120px; height: 8px; background: var(--line); border-radius: 4px; flex: none; }
+.gbar::after { content: ''; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--muted); }
+.gbar i { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.gx { font: 13px var(--mono); width: 52px; text-align: right; }
+.vb { font-size: 12px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.vb.cheap { background: var(--best-bg); color: var(--best-text); }
+.vb.dear { background: var(--danger-bg); color: var(--danger); }
+.vb.same { background: var(--fair-bg); color: var(--accent); }
+.vb.none { color: var(--muted); border: 1px solid var(--line); }
+.flags { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; white-space: normal; max-width: 180px; }
+/* detail drawer: shut until a card is picked */
+.jdet { position: fixed; top: 0; right: 0; bottom: 0; width: min(100vw, 420px); z-index: 35; background: var(--surface); border-left: 1px solid var(--line); box-shadow: -10px 0 40px #0003; overflow: auto; padding: 16px 20px 32px; }
+.jdet .top { display: flex; justify-content: space-between; align-items: center; font: 12px var(--mono); color: var(--muted); text-transform: uppercase; }
+.jdet .scans { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.jdet figure { margin: 0; text-align: center; font-size: 12px; color: var(--muted); }
+.jdet figure img, .jdet .noscan { width: 100%; height: auto; aspect-ratio: 63 / 88; object-fit: cover; border-radius: 6px; background: var(--line); display: grid; place-items: center; }
+.jdet h2 { margin: 6px 0 2px; font-size: 18px; }
+.jdet .en { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.jdet .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+.jdet .tile { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 2px; }
+.jdet .tile b { font: 600 16px var(--mono); }
+.jdet .tile span { font-size: 11px; color: var(--muted); }
+.jdet h3 { font-size: 13px; margin: 16px 0 6px; }
+.jdet svg { width: 100%; height: auto; }
+.jdet svg text { font: 10px var(--mono); fill: var(--muted); }
+.jdet .jlg { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.jdet .jlg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.jdet table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.jdet table th, .jdet table td { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+.jdet table .n { text-align: right; font-variant-numeric: tabular-nums; }
+.jdet .links a { display: inline-block; margin: 0 12px 6px 0; color: var(--accent); }
+@media (max-width: 900px) {
+  .jsum { grid-template-columns: 1fr; }
+  .jt .hs { display: none; }
+  .gbar { display: none; }
+  .jt .card .t { min-width: 0; }
+  .jt td:first-child { min-width: 0; }
+  .jt .card .t .mp { display: block; font: 12px var(--mono); color: var(--text); }
+  .jt td, .jt th { padding-left: 6px; padding-right: 6px; }
+}
+/* the drawer pushes the table on a desktop (like the Tracker's detail pane); minor columns go when it gets narrow */
+#main { container-type: inline-size; }
+@media (min-width: 1101px) { body.detopen #main { margin-right: min(100vw, 420px); } }
+@container (max-width: 860px) { .jt .cs, .gbar { display: none; } }
+@container (max-width: 640px) { .jt .hs { display: none; } .jt .card .t .mp { display: block; font: 12px var(--mono); color: var(--text); } }
+@container (max-width: 860px) { .jt .flags { display: none; } .jt th, .jt td { padding-left: 8px; padding-right: 8px; } }
+.tw { overflow-x: auto; }
+@container (max-width: 860px) { .jt td:first-child { min-width: 0; } .jt .card .t { max-width: 190px; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-<main>
-  <a class="back" href="../../">← Card Price Tracker</a>
-  <h1>JP vs EN Prices</h1>
-  <p class="sub">Wobbuffet collection, every Japanese print: what the Japanese copy sells for in Japan (Mercari) against the English card on TCGplayer. Pick a card to see its price trend.</p>
-  <div class="bar" role="group" aria-label="Currency">
-    <button type="button" id="usd" aria-pressed="true">USD</button>
-    <button type="button" id="jpy" aria-pressed="false">JPY</button>
-    <span class="note" id="fxnote"></span>
-  </div>
-  <div class="panel scroll"><table id="summary"></table></div>
-  <p class="note foot">
-    Japan price = median of filtered raw Mercari sales (lots, slabs, overseas copies dropped). Difference = EN price − Japan price;
-    a verdict needs the JP copy under 0.8× (cheaper) or over 1.25× (dearer) the EN price. Mercari's minimum is ¥300, so bulk commons always
-    look dearer in Japan. Mercari can't split holo / mirror finishes. Old cards that print no number are matched by name and set, which can mix in other prints. Monthly lines: Mercari months with fewer than 3 sales are blank;
-    TCGplayer lines from api.cardprice.com (JP prints only from 2026-07). JPY/USD = monthly mean of daily ECB rates.
-    Updated <span id="built"></span>.
-  </p>
-</main>
-<aside class="det" id="det" aria-label="Card details" data-empty></aside>
+<a class="skip" href="#main">Skip to prices</a>
+<div class="mshell">
+  <aside class="mrail" id="rail" aria-label="Collection and filters">
+    <div class="links"><a class="pill-link" href="../../">← Card Price Tracker</a><a class="pill-link" href="#" id="mkt">Market report</a></div>
+    <label class="colp"><span>Collection</span><select id="colPick"></select></label>
+    <div class="cur" role="group" aria-label="Currency"><button type="button" data-cur="usd">USD</button><button type="button" data-cur="jpy">JPY</button><span class="fxn" id="fxn"></span></div>
+    <div id="facets"></div>
+    <div class="fx mono" id="fx"></div>
+  </aside>
+  <button type="button" class="scrim" aria-label="Close filters" onclick="document.body.classList.remove('fopen')"></button>
+  <main id="main">
+    <header class="mhead"><div><h1>JP vs EN prices</h1><p class="sub" id="sub"></p></div>
+      <button type="button" id="fopen" class="fopen">Filters</button></header>
+    <section id="summary"></section>
+    <section id="all">
+      <div class="tbar" id="tbar"></div>
+      <div class="tw"><table class="dt jt"><thead id="tHead"></thead><tbody id="tBody"></tbody></table></div>
+    </section>
+    <footer id="foot" class="foot"></footer>
+  </main>
+  <aside class="jdet" id="det" aria-label="Card details" hidden></aside>
 </div>
 <script>
-const DATA = {"collection": "Wobbuffet", "months": ["2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"], "fx": {"2025-11": 0.0064472999999999996, "2025-12": 0.006415995238095238, "2026-01": 0.006381914285714285, "2026-02": 0.00644563, "2026-03": 0.0063023, "2026-04": 0.006286895, "2026-05": 0.006319835, "2026-06": 0.0062220136363636365, "2026-07": 0.006153782608695652, "2026-08": 0.006297328571428572, "2026-09": 0.006395227272727273, "2026-10": 0.00633068947368421}, "cards": [{"key": "xy8-67", "title": "ソーナンス 011/027", "img_en": "https://assets.tcgdex.net/en/xy/xy8/67/high.webp", "img_jp": "ja-xy8-67", "hd_jp": "ja-xy8-67", "en_id": "xy8-67", "en_label": "EN BREAKthrough 67", "jp_id": "tcg-605353", "jp_label": "Legendary Shine Collection (Japanese) 11", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.23, "jp_tcg_usd": null}, {"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.22, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.22, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.23, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.25, "jp_tcg_usd": null}, {"month": "2026-04", "n": 5, "mercari_jpy": 555, "mercari_usd": 3.49, "en_usd": 0.29, "jp_tcg_usd": null}, {"month": "2026-05", "n": 4, "mercari_jpy": 450.0, "mercari_usd": 2.84, "en_usd": 0.27, "jp_tcg_usd": null}, {"month": "2026-06", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.3, "jp_tcg_usd": null}, {"month": "2026-07", "n": 3, "mercari_jpy": 1480, "mercari_usd": 9.11, "en_usd": 0.39, "jp_tcg_usd": 7.5}, {"month": "2026-08", "n": 4, "mercari_jpy": 550.0, "mercari_usd": 3.46, "en_usd": 0.37, "jp_tcg_usd": 7.66}, {"month": "2026-09", "n": 8, "mercari_jpy": 589.5, "mercari_usd": 3.77, "en_usd": 0.41, "jp_tcg_usd": 7.68}, {"month": "2026-10", "n": 7, "mercari_jpy": 599, "mercari_usd": 3.79, "en_usd": 0.4, "jp_tcg_usd": 7.68}], "mercari_sold_all_jpy": 550, "mercari_sold_n": 37, "mercari_tier": "full", "gap_mercari": 9.47, "gap_mercari_month": "2026-10", "gap_jp_tcg": 19.2, "gap_jp_tcg_month": "2026-10", "en_usd_last": 0.4, "en_usd_month": "2026-10", "gap_all": 8.7}, {"key": "bw7-58", "title": "ソーナンス 017/034", "img_en": "https://assets.tcgdex.net/en/bw/bw7/58/high.webp", "img_jp": "ja-bw7-58", "hd_jp": "ja-bw7-58", "en_id": "bw7-58", "en_label": "EN Boundaries Crossed 58", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.66, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.63, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.62, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.59, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.59, "jp_tcg_usd": null}, {"month": "2026-04", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.71, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.74, "jp_tcg_usd": null}, {"month": "2026-06", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.79, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.8, "jp_tcg_usd": null}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.83, "jp_tcg_usd": null}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.87, "jp_tcg_usd": null}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.84, "jp_tcg_usd": null}], "mercari_sold_all_jpy": 788.5, "mercari_sold_n": 4, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": 0.84, "en_usd_month": "2026-10", "gap_all": 5.94}, {"key": "sm3-49", "title": "ソーナンス 021/051", "img_en": "https://assets.tcgdex.net/en/sm/sm3/49/high.webp", "img_jp": "ja-sm3-49", "hd_jp": "ja-sm3-49", "en_id": "sm3-49", "en_label": "EN Burning Shadows 49", "jp_id": "tcg-572417", "jp_label": "To Have Seen the Battle Rainbow (Japanese) 21", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.17, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.16, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.16, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.16, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.18, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.23, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.26, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.23, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.22, "jp_tcg_usd": 0.55}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.2, "jp_tcg_usd": 0.55}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.28, "jp_tcg_usd": 0.55}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.27, "jp_tcg_usd": 3.95}], "mercari_sold_all_jpy": null, "mercari_sold_n": 0, "mercari_tier": null, "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 14.63, "gap_jp_tcg_month": "2026-10", "en_usd_last": 0.27, "en_usd_month": "2026-10", "gap_all": null}, {"key": "sv10-082", "title": "ソーナンス 040/098", "img_en": "https://assets.tcgdex.net/en/sv/sv10/082/high.webp", "img_jp": "ja-sv10-082", "hd_jp": "ja-sv10-082", "en_id": "sv10-82", "en_label": "EN Destined Rivals 082", "jp_id": "tcg-628681", "jp_label": "The Glory of Team Rocket (Japanese) 40", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.11, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.13, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.13, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.17, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.18, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.17, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.14, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.22, "jp_tcg_usd": null}, {"month": "2026-07", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.21, "jp_tcg_usd": 0.25}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.23, "jp_tcg_usd": 0.26}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.21, "jp_tcg_usd": 0.29}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.17, "jp_tcg_usd": 0.29}], "mercari_sold_all_jpy": 300.0, "mercari_sold_n": 2, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 1.71, "gap_jp_tcg_month": "2026-10", "en_usd_last": 0.17, "en_usd_month": "2026-10", "gap_all": 11.17}, {"key": "dp1-41", "title": "ソーナンス 時空の創造", "img_en": "https://assets.tcgdex.net/en/dp/dp1/41/high.webp", "img_jp": "ja-dp1-41", "hd_jp": "ja-dp1-41", "en_id": "dp1-41", "en_label": "EN Diamond & Pearl 41", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.44, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.73, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.3, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.99, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.1, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.79, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.1, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.47, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.28, "jp_tcg_usd": null}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.5, "jp_tcg_usd": null}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 3.04, "jp_tcg_usd": null}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.88, "jp_tcg_usd": null}], "mercari_sold_all_jpy": 500.0, "mercari_sold_n": 2, "mercari_tier": "setname", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": 2.88, "en_usd_month": "2026-10", "gap_all": 1.1}, {"key": "swsh7-66", "title": "ソーナンス 013/067", "img_en": "https://assets.tcgdex.net/en/swsh/swsh7/66/high.webp", "img_jp": "ja-swsh7-66", "hd_jp": "ja-swsh7-66", "en_id": "swsh7-66", "en_label": "EN Evolving Skies 66", "jp_id": "tcg-569336", "jp_label": "Skyscraping Perfection (Japanese) 13", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.08, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.03, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.07, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.07, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.1, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.08, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.07, "jp_tcg_usd": null}, {"month": "2026-06", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.05, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.03, "jp_tcg_usd": 0.49}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.15, "jp_tcg_usd": 0.49}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.14, "jp_tcg_usd": 0.5}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.1, "jp_tcg_usd": 0.53}], "mercari_sold_all_jpy": 300.0, "mercari_sold_n": 4, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 5.3, "gap_jp_tcg_month": "2026-10", "en_usd_last": 0.1, "en_usd_month": "2026-10", "gap_all": 18.99}, {"key": "g1-RC11", "title": "ソーナンス 013/032", "img_en": "https://assets.tcgdex.net/en/xy/g1/RC11/high.webp", "img_jp": "ja-g1-rc11", "hd_jp": "ja-g1-rc11", "en_id": "g1-RC11", "en_label": "EN Generations RC11", "jp_id": "tcg-605482", "jp_label": "PokeKyun Collection (Japanese) 13", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 12, "mercari_jpy": 2055.5, "mercari_usd": 12.79, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 13, "mercari_jpy": 1999, "mercari_usd": 12.3, "en_usd": 4.83, "jp_tcg_usd": 27.79}, {"month": "2026-08", "n": 17, "mercari_jpy": 1999, "mercari_usd": 12.59, "en_usd": 6.25, "jp_tcg_usd": 27.56}, {"month": "2026-09", "n": 17, "mercari_jpy": 2222, "mercari_usd": 14.21, "en_usd": 5.4, "jp_tcg_usd": 28.3}, {"month": "2026-10", "n": 24, "mercari_jpy": 1799.0, "mercari_usd": 11.39, "en_usd": 5, "jp_tcg_usd": 27.08}], "mercari_sold_all_jpy": 1999.0, "mercari_sold_n": 84, "mercari_tier": "full", "gap_mercari": 2.28, "gap_mercari_month": "2026-10", "gap_jp_tcg": 5.42, "gap_jp_tcg_month": "2026-10", "en_usd_last": 5, "en_usd_month": "2026-10", "gap_all": 2.53}, {"key": "hgssp-HGSS04", "title": "ソーナンス 040/L-P", "img_en": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS04/high.webp", "img_jp": "ja-hgssp-hgss04", "hd_jp": "ja-hgssp-hgss04", "en_id": "hsp-HGSS04", "en_label": "EN HGSS Black Star Promos HGSS04", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.07, "jp_tcg_usd": null}, {"month": "2026-01", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.48, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.85, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.1, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.29, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 6.07, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.24, "jp_tcg_usd": null}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 7.57, "jp_tcg_usd": null}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 7.96, "jp_tcg_usd": null}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 8.44, "jp_tcg_usd": null}], "mercari_sold_all_jpy": 4832.5, "mercari_sold_n": 4, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": 8.44, "en_usd_month": "2026-10", "gap_all": 3.62}, {"key": "hgss1-13", "title": "ソーナンス 041/070", "img_en": "https://assets.tcgdex.net/en/hgss/hgss1/13/high.webp", "img_jp": "ja-hgss1-13", "hd_jp": "ja-hgss1-13", "en_id": "hgss1-13", "en_label": "EN HeartGold SoulSilver 13", "jp_id": "tcg-608044", "jp_label": "HeartGold Collection (Japanese) 41", "jp_ambiguous": true, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 11.75, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 12.26, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 13.83, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 14.15, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 14.7, "jp_tcg_usd": null}, {"month": "2026-04", "n": 5, "mercari_jpy": 980, "mercari_usd": 6.16, "en_usd": 14.17, "jp_tcg_usd": null}, {"month": "2026-05", "n": 7, "mercari_jpy": 1111, "mercari_usd": 7.02, "en_usd": 18.02, "jp_tcg_usd": null}, {"month": "2026-06", "n": 16, "mercari_jpy": 974.5, "mercari_usd": 6.06, "en_usd": 20.14, "jp_tcg_usd": null}, {"month": "2026-07", "n": 10, "mercari_jpy": 1049.5, "mercari_usd": 6.46, "en_usd": 25.13, "jp_tcg_usd": 10}, {"month": "2026-08", "n": 11, "mercari_jpy": 1333, "mercari_usd": 8.39, "en_usd": 31.31, "jp_tcg_usd": 10}, {"month": "2026-09", "n": 9, "mercari_jpy": 1580, "mercari_usd": 10.1, "en_usd": 33.36, "jp_tcg_usd": 10}, {"month": "2026-10", "n": 23, "mercari_jpy": 1500, "mercari_usd": 9.5, "en_usd": 33.54, "jp_tcg_usd": 19.99}], "mercari_sold_all_jpy": 1111, "mercari_sold_n": 81, "mercari_tier": "full", "gap_mercari": 0.28, "gap_mercari_month": "2026-10", "gap_jp_tcg": 0.6, "gap_jp_tcg_month": "2026-10", "en_usd_last": 33.54, "en_usd_month": "2026-10", "gap_all": 0.21}, {"key": "sm8-93", "title": "ソーナンス 044/095", "img_en": "https://assets.tcgdex.net/en/sm/sm8/93/high.webp", "img_jp": "ja-sm8-93", "hd_jp": "ja-sm8-93", "en_id": "sm8-93", "en_label": "EN Lost Thunder 93", "jp_id": "tcg-572923", "jp_label": "Super-Burst Impact (Japanese) 44", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.48, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.44, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.43, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.43, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.43, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.47, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.52, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.54, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.53, "jp_tcg_usd": 0.26}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.55, "jp_tcg_usd": 0.26}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.56, "jp_tcg_usd": 0.28}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.6, "jp_tcg_usd": 2.64}], "mercari_sold_all_jpy": 300, "mercari_sold_n": 3, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 4.4, "gap_jp_tcg_month": "2026-10", "en_usd_last": 0.6, "en_usd_month": "2026-10", "gap_all": 3.17}, {"key": "xy4-36", "title": "ソーナンス 035/088", "img_en": "https://assets.tcgdex.net/en/xy/xy4/36/high.webp", "img_jp": "ja-xy4-36", "hd_jp": "ja-xy4-36", "en_id": "xy4-36", "en_label": "EN Phantom Forces 36", "jp_id": "tcg-603635", "jp_label": "Phantom Gate (Japanese) 35", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.42, "jp_tcg_usd": null}, {"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.39, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.38, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.27, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.31, "jp_tcg_usd": null}, {"month": "2026-04", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.39, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.38, "jp_tcg_usd": null}, {"month": "2026-06", "n": 3, "mercari_jpy": 650, "mercari_usd": 4.04, "en_usd": 2.12, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.23, "jp_tcg_usd": 5}, {"month": "2026-08", "n": 5, "mercari_jpy": 580, "mercari_usd": 3.65, "en_usd": 2.37, "jp_tcg_usd": 4}, {"month": "2026-09", "n": 3, "mercari_jpy": 750, "mercari_usd": 4.8, "en_usd": 2.51, "jp_tcg_usd": 4.27}, {"month": "2026-10", "n": 5, "mercari_jpy": 500, "mercari_usd": 3.17, "en_usd": 1.93, "jp_tcg_usd": 3.73}], "mercari_sold_all_jpy": 600, "mercari_sold_n": 19, "mercari_tier": "full", "gap_mercari": 1.64, "gap_mercari_month": "2026-10", "gap_jp_tcg": 1.93, "gap_jp_tcg_month": "2026-10", "en_usd_last": 1.93, "en_usd_month": "2026-10", "gap_all": 1.97}, {"key": "svp-203", "title": "ソーナンス 103/098", "img_en": "svp-203", "img_jp": "ja-svp-203", "hd_jp": "ja-svp-203", "en_id": "svp-203", "en_label": "EN SVP Black Star Promos 203", "jp_id": "tcg-629044", "jp_label": "The Glory of Team Rocket (Japanese) 103", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.87, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.25, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.61, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 6.53, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 8.03, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 10.29, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 12.97, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 13.26, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 8.61, "jp_tcg_usd": 5.03}, {"month": "2026-08", "n": 6, "mercari_jpy": 633.0, "mercari_usd": 3.99, "en_usd": 7.21, "jp_tcg_usd": 5.07}, {"month": "2026-09", "n": 11, "mercari_jpy": 666, "mercari_usd": 4.26, "en_usd": 5.12, "jp_tcg_usd": 5.23}, {"month": "2026-10", "n": 11, "mercari_jpy": 600, "mercari_usd": 3.8, "en_usd": 4.59, "jp_tcg_usd": 4.18}], "mercari_sold_all_jpy": 630.0, "mercari_sold_n": 28, "mercari_tier": "full", "gap_mercari": 0.83, "gap_mercari_month": "2026-10", "gap_jp_tcg": 0.91, "gap_jp_tcg_month": "2026-10", "en_usd_last": 4.59, "en_usd_month": "2026-10", "gap_all": 0.87}, {"key": "swsh1-191", "title": "ソーナンス 063/060", "img_en": "https://assets.tcgdex.net/en/swsh/swsh1/191/high.webp", "img_jp": "ja-swsh1-191", "hd_jp": "ja-swsh1-191", "en_id": "swsh1-191", "en_label": "EN Sword & Shield 191", "jp_id": "tcg-568576", "jp_label": "Sword (Japanese) 63", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.81, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.76, "jp_tcg_usd": null}, {"month": "2026-01", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.41, "jp_tcg_usd": null}, {"month": "2026-02", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.25, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.76, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.96, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.15, "jp_tcg_usd": null}, {"month": "2026-06", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.75, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.72, "jp_tcg_usd": 6.46}, {"month": "2026-08", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.72, "jp_tcg_usd": 6.43}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.89, "jp_tcg_usd": 6.43}, {"month": "2026-10", "n": 3, "mercari_jpy": 935, "mercari_usd": 5.92, "en_usd": 5.01, "jp_tcg_usd": 6.43}], "mercari_sold_all_jpy": 444, "mercari_sold_n": 13, "mercari_tier": "full", "gap_mercari": 1.18, "gap_mercari_month": "2026-10", "gap_jp_tcg": 1.28, "gap_jp_tcg_month": "2026-10", "en_usd_last": 5.01, "en_usd_month": "2026-10", "gap_all": 0.56}, {"key": "swsh1-86", "title": "ソーナンス 026/060", "img_en": "https://assets.tcgdex.net/en/swsh/swsh1/86/high.webp", "img_jp": "ja-swsh1-86", "hd_jp": "ja-swsh1-86", "en_id": "swsh1-86", "en_label": "EN Sword & Shield 86", "jp_id": "tcg-568539", "jp_label": "Sword (Japanese) 26", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.04, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.01, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.93, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.85, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.17, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.35, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.21, "jp_tcg_usd": null}, {"month": "2026-06", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.55, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.19, "jp_tcg_usd": 1.88}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.41, "jp_tcg_usd": 1.88}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.21, "jp_tcg_usd": 1.79}, {"month": "2026-10", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.27, "jp_tcg_usd": 1.76}], "mercari_sold_all_jpy": 438.5, "mercari_sold_n": 6, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 1.39, "gap_jp_tcg_month": "2026-10", "en_usd_last": 1.27, "en_usd_month": "2026-10", "gap_all": 2.19}, {"key": "xyp-XY155", "title": "ソーナンス 055/131", "img_en": "https://assets.tcgdex.net/en/xy/xyp/XY155/high.webp", "img_jp": "ja-xyp-xy155", "hd_jp": "ja-xyp-xy155", "en_id": "xyp-XY155", "en_label": "EN XY Black Star Promos XY155", "jp_id": "tcg-605552", "jp_label": "Premium Champion Pack (Japanese) 55", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 3, "mercari_jpy": 1900, "mercari_usd": 12.25, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 5, "mercari_jpy": 1900, "mercari_usd": 12.19, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 4, "mercari_jpy": 1294.0, "mercari_usd": 8.26, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 3, "mercari_jpy": 1380, "mercari_usd": 8.89, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 10, "mercari_jpy": 1989.5, "mercari_usd": 12.54, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 6, "mercari_jpy": 1361.0, "mercari_usd": 8.56, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 7, "mercari_jpy": 3200, "mercari_usd": 20.22, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 5, "mercari_jpy": 2444, "mercari_usd": 15.21, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 7, "mercari_jpy": 2286, "mercari_usd": 14.07, "en_usd": 9.74, "jp_tcg_usd": 39.99}, {"month": "2026-08", "n": 3, "mercari_jpy": 2300, "mercari_usd": 14.48, "en_usd": 9.27, "jp_tcg_usd": 39.99}, {"month": "2026-09", "n": 4, "mercari_jpy": 2742.0, "mercari_usd": 17.54, "en_usd": 9.87, "jp_tcg_usd": 30}, {"month": "2026-10", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 10.54, "jp_tcg_usd": 30}], "mercari_sold_all_jpy": 2200, "mercari_sold_n": 59, "mercari_tier": "full", "gap_mercari": 1.78, "gap_mercari_month": "2026-09", "gap_jp_tcg": 2.85, "gap_jp_tcg_month": "2026-10", "en_usd_last": 10.54, "en_usd_month": "2026-10", "gap_all": 1.32}, {"key": "jp-vs-93", "title": "ロケットのソーナンス 093/141", "img_en": null, "img_jp": "jp-vs1-093", "hd_jp": "jp-vs1-093", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-631881", "jp_label": "Pokemon VS (Japanese) 93", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-08", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 104.99}, {"month": "2026-09", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 99.99}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 99.99}], "mercari_sold_all_jpy": 18938.5, "mercari_sold_n": 8, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-ashvstr-8", "title": "ソーナンス 008/026", "img_en": null, "img_jp": "jp-smd-008", "hd_jp": "jp-smd-008", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-598637", "jp_label": "Ash vs Team Rocket Deck Kit (Japanese) 8", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 3, "mercari_jpy": 6800, "mercari_usd": 42.86, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 5, "mercari_jpy": 4444, "mercari_usd": 28.09, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 3, "mercari_jpy": 3777, "mercari_usd": 23.24, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 75}, {"month": "2026-09", "n": 6, "mercari_jpy": 6649.5, "mercari_usd": 42.53, "en_usd": null, "jp_tcg_usd": 80}, {"month": "2026-10", "n": 3, "mercari_jpy": 2900, "mercari_usd": 18.36, "en_usd": null, "jp_tcg_usd": 80}], "mercari_sold_all_jpy": 4422.0, "mercari_sold_n": 30, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-xyp-80", "title": "ソーナンス 080/XY-P", "img_en": null, "img_jp": "jpn_xyp-80", "hd_jp": "jpn_xyp-80", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-08", "n": 5, "mercari_jpy": 2000, "mercari_usd": 12.59, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-09", "n": 5, "mercari_jpy": 1980, "mercari_usd": 12.66, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}], "mercari_sold_all_jpy": 1799, "mercari_sold_n": 19, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-xyss-12", "title": "ソーナンス 012/049", "img_en": null, "img_jp": "jpn_xyss-12", "hd_jp": "jpn_xyss-12", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-606424", "jp_label": "M Master Deck Build Box Power Style (Japanese) 12", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4}, {"month": "2026-08", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4}], "mercari_sold_all_jpy": 600, "mercari_sold_n": 9, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-xypc-54", "title": "ソーナンス 054/131", "img_en": null, "img_jp": "jpn_xypc-54", "hd_jp": "jpn_xypc-54", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-605551", "jp_label": "Premium Champion Pack (Japanese) 54", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.75}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 5.3}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.98}, {"month": "2026-10", "n": 4, "mercari_jpy": 683.0, "mercari_usd": 4.32, "en_usd": null, "jp_tcg_usd": 4.98}], "mercari_sold_all_jpy": 700, "mercari_sold_n": 15, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-smxy-47", "title": "ソーナンス 047/171", "img_en": null, "img_jp": "jpn_smxy-47", "hd_jp": "jpn_smxy-47", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-599010", "jp_label": "The Best of XY (Japanese) 47", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 4, "mercari_jpy": 625.0, "mercari_usd": 3.95, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 3, "mercari_jpy": 999, "mercari_usd": 6.22, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 3, "mercari_jpy": 599, "mercari_usd": 3.69, "en_usd": null, "jp_tcg_usd": 2.5}, {"month": "2026-08", "n": 4, "mercari_jpy": 1038.5, "mercari_usd": 6.54, "en_usd": null, "jp_tcg_usd": 2.5}, {"month": "2026-09", "n": 3, "mercari_jpy": 750, "mercari_usd": 4.8, "en_usd": null, "jp_tcg_usd": 1.99}, {"month": "2026-10", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 1.96}], "mercari_sold_all_jpy": 625.0, "mercari_sold_n": 22, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-sm4p-37", "title": "ソーナンス 037/114", "img_en": null, "img_jp": "jpn_sm4plus-37", "hd_jp": "jpn_sm4plus-37", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-574282", "jp_label": "SM4+: GX Battle Boost (Japanese) 37", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.49}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.49}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.49}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.49}], "mercari_sold_all_jpy": 553.5, "mercari_sold_n": 2, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-smh-43", "title": "ソーナンス 043/131", "img_en": null, "img_jp": "jpn_smh-43", "hd_jp": "jpn_smh-43", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-599258", "jp_label": "GX Starter Decks (Japanese) 43", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 6}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 5}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 3.3}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 3.98}], "mercari_sold_all_jpy": 300, "mercari_sold_n": 1, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-svp-131", "title": "ソーナンス 131/SV-P", "img_en": null, "img_jp": "jpn_svp-131", "hd_jp": "jpn_svp-131", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-587880", "jp_label": "SV-P Promotional Cards (Japanese) 131", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.99}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 25}, {"month": "2026-09", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 19.69}, {"month": "2026-10", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 19.69}], "mercari_sold_all_jpy": 666, "mercari_sold_n": 7, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-ep-15", "title": "ソーナンス エントリーパック", "img_en": null, "img_jp": null, "hd_jp": null, "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}], "mercari_sold_all_jpy": null, "mercari_sold_n": 0, "mercari_tier": null, "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}, {"key": "jp-pcg10-31", "title": "ソーナンス 031/108", "img_en": null, "img_jp": "jpn_pcg10-31", "hd_jp": "jpn_pcg10-31", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-609270", "jp_label": "World Champions Pack (Japanese) 31", "jp_ambiguous": false, "rows": [{"month": "2025-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 69.5}, {"month": "2026-08", "n": 4, "mercari_jpy": 440.0, "mercari_usd": 2.77, "en_usd": null, "jp_tcg_usd": 69.5}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 69.5}, {"month": "2026-10", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 69.5}], "mercari_sold_all_jpy": 1111, "mercari_sold_n": 9, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null}], "built": "2026-10-28"};
+const DATA = {"collection": "Wobbuffet", "months": ["2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11"], "fx": {"2025-12": 0.006415995238095238, "2026-01": 0.006381914285714285, "2026-02": 0.00644563, "2026-03": 0.0063023, "2026-04": 0.006286895, "2026-05": 0.006319835, "2026-06": 0.0062220136363636365, "2026-07": 0.006153782608695652, "2026-08": 0.006297328571428572, "2026-09": 0.006395227272727273, "2026-10": 0.006331804545454545, "2026-11": 0.006321333333333333}, "cards": [{"key": "xy8-67", "title": "ソーナンス 011/027", "img_en": "https://assets.tcgdex.net/en/xy/xy8/67/high.webp", "img_jp": "ja-xy8-67", "hd_jp": "ja-xy8-67", "en_id": "xy8-67", "en_label": "EN BREAKthrough 67", "jp_id": "tcg-605353", "jp_label": "Legendary Shine Collection (Japanese) 11", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.22, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.22, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.23, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.25, "jp_tcg_usd": null}, {"month": "2026-04", "n": 5, "mercari_jpy": 555, "mercari_usd": 3.49, "en_usd": 0.29, "jp_tcg_usd": null}, {"month": "2026-05", "n": 4, "mercari_jpy": 450.0, "mercari_usd": 2.84, "en_usd": 0.27, "jp_tcg_usd": null}, {"month": "2026-06", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.3, "jp_tcg_usd": null}, {"month": "2026-07", "n": 3, "mercari_jpy": 1480, "mercari_usd": 9.11, "en_usd": 0.39, "jp_tcg_usd": 7.5}, {"month": "2026-08", "n": 4, "mercari_jpy": 550.0, "mercari_usd": 3.46, "en_usd": 0.37, "jp_tcg_usd": 7.66}, {"month": "2026-09", "n": 5, "mercari_jpy": 499, "mercari_usd": 3.19, "en_usd": 0.41, "jp_tcg_usd": 7.68}, {"month": "2026-10", "n": 7, "mercari_jpy": 599, "mercari_usd": 3.79, "en_usd": 0.4, "jp_tcg_usd": 7.68}, {"month": "2026-11", "n": 3, "mercari_jpy": 799, "mercari_usd": 5.05, "en_usd": 0.41, "jp_tcg_usd": 7.68}], "mercari_sold_all_jpy": 552.5, "mercari_sold_n": 36, "mercari_tier": "full", "gap_mercari": 12.32, "gap_mercari_month": "2026-11", "gap_jp_tcg": 18.73, "gap_jp_tcg_month": "2026-11", "en_usd_last": 0.41, "en_usd_month": "2026-11", "gap_all": 8.52, "en_set": "BREAKthrough", "en_no": "67", "en_name": "Wobbuffet", "era": "XY", "rarity": "Uncommon", "code": "BKT", "jp_set": "Legendary Shine Collection", "logo": "../../logos/enbreakthrough.webp"}, {"key": "bw7-58", "title": "ソーナンス 017/034", "img_en": "https://assets.tcgdex.net/en/bw/bw7/58/high.webp", "img_jp": "ja-bw7-58", "hd_jp": "ja-bw7-58", "en_id": "bw7-58", "en_label": "EN Boundaries Crossed 58", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.63, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.62, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.59, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.59, "jp_tcg_usd": null}, {"month": "2026-04", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.71, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.74, "jp_tcg_usd": null}, {"month": "2026-06", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.79, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.8, "jp_tcg_usd": null}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.83, "jp_tcg_usd": null}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.87, "jp_tcg_usd": null}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.84, "jp_tcg_usd": null}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.84, "jp_tcg_usd": null}], "mercari_sold_all_jpy": 788.5, "mercari_sold_n": 4, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": 0.84, "en_usd_month": "2026-11", "gap_all": 5.93, "en_set": "Boundaries Crossed", "en_no": "58", "en_name": "Wobbuffet", "era": "Black & White", "rarity": "Uncommon", "code": "BCR", "jp_set": "", "logo": "../../logos/enboundariescrossed.webp"}, {"key": "sm3-49", "title": "ソーナンス 021/051", "img_en": "https://assets.tcgdex.net/en/sm/sm3/49/high.webp", "img_jp": "ja-sm3-49", "hd_jp": "ja-sm3-49", "en_id": "sm3-49", "en_label": "EN Burning Shadows 49", "jp_id": "tcg-572417", "jp_label": "To Have Seen the Battle Rainbow (Japanese) 21", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.16, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.16, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.16, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.18, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.23, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.26, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.23, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.22, "jp_tcg_usd": 0.55}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.2, "jp_tcg_usd": 0.55}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.28, "jp_tcg_usd": 0.55}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.26, "jp_tcg_usd": 3.95}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.26, "jp_tcg_usd": 3.95}], "mercari_sold_all_jpy": null, "mercari_sold_n": 0, "mercari_tier": null, "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 15.19, "gap_jp_tcg_month": "2026-11", "en_usd_last": 0.26, "en_usd_month": "2026-11", "gap_all": null, "en_set": "Burning Shadows", "en_no": "49", "en_name": "Wobbuffet", "era": "Sun & Moon", "rarity": "Uncommon", "code": "BUS", "jp_set": "To Have Seen the Battle Rainbow", "logo": "../../logos/enburningshadows.webp"}, {"key": "sv10-082", "title": "ソーナンス 040/098", "img_en": "https://assets.tcgdex.net/en/sv/sv10/082/high.webp", "img_jp": "ja-sv10-082", "hd_jp": "ja-sv10-082", "en_id": "sv10-82", "en_label": "EN Destined Rivals 082", "jp_id": "tcg-628681", "jp_label": "The Glory of Team Rocket (Japanese) 40", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.13, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.13, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.17, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.18, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.17, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.14, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.22, "jp_tcg_usd": null}, {"month": "2026-07", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.21, "jp_tcg_usd": 0.25}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.23, "jp_tcg_usd": 0.26}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.21, "jp_tcg_usd": 0.29}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.18, "jp_tcg_usd": 0.3}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.24, "jp_tcg_usd": 0.29}], "mercari_sold_all_jpy": 300.0, "mercari_sold_n": 2, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 1.21, "gap_jp_tcg_month": "2026-11", "en_usd_last": 0.24, "en_usd_month": "2026-11", "gap_all": 7.9, "en_set": "Destined Rivals", "en_no": "082", "en_name": "", "era": "Scarlet & Violet", "rarity": "", "code": "DRI", "jp_set": "The Glory of Team Rocket", "logo": "../../logos/endestinedrivals.webp"}, {"key": "dp1-41", "title": "ソーナンス 時空の創造", "img_en": "https://assets.tcgdex.net/en/dp/dp1/41/high.webp", "img_jp": "ja-dp1-41", "hd_jp": "ja-dp1-41", "en_id": "dp1-41", "en_label": "EN Diamond & Pearl 41", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.73, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.3, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.99, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.1, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.79, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.1, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.47, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.28, "jp_tcg_usd": null}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.5, "jp_tcg_usd": null}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 3.04, "jp_tcg_usd": null}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.69, "jp_tcg_usd": null}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.3, "jp_tcg_usd": null}], "mercari_sold_all_jpy": 500.0, "mercari_sold_n": 2, "mercari_tier": "setname", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": 2.3, "en_usd_month": "2026-11", "gap_all": 1.37, "en_set": "Diamond & Pearl", "en_no": "41", "en_name": "Wobbuffet", "era": "Diamond & Pearl", "rarity": "Rare", "code": "DP", "jp_set": "", "logo": "../../logos/endiamondpearl.webp"}, {"key": "swsh7-66", "title": "ソーナンス 013/067", "img_en": "https://assets.tcgdex.net/en/swsh/swsh7/66/high.webp", "img_jp": "ja-swsh7-66", "hd_jp": "ja-swsh7-66", "en_id": "swsh7-66", "en_label": "EN Evolving Skies 66", "jp_id": "tcg-569336", "jp_label": "Skyscraping Perfection (Japanese) 13", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.03, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.07, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.07, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.1, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.08, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.07, "jp_tcg_usd": null}, {"month": "2026-06", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.05, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.03, "jp_tcg_usd": 0.49}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.15, "jp_tcg_usd": 0.49}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.14, "jp_tcg_usd": 0.5}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.11, "jp_tcg_usd": 0.53}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.12, "jp_tcg_usd": 0.53}], "mercari_sold_all_jpy": 300.0, "mercari_sold_n": 4, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 4.42, "gap_jp_tcg_month": "2026-11", "en_usd_last": 0.12, "en_usd_month": "2026-11", "gap_all": 15.8, "en_set": "Evolving Skies", "en_no": "66", "en_name": "Wobbuffet", "era": "Sword & Shield", "rarity": "Common", "code": "EVS", "jp_set": "Skyscraping Perfection", "logo": "../../logos/enevolvingskies.webp"}, {"key": "g1-RC11", "title": "ソーナンス 013/032", "img_en": "https://assets.tcgdex.net/en/xy/g1/RC11/high.webp", "img_jp": "ja-g1-rc11", "hd_jp": "ja-g1-rc11", "en_id": "g1-RC11", "en_label": "EN Generations RC11", "jp_id": "tcg-605482", "jp_label": "PokeKyun Collection (Japanese) 13", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 3, "mercari_jpy": 2000, "mercari_usd": 12.44, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 10, "mercari_jpy": 1949.0, "mercari_usd": 11.99, "en_usd": 4.83, "jp_tcg_usd": 27.79}, {"month": "2026-08", "n": 17, "mercari_jpy": 1999, "mercari_usd": 12.59, "en_usd": 6.25, "jp_tcg_usd": 27.56}, {"month": "2026-09", "n": 17, "mercari_jpy": 2222, "mercari_usd": 14.21, "en_usd": 5.4, "jp_tcg_usd": 28.3}, {"month": "2026-10", "n": 23, "mercari_jpy": 1799, "mercari_usd": 11.39, "en_usd": 5.65, "jp_tcg_usd": 27.08}, {"month": "2026-11", "n": 14, "mercari_jpy": 1940.0, "mercari_usd": 12.26, "en_usd": 5.43, "jp_tcg_usd": 27.08}], "mercari_sold_all_jpy": 1989.5, "mercari_sold_n": 84, "mercari_tier": "full", "gap_mercari": 2.26, "gap_mercari_month": "2026-11", "gap_jp_tcg": 4.99, "gap_jp_tcg_month": "2026-11", "en_usd_last": 5.43, "en_usd_month": "2026-11", "gap_all": 2.32, "en_set": "Generations", "en_no": "RC11", "en_name": "Wobbuffet", "era": "XY", "rarity": "Common", "code": "GEN", "jp_set": "PokeKyun Collection", "logo": "../../logos/engenerations.webp"}, {"key": "hgssp-HGSS04", "title": "ソーナンス 040/L-P", "img_en": "https://assets.tcgdex.net/en/hgss/hgssp/HGSS04/high.webp", "img_jp": "ja-hgssp-hgss04", "hd_jp": "ja-hgssp-hgss04", "en_id": "hsp-HGSS04", "en_label": "EN HGSS Black Star Promos HGSS04", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.07, "jp_tcg_usd": null}, {"month": "2026-01", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.48, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.85, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.1, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.29, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 6.07, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.24, "jp_tcg_usd": null}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 7.57, "jp_tcg_usd": null}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 7.96, "jp_tcg_usd": null}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 8.44, "jp_tcg_usd": null}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 7.88, "jp_tcg_usd": null}], "mercari_sold_all_jpy": 4832.5, "mercari_sold_n": 4, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": 7.88, "en_usd_month": "2026-11", "gap_all": 3.88, "en_set": "HGSS Black Star Promos", "en_no": "HGSS04", "en_name": "", "era": "HeartGold & SoulSilver", "rarity": "", "code": "HGSSP", "jp_set": "", "logo": "../../logos/enhgssblackstarpromos.webp"}, {"key": "hgss1-13", "title": "ソーナンス 041/070", "img_en": "https://assets.tcgdex.net/en/hgss/hgss1/13/high.webp", "img_jp": "ja-hgss1-13", "hd_jp": "ja-hgss1-13", "en_id": "hgss1-13", "en_label": "EN HeartGold SoulSilver 13", "jp_id": "tcg-608044", "jp_label": "HeartGold Collection (Japanese) 41", "jp_ambiguous": true, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 12.26, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 13.83, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 14.15, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 14.7, "jp_tcg_usd": null}, {"month": "2026-04", "n": 3, "mercari_jpy": 899, "mercari_usd": 5.65, "en_usd": 14.17, "jp_tcg_usd": null}, {"month": "2026-05", "n": 7, "mercari_jpy": 1111, "mercari_usd": 7.02, "en_usd": 18.02, "jp_tcg_usd": null}, {"month": "2026-06", "n": 16, "mercari_jpy": 974.5, "mercari_usd": 6.06, "en_usd": 20.14, "jp_tcg_usd": null}, {"month": "2026-07", "n": 10, "mercari_jpy": 1049.5, "mercari_usd": 6.46, "en_usd": 25.13, "jp_tcg_usd": 10}, {"month": "2026-08", "n": 11, "mercari_jpy": 1333, "mercari_usd": 8.39, "en_usd": 31.31, "jp_tcg_usd": 10}, {"month": "2026-09", "n": 9, "mercari_jpy": 1580, "mercari_usd": 10.1, "en_usd": 33.36, "jp_tcg_usd": 10}, {"month": "2026-10", "n": 22, "mercari_jpy": 1500.0, "mercari_usd": 9.5, "en_usd": 35.33, "jp_tcg_usd": 26.5}, {"month": "2026-11", "n": 5, "mercari_jpy": 1222, "mercari_usd": 7.72, "en_usd": 36.09, "jp_tcg_usd": 15}], "mercari_sold_all_jpy": 1111, "mercari_sold_n": 83, "mercari_tier": "full", "gap_mercari": 0.21, "gap_mercari_month": "2026-11", "gap_jp_tcg": 0.42, "gap_jp_tcg_month": "2026-11", "en_usd_last": 36.09, "en_usd_month": "2026-11", "gap_all": 0.19, "en_set": "HeartGold & SoulSilver", "en_no": "13", "en_name": "Wobbuffet", "era": "HeartGold & SoulSilver", "rarity": "Holo Rare", "code": "", "jp_set": "HeartGold Collection", "logo": "../../logos/enheartgoldsoulsilver.webp"}, {"key": "sm8-93", "title": "ソーナンス 044/095", "img_en": "https://assets.tcgdex.net/en/sm/sm8/93/high.webp", "img_jp": "ja-sm8-93", "hd_jp": "ja-sm8-93", "en_id": "sm8-93", "en_label": "EN Lost Thunder 93", "jp_id": "tcg-572923", "jp_label": "Super-Burst Impact (Japanese) 44", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.44, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.43, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.43, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.43, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.47, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.52, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.54, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.53, "jp_tcg_usd": 0.26}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.55, "jp_tcg_usd": 0.26}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.56, "jp_tcg_usd": 0.28}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.64, "jp_tcg_usd": 2.64}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.64, "jp_tcg_usd": 2.64}], "mercari_sold_all_jpy": 350.0, "mercari_sold_n": 2, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 4.12, "gap_jp_tcg_month": "2026-11", "en_usd_last": 0.64, "en_usd_month": "2026-11", "gap_all": 3.46, "en_set": "Lost Thunder", "en_no": "93", "en_name": "Wobbuffet", "era": "Sun & Moon", "rarity": "Rare", "code": "LOT", "jp_set": "Super-Burst Impact", "logo": "../../logos/enlostthunder.webp"}, {"key": "xy4-36", "title": "ソーナンス 035/088", "img_en": "https://assets.tcgdex.net/en/xy/xy4/36/high.webp", "img_jp": "ja-xy4-36", "hd_jp": "ja-xy4-36", "en_id": "xy4-36", "en_label": "EN Phantom Forces 36", "jp_id": "tcg-603635", "jp_label": "Phantom Gate (Japanese) 35", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.39, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.38, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.27, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.31, "jp_tcg_usd": null}, {"month": "2026-04", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.39, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.38, "jp_tcg_usd": null}, {"month": "2026-06", "n": 3, "mercari_jpy": 650, "mercari_usd": 4.04, "en_usd": 2.12, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.23, "jp_tcg_usd": 5}, {"month": "2026-08", "n": 4, "mercari_jpy": 715.0, "mercari_usd": 4.5, "en_usd": 2.37, "jp_tcg_usd": 4}, {"month": "2026-09", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 2.51, "jp_tcg_usd": 4.27}, {"month": "2026-10", "n": 3, "mercari_jpy": 400, "mercari_usd": 2.53, "en_usd": 1.9, "jp_tcg_usd": 3.73}, {"month": "2026-11", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.92, "jp_tcg_usd": 3.73}], "mercari_sold_all_jpy": 600, "mercari_sold_n": 17, "mercari_tier": "full", "gap_mercari": 1.33, "gap_mercari_month": "2026-10", "gap_jp_tcg": 1.94, "gap_jp_tcg_month": "2026-11", "en_usd_last": 1.92, "en_usd_month": "2026-11", "gap_all": 1.98, "en_set": "Phantom Forces", "en_no": "36", "en_name": "Wobbuffet", "era": "XY", "rarity": "Uncommon", "code": "PHF", "jp_set": "Phantom Gate", "logo": "../../logos/enphantomforces.webp"}, {"key": "svp-203", "title": "ソーナンス 103/098", "img_en": "svp-203", "img_jp": "ja-svp-203", "hd_jp": "ja-svp-203", "en_id": "svp-203", "en_label": "EN SVP Black Star Promos 203", "jp_id": "tcg-629044", "jp_label": "The Glory of Team Rocket (Japanese) 103", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.25, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.61, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 6.53, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 8.03, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 10.29, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 12.97, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 13.26, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 8.61, "jp_tcg_usd": 5.03}, {"month": "2026-08", "n": 6, "mercari_jpy": 633.0, "mercari_usd": 3.99, "en_usd": 7.21, "jp_tcg_usd": 5.07}, {"month": "2026-09", "n": 11, "mercari_jpy": 666, "mercari_usd": 4.26, "en_usd": 5.12, "jp_tcg_usd": 5.23}, {"month": "2026-10", "n": 11, "mercari_jpy": 600, "mercari_usd": 3.8, "en_usd": 4.37, "jp_tcg_usd": 4.36}, {"month": "2026-11", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 3.83, "jp_tcg_usd": 4.42}], "mercari_sold_all_jpy": 660, "mercari_sold_n": 29, "mercari_tier": "full", "gap_mercari": 0.87, "gap_mercari_month": "2026-10", "gap_jp_tcg": 1.15, "gap_jp_tcg_month": "2026-11", "en_usd_last": 3.83, "en_usd_month": "2026-11", "gap_all": 1.09, "en_set": "SVP Black Star Promos", "en_no": "203", "en_name": "Team Rocket's Wobbuffet", "era": "Scarlet & Violet", "rarity": "Promo", "code": "SVP", "jp_set": "The Glory of Team Rocket", "logo": ""}, {"key": "swsh1-191", "title": "ソーナンス 063/060", "img_en": "https://assets.tcgdex.net/en/swsh/swsh1/191/high.webp", "img_jp": "ja-swsh1-191", "hd_jp": "ja-swsh1-191", "en_id": "swsh1-191", "en_label": "EN Sword & Shield 191", "jp_id": "tcg-568576", "jp_label": "Sword (Japanese) 63", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.76, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.41, "jp_tcg_usd": null}, {"month": "2026-02", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.25, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.76, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.96, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.15, "jp_tcg_usd": null}, {"month": "2026-06", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.75, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.72, "jp_tcg_usd": 6.46}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.72, "jp_tcg_usd": 6.43}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 4.89, "jp_tcg_usd": 6.43}, {"month": "2026-10", "n": 4, "mercari_jpy": 667.5, "mercari_usd": 4.23, "en_usd": 5.18, "jp_tcg_usd": 6.43}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 5.27, "jp_tcg_usd": 6.43}], "mercari_sold_all_jpy": 444, "mercari_sold_n": 11, "mercari_tier": "full", "gap_mercari": 0.82, "gap_mercari_month": "2026-10", "gap_jp_tcg": 1.22, "gap_jp_tcg_month": "2026-11", "en_usd_last": 5.27, "en_usd_month": "2026-11", "gap_all": 0.53, "en_set": "Sword & Shield", "en_no": "191", "en_name": "Wobbuffet V", "era": "Sword & Shield", "rarity": "Ultra Rare", "code": "SSH", "jp_set": "Sword", "logo": "../../logos/enswordshield.webp"}, {"key": "swsh1-86", "title": "ソーナンス 026/060", "img_en": "https://assets.tcgdex.net/en/swsh/swsh1/86/high.webp", "img_jp": "ja-swsh1-86", "hd_jp": "ja-swsh1-86", "en_id": "swsh1-86", "en_label": "EN Sword & Shield 86", "jp_id": "tcg-568539", "jp_label": "Sword (Japanese) 26", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.01, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.93, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 0.85, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.17, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.35, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.21, "jp_tcg_usd": null}, {"month": "2026-06", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.55, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.19, "jp_tcg_usd": 1.88}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.41, "jp_tcg_usd": 1.88}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.21, "jp_tcg_usd": 1.79}, {"month": "2026-10", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.27, "jp_tcg_usd": 1.71}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": 1.22, "jp_tcg_usd": 1.72}], "mercari_sold_all_jpy": 438.5, "mercari_sold_n": 6, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": 1.41, "gap_jp_tcg_month": "2026-11", "en_usd_last": 1.22, "en_usd_month": "2026-11", "gap_all": 2.27, "en_set": "Sword & Shield", "en_no": "86", "en_name": "Wobbuffet V", "era": "Sword & Shield", "rarity": "Holo Rare V", "code": "SSH", "jp_set": "Sword", "logo": "../../logos/enswordshield.webp"}, {"key": "xyp-XY155", "title": "ソーナンス 055/131", "img_en": "https://assets.tcgdex.net/en/xy/xyp/XY155/high.webp", "img_jp": "ja-xyp-xy155", "hd_jp": "ja-xyp-xy155", "en_id": "xyp-XY155", "en_label": "EN XY Black Star Promos XY155", "jp_id": "tcg-605552", "jp_label": "Premium Champion Pack (Japanese) 55", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 5, "mercari_jpy": 1900, "mercari_usd": 12.19, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 4, "mercari_jpy": 1294.0, "mercari_usd": 8.26, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 3, "mercari_jpy": 1380, "mercari_usd": 8.89, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 10, "mercari_jpy": 1989.5, "mercari_usd": 12.54, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 6, "mercari_jpy": 1361.0, "mercari_usd": 8.56, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 7, "mercari_jpy": 3200, "mercari_usd": 20.22, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 5, "mercari_jpy": 2444, "mercari_usd": 15.21, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 7, "mercari_jpy": 2286, "mercari_usd": 14.07, "en_usd": 9.74, "jp_tcg_usd": 39.99}, {"month": "2026-08", "n": 3, "mercari_jpy": 2300, "mercari_usd": 14.48, "en_usd": 9.27, "jp_tcg_usd": 39.99}, {"month": "2026-09", "n": 3, "mercari_jpy": 2444, "mercari_usd": 15.63, "en_usd": 9.87, "jp_tcg_usd": 30}, {"month": "2026-10", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 11.99, "jp_tcg_usd": 30}, {"month": "2026-11", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": 11.95, "jp_tcg_usd": 30}], "mercari_sold_all_jpy": 2006, "mercari_sold_n": 59, "mercari_tier": "full", "gap_mercari": 1.58, "gap_mercari_month": "2026-09", "gap_jp_tcg": 2.51, "gap_jp_tcg_month": "2026-11", "en_usd_last": 11.95, "en_usd_month": "2026-11", "gap_all": 1.06, "en_set": "XY Black Star Promos", "en_no": "XY155", "en_name": "Wobbuffet BREAK", "era": "XY", "rarity": "Promo", "code": "XYP", "jp_set": "Premium Champion Pack", "logo": "../../logos/enxyblackstarpromos.webp"}, {"key": "jp-vs-93", "title": "ロケットのソーナンス 093/141", "img_en": null, "img_jp": "jp-vs1-093", "hd_jp": "jp-vs1-093", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-631881", "jp_label": "Pokemon VS (Japanese) 93", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-08", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 104.99}, {"month": "2026-09", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 99.99}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 99.99}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 99.99}], "mercari_sold_all_jpy": 18938.5, "mercari_sold_n": 8, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "Pokemon VS", "logo": ""}, {"key": "jp-ashvstr-8", "title": "ソーナンス 008/026", "img_en": null, "img_jp": "jp-smd-008", "hd_jp": "jp-smd-008", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-598637", "jp_label": "Ash vs Team Rocket Deck Kit (Japanese) 8", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 3, "mercari_jpy": 6800, "mercari_usd": 42.86, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 5, "mercari_jpy": 4444, "mercari_usd": 28.09, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 3, "mercari_jpy": 3777, "mercari_usd": 23.24, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 75}, {"month": "2026-09", "n": 6, "mercari_jpy": 6649.5, "mercari_usd": 42.53, "en_usd": null, "jp_tcg_usd": 80}, {"month": "2026-10", "n": 3, "mercari_jpy": 2900, "mercari_usd": 18.36, "en_usd": null, "jp_tcg_usd": 80}, {"month": "2026-11", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 80}], "mercari_sold_all_jpy": 4522.0, "mercari_sold_n": 30, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "Ash vs Team Rocket Deck Kit", "logo": ""}, {"key": "jp-xyp-80", "title": "ソーナンス 080/XY-P", "img_en": null, "img_jp": "jpn_xyp-80", "hd_jp": "jpn_xyp-80", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-08", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-09", "n": 4, "mercari_jpy": 1889.5, "mercari_usd": 12.08, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-11", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}], "mercari_sold_all_jpy": 1422.0, "mercari_sold_n": 16, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "", "logo": ""}, {"key": "jp-xyss-12", "title": "ソーナンス 012/049", "img_en": null, "img_jp": "jpn_xyss-12", "hd_jp": "jpn_xyss-12", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-606424", "jp_label": "M Master Deck Build Box Power Style (Japanese) 12", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4}], "mercari_sold_all_jpy": 300, "mercari_sold_n": 7, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "M Master Deck Build Box Power Style", "logo": ""}, {"key": "jp-xypc-54", "title": "ソーナンス 054/131", "img_en": null, "img_jp": "jpn_xypc-54", "hd_jp": "jpn_xypc-54", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-605551", "jp_label": "Premium Champion Pack (Japanese) 54", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.75}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 5.3}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.98}, {"month": "2026-10", "n": 4, "mercari_jpy": 683.0, "mercari_usd": 4.32, "en_usd": null, "jp_tcg_usd": 4.98}, {"month": "2026-11", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.98}], "mercari_sold_all_jpy": 749.5, "mercari_sold_n": 12, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "Premium Champion Pack", "logo": ""}, {"key": "jp-smxy-47", "title": "ソーナンス 047/171", "img_en": null, "img_jp": "jpn_smxy-47", "hd_jp": "jpn_smxy-47", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-599010", "jp_label": "The Best of XY (Japanese) 47", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 4, "mercari_jpy": 625.0, "mercari_usd": 3.95, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 3, "mercari_jpy": 999, "mercari_usd": 6.22, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 3, "mercari_jpy": 599, "mercari_usd": 3.69, "en_usd": null, "jp_tcg_usd": 2.5}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 2.5}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 1.99}, {"month": "2026-10", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 1.96}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 2.07}], "mercari_sold_all_jpy": 600, "mercari_sold_n": 17, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "The Best of XY", "logo": ""}, {"key": "jp-sm4p-37", "title": "ソーナンス 037/114", "img_en": null, "img_jp": "jpn_sm4plus-37", "hd_jp": "jpn_sm4plus-37", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-574282", "jp_label": "SM4+: GX Battle Boost (Japanese) 37", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.49}, {"month": "2026-08", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.49}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.49}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.49}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.49}], "mercari_sold_all_jpy": 553.5, "mercari_sold_n": 2, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "SM4+: GX Battle Boost", "logo": ""}, {"key": "jp-smh-43", "title": "ソーナンス 043/131", "img_en": null, "img_jp": "jpn_smh-43", "hd_jp": "jpn_smh-43", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-599258", "jp_label": "GX Starter Decks (Japanese) 43", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 6}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 5}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 3.3}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 3.98}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 3.98}], "mercari_sold_all_jpy": 300, "mercari_sold_n": 1, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "GX Starter Decks", "logo": ""}, {"key": "jp-svp-131", "title": "ソーナンス 131/SV-P", "img_en": null, "img_jp": "jpn_svp-131", "hd_jp": "jpn_svp-131", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-587880", "jp_label": "SV-P Promotional Cards (Japanese) 131", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 4.99}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 25}, {"month": "2026-09", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 19.69}, {"month": "2026-10", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 19.69}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}], "mercari_sold_all_jpy": 632.5, "mercari_sold_n": 6, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "SV-P Promotional Cards", "logo": ""}, {"key": "jp-ep-15", "title": "ソーナンス エントリーパック", "img_en": null, "img_jp": null, "hd_jp": null, "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": null, "jp_label": null, "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-10", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-11", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}], "mercari_sold_all_jpy": null, "mercari_sold_n": 0, "mercari_tier": null, "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "", "logo": ""}, {"key": "jp-pcg10-31", "title": "ソーナンス 031/108", "img_en": null, "img_jp": "jpn_pcg10-31", "hd_jp": "jpn_pcg10-31", "en_id": null, "en_label": "Japan-only print (no EN card)", "jp_id": "tcg-609270", "jp_label": "World Champions Pack (Japanese) 31", "jp_ambiguous": false, "rows": [{"month": "2025-12", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-01", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-02", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-03", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-04", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-05", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-06", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": null}, {"month": "2026-07", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 69.5}, {"month": "2026-08", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 69.5}, {"month": "2026-09", "n": 0, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 69.5}, {"month": "2026-10", "n": 1, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 69.5}, {"month": "2026-11", "n": 2, "mercari_jpy": null, "mercari_usd": null, "en_usd": null, "jp_tcg_usd": 69.5}], "mercari_sold_all_jpy": 1250.0, "mercari_sold_n": 6, "mercari_tier": "full", "gap_mercari": null, "gap_mercari_month": null, "gap_jp_tcg": null, "gap_jp_tcg_month": null, "en_usd_last": null, "en_usd_month": null, "gap_all": null, "en_set": "", "en_no": "", "en_name": "", "era": "Other", "rarity": "", "code": "", "jp_set": "World Champions Pack", "logo": ""}], "built": "2026-11-10"};
 const DOCS = "../../";
-const params = new URLSearchParams(location.search);
-let cur = params.get("cur") === "jpy" ? "jpy" : "usd";
-let sel = params.get("card");
-const NF = { usd: new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }),
-             jpy: new Intl.NumberFormat("en-US", { style: "currency", currency: "JPY", maximumFractionDigits: 0 }) };
-const MF = new Intl.DateTimeFormat("en-US", { month: "short", year: "2-digit", timeZone: "UTC" });
-const fmt = v => v == null ? "–" : NF[cur].format(v);
-const mon = m => MF.format(new Date(m + "-01T00:00:00Z"));
-const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const src = s => s.startsWith("http") ? s : DOCS + "thumbs/" + s + ".jpg";
-const byKey = new Map(DATA.cards.map(c => [c.key, c]));
-const lastFx = Object.values(DATA.fx).filter(Boolean).at(-1);
-const fxOf = m => DATA.fx[m] || lastFx;
-// every series is stored in USD except Mercari (JPY); convert per month for the chosen view
-function val(r, s) {
-  if (s === "mercari") return r.mercari_jpy == null ? null : cur === "jpy" ? r.mercari_jpy : r.mercari_usd;
-  const usd = r[s];
-  return usd == null ? null : cur === "usd" ? usd : usd / fxOf(r.month);
-}
-const toCur = usd => usd == null ? null : cur === "usd" ? usd : usd / lastFx;
-const jpyToCur = jpy => jpy == null ? null : cur === "jpy" ? jpy : jpy * lastFx;
-const SERIES = [["en_usd", "--en", "EN on TCGplayer"], ["jp_tcg_usd", "--jptcg", "JP on TCGplayer"],
-                ["mercari", "--merc", "JP sold on Mercari"]];
+const CFG = {"slug": "wobbuffet", "market": "../../market/?collection=wobbuffet", "others": [{"name": "Wobbuffet", "href": "../wobbuffet/", "n": 26}, {"name": "Yuka Morii", "href": "../yuka-morii/", "n": 71}]};
+// JP vs EN prices · facet rail (2026-11-10; mock Tracker/design-demos/jpen-2.html). One filter state drives the summary and the table; a card opens a
+// drawer with both scans, the 12-month chart and links. Data: COLS = both collections' jp_en_trends.html data, plus
+// era / set / code / logo / EN name from the Tracker SEED (build_mocks.py).
+(function () {
+const $ = id => document.getElementById(id);
+const Q = new URLSearchParams(location.search);
+const D = DATA, CID = CFG.slug;
+let cur = Q.get('cur') === 'jpy' ? 'jpy' : 'usd', sel = Q.get('card');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const n = v => v.toLocaleString('en-US');
+const NF = { usd: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }), jpy: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 }) };
+const MF = new Intl.DateTimeFormat('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+const fmt = v => (v == null ? '–' : NF[cur].format(v));
+const mon = m => MF.format(new Date(m + '-01T00:00:00Z'));
+const lastFx = Object.values(D.fx).filter(Boolean).at(-1), fxOf = m => D.fx[m] || lastFx;
+const usd = v => (v == null ? null : cur === 'usd' ? v : v / lastFx);          // a USD amount in the chosen currency
+const yen = v => (v == null ? null : cur === 'jpy' ? v : v * lastFx);          // a JPY amount in the chosen currency
+const thumb = s => (!s ? '' : s.startsWith('http') ? s : DOCS + 'thumbs/' + s + '.jpg');
+const ERA_ORDER = ['Base', 'Gym', 'Neo', 'Legendary Collection', 'e-Card', 'EX', 'Diamond & Pearl', 'Platinum', 'HeartGold & SoulSilver', 'Black & White', 'XY', 'Sun & Moon', 'Sword & Shield', 'Scarlet & Violet', 'Mega Evolution'];
+const eraIx = e => { const i = ERA_ORDER.indexOf(e); return i < 0 ? 99 : i; };
+// verdict: Mercari (or JP TCGplayer) price ÷ EN, as the old page: < 0.8 cheaper in Japan, > 1.25 dearer
+const V = [['cheap', 'Cheaper in JP', 'var(--best-text)'], ['same', 'About the same', 'var(--accent)'], ['dear', 'Dearer in JP', 'var(--danger)'], ['none', 'No comparison', 'var(--line)']];
+const verdictOf = c => (c.gap_all == null ? 'none' : c.gap_all < 0.8 ? 'cheap' : c.gap_all > 1.25 ? 'dear' : 'same');
+const why = c => (!c.en_id ? 'Japan-only print' : c.en_usd_last == null ? 'No EN price' : 'No Japan sales');
+const flagsOf = c => [c.mercari_sold_all_jpy <= 350 && c.en_usd_last < 1 && '¥300 floor', c.mercari_sold_n < 5 && 'Thin data (< 5 sales)', (c.mercari_tier === 'setname' || c.mercari_tier === 'card') && 'Name + set match'].filter(Boolean);
+const RA = D.cards.map(c => ({ ...c, verdict: verdictOf(c), flags: flagsOf(c), setk: c.en_set || c.jp_set || 'Japan-only' }));
 
-function verdict(c) {
-  const g = c.gap_all;
-  if (g == null) return !c.en_id ? '<span class="note">Japan-only print</span>' : c.en_usd_last == null ? '<span class="note">No EN price</span>' : '<span class="note">No Japan sales</span>';
-  const [cls, txt] = g < 0.8 ? ["cheap", "Cheaper in JP"] : g > 1.25 ? ["dear", "Dearer in JP"] : ["same", "About the same"];
-  const flags = [];
-  if (c.mercari_sold_all_jpy <= 350 && c.en_usd_last < 1) flags.push("¥300 floor");
-  if (c.mercari_sold_n < 5) flags.push("thin data");
-  if (c.mercari_tier === "setname" || c.mercari_tier === "card") flags.push("name + set match");
-  return `<span class="v ${cls}">${txt}</span>${flags.length ? `<span class="note">${flags.join(", ")}</span>` : ""}`;
+// ---------- filters ----------
+const FK = ['verdict', 'era', 'setk', 'rarity', 'flags'];
+const F = { q: '' }; FK.forEach(k => { F[k] = []; });
+const getv = { verdict: c => c.verdict, era: c => c.era, setk: c => c.setk, rarity: c => c.rarity, flags: c => (c.flags.length ? c.flags : ['No flags']) };
+const hit = (c, k) => !F[k].length || [].concat(getv[k](c)).some(v => F[k].includes(v));
+const match = (c, skip) => FK.every(k => k === skip || hit(c, k))
+  && (!F.q || [c.title, c.en_name, c.en_set, c.jp_set, c.code, c.en_no].join(' ').toLowerCase().includes(F.q));
+const rowsBut = skip => RA.filter(c => match(c, skip));
+let UI = { open: { verdict: true, era: true } };
+try { UI = { ...UI, ...JSON.parse(localStorage.getItem('cpt-jpen-ui') || '{}') }; } catch (e) { /* fine */ }
+const saveUI = () => { try { localStorage.setItem('cpt-jpen-ui', JSON.stringify(UI)); } catch (e) { /* fine */ } };
+const FACETS = [
+  ['verdict', 'Verdict', (a, b) => V.findIndex(v => v[0] === a) - V.findIndex(v => v[0] === b), v => (V.find(x => x[0] === v) || [v, v])[1]],
+  ['era', 'Era', (a, b) => eraIx(a) - eraIx(b), v => v],
+  ['setk', 'Set', null, v => v],
+  ['rarity', 'Rarity', null, v => v],
+  ['flags', 'Data quality', null, v => v],
+];
+function facet([key, label, order, lab]) {
+  const m = new Map(); rowsBut(key).forEach(c => [].concat(getv[key](c)).forEach(v => { if (v) m.set(v, (m.get(v) || 0) + 1); }));
+  const cur0 = F[key];
+  const vals = [...new Set([...m.keys(), ...cur0])].sort(order || ((a, b) => (m.get(b) || 0) - (m.get(a) || 0) || String(a).localeCompare(b)));
+  if (!vals.length) return '';
+  return `<details class="facet" data-k="${key}"${UI.open[key] ? ' open' : ''}><summary>${label}${cur0.length ? `<span class="on">${cur0.length}</span>` : ''}<small>${vals.length}</small></summary>
+    ${vals.length > 12 ? `<input type="search" class="fq" placeholder="Search ${label.toLowerCase()}…" aria-label="Search ${label}" autocomplete="off">` : ''}
+    <div class="fl" role="group" aria-label="${label}">${vals.map(v => { const k = m.get(v) || 0;
+      return `<label class="fo${k ? '' : ' zero'}"><input type="checkbox" data-k="${key}" data-v="${esc(v)}"${cur0.includes(v) ? ' checked' : ''}>${key === 'verdict' ? `<i class="sw" style="background:${(V.find(x => x[0] === v) || [])[2]}"></i>` : ''}<span>${esc(lab(v))}</span><small>${n(k)}</small></label>`; }).join('')}</div>
+    ${cur0.length ? `<button type="button" class="linkish" data-clear="${key}">Clear</button>` : ''}</details>`;
+}
+function drawRail() {
+  const nOn = FK.filter(k => F[k].length).length;
+  $('facets').innerHTML = `<div class="fh"><h2>Filters</h2>${nOn || F.q ? '<button type="button" class="linkish" data-reset>Reset all</button>' : ''}</div>${FACETS.map(facet).join('')}`;
+  $('fopen').textContent = 'Filters' + (nOn ? ' · ' + nOn : '');
+  document.querySelectorAll('[data-cur]').forEach(b => b.setAttribute('aria-pressed', b.dataset.cur === cur));
 }
 
+// ---------- summary ----------
+function drawSummary(rows) {
+  const cnt = {}; V.forEach(v => { cnt[v[0]] = rows.filter(c => c.verdict === v[0]).length; });
+  const cheap = rows.filter(c => c.verdict === 'cheap');
+  const save = cheap.reduce((t, c) => t + (c.en_usd_last - c.mercari_sold_all_jpy * lastFx), 0);
+  const gaps = rows.map(c => c.gap_all).filter(g => g != null).sort((a, b) => a - b);
+  const med = gaps.length ? gaps[gaps.length >> 1] : null;
+  $('summary').innerHTML = `<div class="jsum"><div><div class="big">${fmt(usd(save))} <span>saved buying the ${n(cheap.length)} cheaper prints in Japan</span></div>
+      <div class="med">${med == null ? '' : `median Japan ÷ EN ${med.toFixed(2)}× · ${n(gaps.length)} prints compared`}</div></div>
+    <div><div class="split">${V.map(v => cnt[v[0]] ? `<i style="width:${cnt[v[0]] / (rows.length || 1) * 100}%;background:${v[2]}" title="${v[1]} ${cnt[v[0]]}"></i>` : '').join('')}</div>
+      <div class="legend">${V.map(v => `<button type="button" class="lg-b${F.verdict.includes(v[0]) ? ' on' : ''}" data-verdict="${v[0]}"${cnt[v[0]] ? '' : ' disabled'}><i style="background:${v[2]}"></i>${v[1]} <b>${n(cnt[v[0]])}</b></button>`).join('')}</div></div></div>`;
+}
+
+// ---------- table ----------
+const st = { k: 'gap_all', d: 1, def: true };
+const SK = { name: c => c.en_name || c.title, set: c => eraIx(c.era) * 1e4 + (c.code || c.setk).charCodeAt(0), en: c => c.en_usd_last, jp: c => c.mercari_sold_all_jpy, gap_all: c => c.gap_all, n: c => c.mercari_sold_n };
+const cmp = (k, d) => (a, b) => { const x = SK[k](a), y = SK[k](b);
+  if (x == null || y == null) return (x == null) - (y == null);   // no value stays last in both directions
+  return d * (typeof x === 'string' ? x.localeCompare(y) : x - y) || String(a.title).localeCompare(b.title); };
+const th = (k, label, cls = '') => { const on = st.k === k && !st.def;
+  return `<th class="${cls}"${on ? ` aria-sort="${st.d > 0 ? 'ascending' : 'descending'}"` : ''}><button type="button" class="sh${on ? ' on' : ''}" data-k="${k}">${label}<span aria-hidden="true">${on ? (st.d > 0 ? '↑' : '↓') : '↕'}</span></button></th>`; };
+// the gap as a bar centred on 1× (log scale, 0.1× .. 10×): green toward Japan, red away
+const gapBar = g => { if (g == null) return '<span class="muted">–</span>';
+  const p = Math.max(-1, Math.min(1, Math.log10(g))) * 50, cls = g < 0.8 ? 'var(--best-text)' : g > 1.25 ? 'var(--danger)' : 'var(--accent)';
+  return `<span class="gapc"><span class="gbar" aria-hidden="true"><i style="${p < 0 ? `right:50%;width:${-p}%` : `left:50%;width:${p}%`};background:${cls}"></i></span><span class="gx" style="color:${cls}">${g.toFixed(2)}×</span></span>`; };
+function drawTable(rows) {
+  const sortName = st.def ? '' : { name: 'Card', set: 'Set', en: 'EN', jp: 'Japan', gap_all: 'Japan ÷ EN', n: 'Sales' }[st.k];
+  $('tbar').innerHTML = `<input type="search" id="q" placeholder="Search card, set…" aria-label="Search prints" value="${esc(F.q)}" autocomplete="off">
+    <span class="cnt" aria-live="polite"><b>${n(rows.length)}</b> of ${n(RA.length)} prints</span><span class="sp"></span>
+    ${sortName ? `<span class="ftag">Sort: ${sortName} ${st.d > 0 ? '↑' : '↓'}<button type="button" data-sortreset aria-label="Back to default order">×</button></span>` : ''}`;
+  $('tHead').innerHTML = `<tr>${th('name', 'Card')}${th('set', 'Set', 'hs cs')}${th('en', 'EN on TCGplayer', 'r hs')}${th('jp', 'Japan sold', 'r hs')}${th('gap_all', 'Japan ÷ EN', 'r')}<th class="hs">Verdict</th></tr>`;
+  $('tBody').innerHTML = rows.slice().sort(cmp(st.k, st.d)).map(c => `<tr class="row" data-card="${esc(c.key)}" aria-selected="${c.key === sel}" tabindex="0">
+      <td><span class="card">${c.img_jp ? `<img class="th" loading="lazy" width="30" height="42" alt="" src="${esc(thumb(c.img_jp))}">` : '<span class="th"></span>'}<span class="t"><b lang="ja" translate="no">${esc(c.title)}</b><span>${esc(c.en_name || why(c))}</span><span class="mp">EN ${fmt(usd(c.en_usd_last))} · JP ${fmt(yen(c.mercari_sold_all_jpy))}</span></span></span></td>
+      <td class="jset hs cs" title="${esc(c.en_set || c.jp_set)}">${c.logo ? `<img alt="" loading="lazy" src="${esc(c.logo)}">` : ''}${esc(c.code || c.setk)} ${esc(c.en_no || '')}</td>
+      <td class="num hs">${fmt(usd(c.en_usd_last))}</td>
+      <td class="num hs">${fmt(yen(c.mercari_sold_all_jpy))} <small>(${c.mercari_sold_n || 0})</small></td>
+      <td class="num">${gapBar(c.gap_all)}</td>
+      <td class="hs"><span class="vb ${c.verdict}">${c.verdict === 'none' ? esc(why(c)) : (V.find(v => v[0] === c.verdict) || [])[1]}</span>${c.flags.length ? `<span class="flags">${esc(c.flags.join(' · '))}</span>` : ''}</td></tr>`).join('')
+    || '<tr><td colspan="6" class="muted">No prints match. <button type="button" class="linkish" data-reset>Reset filters</button></td></tr>';
+}
+
+// ---------- detail drawer ----------
+const SERIES = [['en_usd', '--en', 'EN on TCGplayer'], ['jp_tcg_usd', '--jptcg', 'JP on TCGplayer'], ['mercari', '--merc', 'JP sold on Mercari']];
+const val = (r, s) => (s === 'mercari' ? (r.mercari_jpy == null ? null : cur === 'jpy' ? r.mercari_jpy : r.mercari_usd) : r[s] == null ? null : cur === 'usd' ? r[s] : r[s] / fxOf(r.month));
 function chart(c) {
   const rows = c.rows, W = 380, H = 200, L = 56, R = 8, T = 10, B = 24;
   const vals = rows.flatMap(r => SERIES.map(([s]) => val(r, s))).filter(v => v != null);
-  if (!vals.length) return `<p class="note">No monthly price data yet for this print.</p>`;
-  const max = Math.max(...vals) * 1.1 || 1;
-  const x = i => L + i * (W - L - R) / (rows.length - 1), y = v => T + (H - T - B) * (1 - v / max);
-  let g = "";
-  for (let k = 0; k <= 4; k++) {
-    const v = max * k / 4;
-    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>` +
-         `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`;
-  }
+  if (!vals.length) return '<p class="muted">No monthly price data yet for this print.</p>';
+  const max = Math.max(...vals) * 1.1 || 1, x = i => L + i * (W - L - R) / (rows.length - 1), y = v => T + (H - T - B) * (1 - v / max);
+  let g = '';
+  for (let k = 0; k <= 4; k++) { const v = max * k / 4; g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`; }
   rows.forEach((r, i) => { if (i % 3 === 0) g += `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${mon(r.month)}</text>`; });
   for (const [s, color, label] of SERIES) {
-    let d = "", pen = false;
-    rows.forEach((r, i) => {
-      const v = val(r, s);
-      if (v == null) { pen = false; return; }
-      d += (pen ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1) + " "; pen = true;
-      const extra = s === "mercari" ? ` (${r.n} sales)` : "";
-      g += `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="var(${color})"><title>${label} ${mon(r.month)}: ${fmt(v)}${extra}</title></circle>`;
-    });
+    let d = '', pen = false;
+    rows.forEach((r, i) => { const v = val(r, s); if (v == null) { pen = false; return; }
+      d += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1) + ' '; pen = true;
+      g += `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="var(${color})"><title>${label} ${mon(r.month)}: ${fmt(v)}${s === 'mercari' ? ` (${r.n} sales)` : ''}</title></circle>`; });
     g += `<path d="${d}" fill="none" stroke="var(${color})" stroke-width="2"/>`;
   }
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly prices for ${esc(c.title)}; the last 6 months are listed below">${g}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly prices for ${esc(c.title)}">${g}</svg>`;
 }
-
-function scan(s, label, alt) {
-  const im = s ? `<img src="${esc(s)}" alt="${esc(alt)}" width="180" height="252" loading="lazy" decoding="async">`
-               : `<div class="noscan">No scan</div>`;
-  return `<figure>${im}<figcaption>${label}</figcaption></figure>`;
-}
-
-function detail() {
-  const det = document.getElementById("det"), c = byKey.get(sel);
-  if (!c) {
-    det.setAttribute("data-empty", "");
-    det.innerHTML = `<p class="empty">Pick a card in the table to see its scans and price trend.</p>`;
-    return;
-  }
-  det.removeAttribute("data-empty");
-  const gapTxt = g => g == null ? "–" : `${g.toFixed(2)}×`;
-  const recent = c.rows.slice(-6).reverse();
-  const merc = "https://jp.mercari.com/search?" + new URLSearchParams({ keyword: c.title, status: "sold_out" });
-  det.innerHTML = `
-    <div class="det-top"><span>Card</span><button type="button" id="close" aria-label="Close card details">Close</button></div>
-    <div class="scans">${scan(c.hd_jp ? DOCS + "jp-en/scans/" + c.hd_jp + ".webp" : c.img_jp && src(c.img_jp), "Japanese", c.title)}${c.en_id ? scan(c.img_en && src(c.img_en), "English", c.en_label) : ""}</div>
+function drawDetail() {
+  const det = $('det'), c = RA.find(x => x.key === sel);
+  document.querySelectorAll('tr.row').forEach(r => r.setAttribute('aria-selected', r.dataset.card === sel));
+  document.body.classList.toggle('detopen', !!c);   // desktop: the table makes room for the drawer
+  if (!c) { det.hidden = true; return; }
+  det.hidden = false;
+  const fig = (s, label) => `<figure>${s ? `<img src="${esc(s)}" alt="${label} scan" loading="lazy">` : '<div class="noscan">No scan</div>'}<figcaption>${label}</figcaption></figure>`;
+  const gx = g => (g == null ? '–' : g.toFixed(2) + '×');
+  const merc = 'https://jp.mercari.com/search?' + new URLSearchParams({ keyword: c.title, status: 'sold_out' });
+  const tcg = 'https://www.tcgplayer.com/search/pokemon/product?' + new URLSearchParams({ q: (c.en_name || '') + ' ' + (c.en_set || '') });
+  det.innerHTML = `<div class="top"><span>Card</span><button type="button" class="linkish" data-close>Close</button></div>
+    <div class="scans">${fig(c.hd_jp ? DOCS + 'jp-en/scans/' + c.hd_jp + '.webp' : thumb(c.img_jp), 'Japanese')}${c.en_id ? fig(thumb(c.img_en), 'English') : ''}</div>
     <h2 lang="ja" translate="no">${esc(c.title)}</h2>
-    <div class="en" translate="no">vs ${esc(c.en_label)}${c.jp_label ? `<br>JP on TCGplayer: ${esc(c.jp_label)}` : ""}</div>
-    ${verdict(c)}
-    <div class="tiles">
-      <div class="tile"><b>${fmt(toCur(c.en_usd_last))}</b><span>EN on TCGplayer${c.en_usd_month ? ", " + mon(c.en_usd_month) : ""}</span></div>
-      <div class="tile"><b>${fmt(jpyToCur(c.mercari_sold_all_jpy))}</b><span>Japan sold median, ${c.mercari_sold_n} sales</span></div>
-      <div class="tile"><b>${gapTxt(c.gap_mercari)}</b><span>Mercari ÷ EN, same month (${c.gap_mercari_month ? mon(c.gap_mercari_month) : "no month with both"})</span></div>
-      <div class="tile"><b>${gapTxt(c.gap_jp_tcg)}</b><span>JP TCGplayer ÷ EN (${c.gap_jp_tcg_month ? mon(c.gap_jp_tcg_month) : "–"})</span></div>
-    </div>
-    <h3>Price Trend</h3>
-    <div class="legend">${SERIES.map(([, col, l]) => `<span><i style="background:var(${col})"></i>${l}</span>`).join("")}</div>
-    ${chart(c)}
-    <table><caption class="note" style="font-weight:400;padding:8px 0 4px">Last 6 months</caption>
-      <thead><tr><th scope="col">Month</th><th scope="col" class="n">EN</th><th scope="col" class="n">JP TCGplayer</th><th scope="col" class="n">Mercari</th></tr></thead>
-      <tbody>${recent.map(r => `<tr><th scope="row">${mon(r.month)}</th><td class="n">${fmt(val(r, "en_usd"))}</td>
-        <td class="n">${fmt(val(r, "jp_tcg_usd"))}</td><td class="n">${fmt(val(r, "mercari"))} <span class="note">(${r.n})</span></td></tr>`).join("")}</tbody></table>
-    <h3>Links</h3>
-    <a href="${esc(merc)}" target="_blank" rel="noopener">Mercari sold listings ↗</a>`;
-  document.getElementById("close").addEventListener("click", () => pick(null));
+    <div class="en">${c.en_id ? `vs ${esc(c.en_name)} · ${esc(c.en_set)} ${esc(c.en_no)}` : 'Japan-only print'}${c.jp_set ? `<br>JP set: ${esc(c.jp_set)}` : ''}</div>
+    <span class="vb ${c.verdict}">${c.verdict === 'none' ? esc(why(c)) : (V.find(v => v[0] === c.verdict) || [])[1]}</span>${c.flags.length ? `<span class="flags">${esc(c.flags.join(' · '))}</span>` : ''}
+    <div class="tiles"><div class="tile"><b>${fmt(usd(c.en_usd_last))}</b><span>EN on TCGplayer${c.en_usd_month ? ', ' + mon(c.en_usd_month) : ''}</span></div>
+      <div class="tile"><b>${fmt(yen(c.mercari_sold_all_jpy))}</b><span>Japan sold median, ${c.mercari_sold_n || 0} sales</span></div>
+      <div class="tile"><b>${gx(c.gap_mercari)}</b><span>Mercari ÷ EN, same month${c.gap_mercari_month ? ' (' + mon(c.gap_mercari_month) + ')' : ''}</span></div>
+      <div class="tile"><b>${gx(c.gap_jp_tcg)}</b><span>JP TCGplayer ÷ EN${c.gap_jp_tcg_month ? ' (' + mon(c.gap_jp_tcg_month) + ')' : ''}</span></div></div>
+    <h3>Price trend, 12 months</h3><div class="jlg">${SERIES.map(([, col, l]) => `<span><i style="background:var(${col})"></i>${l}</span>`).join('')}</div>${chart(c)}
+    <h3>Last 6 months</h3><table><thead><tr><th>Month</th><th class="n">EN</th><th class="n">JP TCGplayer</th><th class="n">Mercari</th></tr></thead>
+      <tbody>${c.rows.slice(-6).reverse().map(r => `<tr><th>${mon(r.month)}</th><td class="n">${fmt(val(r, 'en_usd'))}</td><td class="n">${fmt(val(r, 'jp_tcg_usd'))}</td><td class="n">${fmt(val(r, 'mercari'))} <small class="muted">(${r.n})</small></td></tr>`).join('')}</tbody></table>
+    <h3>Links</h3><div class="links"><a href="${esc(merc)}" target="_blank" rel="noopener">Mercari sold ↗</a>${c.en_id ? `<a href="${esc(tcg)}" target="_blank" rel="noopener">TCGplayer ↗</a>` : ''}</div>`;
 }
 
-function summary() {
-  const rows = [...DATA.cards].sort((a, b) => (a.gap_all ?? 1e9) - (b.gap_all ?? 1e9));
-  document.getElementById("summary").innerHTML =
-    `<caption>Where is it cheaper?</caption><thead><tr><th scope="col"><span class="note">Scan</span></th><th scope="col">JP print</th><th scope="col">EN print</th>
-     <th scope="col" class="n">EN on TCGplayer</th><th scope="col" class="n">Japan (Mercari sold)</th>
-     <th scope="col" class="n">EN − Japan</th><th scope="col" class="n">JP ÷ EN</th><th scope="col">Verdict</th></tr></thead><tbody>` +
-    rows.map(c => {
-      const en = toCur(c.en_usd_last), jp = jpyToCur(c.mercari_sold_all_jpy);
-      const diff = en != null && jp != null ? en - jp : null;
-      const im = c.img_jp || c.img_en;
-      const href = "?" + new URLSearchParams({ ...(cur === "jpy" ? { cur } : {}), card: c.key });
-      return `<tr data-key="${esc(c.key)}"${c.key === sel ? ' aria-current="true"' : ""}>
-        <td>${im ? `<img class="thumb" src="${esc(src(im))}" alt="" width="32" height="45" loading="lazy" decoding="async">` : '<div class="thumb"></div>'}</td>
-        <th scope="row"><a href="${esc(href)}" lang="ja" translate="no">${esc(c.title)}</a></th><td translate="no">${esc(c.en_label.replace(/^EN /, ""))}</td>
-        <td class="n">${fmt(en)}</td><td class="n">${fmt(jp)} <span class="note">(${c.mercari_sold_n})</span></td>
-        <td class="n">${diff == null ? "–" : (diff >= 0 ? "" : "−") + fmt(Math.abs(diff))}</td>
-        <td class="n">${c.gap_all == null ? "–" : c.gap_all.toFixed(2) + "×"}</td><td class="verdict">${verdict(c)}</td></tr>`;
-    }).join("") + "</tbody>";
-}
-
-function syncUrl(push) {
-  const u = new URL(location.href);
-  if (cur === "usd") u.searchParams.delete("cur"); else u.searchParams.set("cur", cur);
-  if (sel) u.searchParams.set("card", sel); else u.searchParams.delete("card");
-  history[push ? "pushState" : "replaceState"](null, "", u);
-}
-
-let opener = null;
-function pick(key) {
-  const closing = !key && sel;
-  sel = key && byKey.has(key) ? key : null;
-  syncUrl(true);
-  for (const tr of document.querySelectorAll("#summary tbody tr"))
-    if (tr.dataset.key === sel) tr.setAttribute("aria-current", "true"); else tr.removeAttribute("aria-current");
-  detail();
-  if (sel) document.getElementById("det").scrollTop = 0;
-  // the drawer covers the table on phones: move focus into it, and back to the row on close
-  if (sel && matchMedia("(max-width: 900px)").matches) document.getElementById("close").focus();
-  if (closing && opener) opener.focus();
-}
-
-document.getElementById("summary").addEventListener("click", e => {
-  const tr = e.target.closest("tbody tr");
-  if (!tr || e.metaKey || e.ctrlKey || e.shiftKey) return;
-  e.preventDefault();
-  opener = tr.querySelector("a");
-  pick(tr.dataset.key);
+// ---------- draw + events ----------
+const sync = () => { const p = new URLSearchParams(); if (cur === 'jpy') p.set('cur', 'jpy'); if (sel) p.set('card', sel); history.replaceState(null, '', p.toString() ? '?' + p : location.pathname); };
+function draw() { const rows = rowsBut(null); drawRail(); drawSummary(rows); drawTable(rows); drawDetail(); sync(); }
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('.facet input[data-k]')) { const k = t.dataset.k, v = t.dataset.v; F[k] = t.checked ? [...F[k], v] : F[k].filter(x => x !== v); draw(); const a = document.querySelector(`.facet input[data-k="${k}"][data-v="${CSS.escape(v)}"]`); if (a) a.focus(); }
+  else if (t.id === 'colPick') location.href = t.value;
 });
-addEventListener("keydown", e => { if (e.key === "Escape" && sel) pick(null); });
-addEventListener("popstate", () => { sel = new URLSearchParams(location.search).get("card"); render(); });
+document.addEventListener('input', e => {
+  if (e.target.id === 'q') { F.q = e.target.value.trim().toLowerCase(); clearTimeout(draw.t); draw.t = setTimeout(() => { draw(); const q = $('q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 150); }
+  if (e.target.matches('.fq')) { const s = e.target.value.toLowerCase(); e.target.parentNode.querySelectorAll('.fo').forEach(o => { o.hidden = !o.textContent.toLowerCase().includes(s); }); }
+});
+document.addEventListener('toggle', e => { if (e.target.matches && e.target.matches('.facet')) { UI.open[e.target.dataset.k] = e.target.open; saveUI(); } }, true);
+document.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  const tr = !b && e.target.closest('tr.row');
+  if (tr) { sel = sel === tr.dataset.card ? null : tr.dataset.card; drawDetail(); sync(); return; }
+  if (!b) return;
+  if (b.dataset.cur) { cur = b.dataset.cur; draw(); }
+  else if (b.dataset.verdict) { const v = b.dataset.verdict; F.verdict = F.verdict.includes(v) ? F.verdict.filter(x => x !== v) : [...F.verdict, v]; draw(); }
+  else if (b.hasAttribute('data-clear')) { F[b.dataset.clear] = []; draw(); }
+  else if (b.hasAttribute('data-reset')) { FK.forEach(k => { F[k] = []; }); F.q = ''; draw(); }
+  else if (b.classList.contains('sh')) { const k = b.dataset.k; Object.assign(st, st.def || st.k !== k ? { k, d: 1, def: false } : st.d > 0 ? { d: -1 } : { k: 'gap_all', d: 1, def: true }); draw(); }
+  else if (b.hasAttribute('data-sortreset')) { Object.assign(st, { k: 'gap_all', d: 1, def: true }); draw(); }
+  else if (b.hasAttribute('data-close')) { sel = null; drawDetail(); sync(); }
+  else if (b.id === 'fopen') document.body.classList.toggle('fopen');
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && sel) { sel = null; drawDetail(); sync(); }
+  const tr = e.key === 'Enter' && e.target.closest && e.target.closest('tr.row');
+  if (tr) { sel = tr.dataset.card; drawDetail(); sync(); }
+});
+$('colPick').innerHTML = CFG.others.map(o => `<option value="${esc(o.href)}"${o.name === D.collection ? ' selected' : ''}>${esc(o.name)}${o.n ? ` (${o.n})` : ''}</option>`).join('');
+$('mkt').href = CFG.market;
+document.title = `JP vs EN Prices · ${D.collection}`;
+$('sub').textContent = `${D.collection} · every Japanese print: the Japan sold price (Mercari) against the English card on TCGplayer`;
+$('fxn').textContent = `¥1 = $${lastFx.toFixed(5)}`;
+$('fx').textContent = `Prices to ${mon(D.months.at(-1))} · FX ${mon(Object.keys(D.fx).filter(k => D.fx[k]).at(-1))}${D.built ? ' · built ' + D.built : ''}`;
+$('foot').innerHTML = '<b>How it is compared.</b> Japan = Mercari sold median (JP TCGplayer when Mercari has no sales), EN = TCGplayer for the matching finish. Under 0.8× = cheaper in Japan, over 1.25× = dearer. Flags: thin data (under 5 sales), the ¥300 Mercari floor, a match by name + set only.';
+draw();
+})();
 
-function render() {
-  summary();
-  detail();
-  document.getElementById("fxnote").textContent = `¥1 = $${lastFx.toFixed(5)} (${mon(DATA.months.at(-1))})`;
-  document.getElementById("built").textContent = DATA.built;
-}
-
-function setCur(id) {
-  cur = id;
-  for (const b of document.querySelectorAll(".bar button")) b.setAttribute("aria-pressed", String(b.id === id));
-  syncUrl(false);
-  render();
-}
-for (const id of ["usd", "jpy"]) document.getElementById(id).addEventListener("click", () => setCur(id));
-setCur(cur);
 </script>
 </body>
 </html>
