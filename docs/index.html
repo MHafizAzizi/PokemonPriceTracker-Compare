@@ -3287,7 +3287,8 @@ document.addEventListener('change', e => {
 });
 
 // List pages: jump to a page, or change rows a page (kept like the List / Binder choice).
-function toListTop() { const t = $('.lpager.top') || $('.tbl'); if (t) window.scrollTo(0, t.getBoundingClientRect().top + scrollY - 70); }
+// Only when the list top is scrolled out of view (a bottom-pager click); a top-pager click must not move the page (user, 2026-11-11).
+function toListTop() { const t = $('.lpager.top') || $('.tbl'); if (t && t.getBoundingClientRect().top < 70) window.scrollTo(0, t.getBoundingClientRect().top + scrollY - 70); }
 document.addEventListener('change', e => {
   if (e.target.matches('select[data-lpage]')) { lPage = Number(e.target.value); render(); toListTop(); }
   else if (e.target.matches('select[data-bsize]')) {
