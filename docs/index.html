@@ -2867,6 +2867,7 @@ function render() {
 
     ${cards.length && ui.view === 'binder' ? binderHtml(cards) : ''}
     ${cards.length && ui.view !== 'binder' ? `
+    ${listPager(cards.length, lPages, lFrom, lFrom + pageCards.length, 'top')}
     <div class="panel tbl ctbl">
       <table>
         <thead><tr>${th('found', 'Found', 'found')}${th('name', 'Card')}${th('set', 'Set')}${th('no', 'No.')}${th('lang', 'Lang')}${th('rarity', 'Rarity')}${th('finish', 'Finish')}${th('cheapest', 'Cheapest', 'num')}${th('shops', 'Shops', 'num')}<th class="acts"><span class="vh">Actions</span></th></tr></thead>
