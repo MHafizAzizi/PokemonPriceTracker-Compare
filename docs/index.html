@@ -1060,7 +1060,9 @@ const minPrice = x => {
 };
 // Column sorts (table headers, 2026-11-09): value of a card for each key; ties go by name
 const SORT_KEY = {
-  no: x => String(x.number || ''),
+  // No. (user, 2026-11-11): product first (main set > special / gallery > promo > deck), then the printed number,
+  // so 001/128 opens the binder and a deck card's 006/040 waits for the decks. "0|001/128" compares numerically.
+  no: x => Object.keys(PRODUCT_LABEL).indexOf(productOf(x)) + '|' + String(x.number || ''),
   lang: x => LANGS.findIndex(([k]) => k === (x.lang || 'EN')) >>> 0,
   rarity: x => TIER_ORDER.indexOf(tierOf(x.rarity, x)) >>> 0,
   finish: x => VAR_RANK.indexOf(x.variant || 'normal') >>> 0,
@@ -1991,7 +1993,7 @@ async function catalogIndex() {
   const rows = c.rows.map(r => {
     const [set, era, lang, dir] = c.sets[r[C.s]];
     return { set, era, lang, number: r[C.number], name: r[C.name], local: r[C.local], en: r[C.en], type: r[C.type],
-      rarity: r[C.rarity], variant: r[C.variant], img: r[C.img] ? `scans/${dir}/${r[C.img]}` : '', ik: illusKey(r[C.illus]), dex: r[C.dex] || [],
+      rarity: r[C.rarity], variant: r[C.variant], img: r[C.img] ? `scans/${String(dir).split('/').map(encodeURIComponent).join('/')}/${encodeURIComponent(r[C.img])}` : '', ik: illusKey(r[C.illus]), dex: r[C.dex] || [],
       art: C.art === undefined ? '' : r[C.art] || '' };
   });
   // artwork links (catalog column "art", 2026-11-05): card -> art key, art key -> one row per card (any finish)
