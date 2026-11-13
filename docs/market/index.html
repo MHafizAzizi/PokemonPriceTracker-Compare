@@ -6,10 +6,17 @@
 <meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
 <title>Market Report</title>
+<meta name="description" content="Marketplace listings for one card collection, priced against market value: deals, fair, overpriced.">
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('cpt-theme')||''}catch(e){}</script>
 <style>
-
+/* Hallmark · checked: 2026-11-13 · genre: modern-minimal (inferred) · shape: app screen · market report
+ * floor: fixed 7, 20, 34, 39a, 40, 48, 63, 67 · reflex fixed: 26b, 64 · structural: printed in chat (column order, nav, row height)
+ * built: the project · redesign: polish · v2.0.0 */
+/* Hallmark · dismissed 56 · the sticky side rail and the main bar sit in separate columns; table heads already offset by --listbar-h / --tbar-h or scroll inside .tw */
+/* Hallmark · answered F7 · one container recipe on purpose: this app screen keeps one box for its controls */
+/* Hallmark · answered F24 · the popovers keep edge and shadow because they float over a busy card table */
 :root{
+    --on-accent:#fff;--on-lang:#fff;--lang-en:#2f6fdb;--lang-jp:#c0392b;--lang-cn:#8a5a12;--rar-u:#1d7a3a;--rar-r:#2f6fdb;--rar-g:#7a5400;--rar-gbg:#fff6d6;--rar-gold:#d4a300;--check-bg:#fdf3e1;--check-text:#8a5a00;--scan-bg:#fff;--fin-ink:#3d2f00;--fin-1:#ffe28a;--fin-2:#bfeaff;--fin-3:#ffd0a8;--fin-e1:#e0b400;--fin-e2:#38a8d8;--fin-e3:#e07a30;--print-ink:#1d1d1b;--print-line:#bbb;--print-muted:#888;--print-faint:#ddd;--shadow-0:var(--shadow-0);--shadow-1:rgb(0 0 0 / .13);--shadow-2:rgb(0 0 0 / .19);--shadow-3:rgb(0 0 0 / .31);--scrim:rgb(0 0 0 / .4);--backdrop:rgb(0 0 0 / .45);
   --bg:#f6f6f4;--surface:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e2dd;--accent:#2f6fdb;
   --best-bg:#e3f4e8;--best-text:#1d7a3a;--danger:#b3261e;--danger-bg:#fbe9e7;--fair-bg:#eef3fc;
   --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
@@ -17,16 +24,22 @@
   color-scheme:light dark;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --on-accent:#0d1a33;--rar-u:#7fd39a;--rar-r:#6d9cff;--rar-g:#f0c850;--rar-gbg:#3a3010;--check-bg:#3a2e14;--check-text:#f0c870;
   --bg:#141416;--surface:#1c1c1f;--text:#ececE8;--muted:#9a9a94;--line:#2e2e33;--accent:#6d9cff;
   --best-bg:#1d3626;--best-text:#7fd39a;--danger:#f2877f;--danger-bg:#3a2020;--fair-bg:#1f2738;
 }}
 :root[data-theme="dark"]{color-scheme:dark;
+    --on-accent:#0d1a33;--rar-u:#7fd39a;--rar-r:#6d9cff;--rar-g:#f0c850;--rar-gbg:#3a3010;--check-bg:#3a2e14;--check-text:#f0c870;
   --bg:#141416;--surface:#1c1c1f;--text:#ececE8;--muted:#9a9a94;--line:#2e2e33;--accent:#6d9cff;
   --best-bg:#1d3626;--best-text:#7fd39a;--danger:#f2877f;--danger-bg:#3a2020;--fair-bg:#1f2738;
 }
 :root[data-theme="light"]{color-scheme:light}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font)}
+
+html, body { overflow-x: clip; }
+h1, h2 { text-wrap: balance; }
+button:active:not(:disabled), .btn:active, a.pill-link:active { transform: translateY(1px); }
 a{color:var(--accent);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .2s}
 a:hover,a:focus-visible{background-size:100% 1px}
 .num,td.n{font-variant-numeric:tabular-nums}
@@ -48,7 +61,7 @@ section{scroll-margin-top:16px}
 .skip{position:absolute;left:-9999px;top:8px;z-index:10;padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px}
 .skip:focus{left:8px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-.label{font-family:var(--mono);font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.label{font-family:var(--font);font-size:12px;color:var(--muted); font-variant-numeric: tabular-nums}
 
 /* 01 summary */
 .kpi.deal b{color:var(--best-text)} .kpi.over b{color:var(--danger)}
@@ -79,7 +92,7 @@ section{scroll-margin-top:16px}
 /* three columns */
 #sellers{margin-top:48px}
 .list{display:flex;flex-direction:column;gap:10px}
-.badge{font-family:var(--mono);font-size:12px;padding:1px 6px;border-radius:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.badge{font-family:var(--font);font-size:12px;padding:1px 6px;border-radius:4px;white-space:nowrap;font-variant-numeric: tabular-nums}
 .b-deal{background:var(--best-bg);color:var(--best-text)}
 .b-over{background:var(--danger-bg);color:var(--danger)}
 .b-fair{background:var(--fair-bg);color:var(--accent)}
@@ -103,7 +116,7 @@ th button:hover,th[aria-sort] button{color:var(--accent)}
 th button:focus-visible{outline:2px solid var(--accent)}
 th[aria-sort=ascending] button::after{content:" \2191"}
 th[aria-sort=descending] button::after{content:" \2193"}
-.chip{font-family:var(--mono);font-size:11px;padding:1px 5px;border-radius:3px;background:var(--best-bg);color:var(--best-text);margin-left:6px}
+.chip{font-family:var(--font);font-size:11px;padding:1px 5px;border-radius:3px;background:var(--best-bg);color:var(--best-text);margin-left:6px; font-variant-numeric: tabular-nums}
 /* % vs market: badge and gap bar share one cell so the eye reads them as one unit */
 .pg{display:flex;align-items:center;justify-content:flex-end;gap:10px}
 .pg .gap{width:110px;margin:0;flex:none}
@@ -117,18 +130,16 @@ button.pill:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .p-lang{font-family:var(--mono);font-weight:600;color:var(--text);background:var(--line);border-color:transparent}
 .p-rar{font-family:var(--mono)}
 /* pill colours (demo B, picked 2026-10-24): language, set, rarity tier; white on each language colour is >= 4.5:1 */
-.p-lang{color:#fff;border-color:transparent}
-.l-EN{background:#2f6fdb}.l-JP{background:#c0392b}.l-CN{background:#8a5a12}
-.p-rar{--u:#1d7a3a;--r:#2f6fdb;--g:#7a5400;--gbg:#fff6d6}
+.p-lang{color:var(--on-lang);border-color:transparent}
+.l-EN{background:var(--lang-en)}.l-JP{background:var(--lang-jp)}.l-CN{background:var(--lang-cn)}
+.p-rar{--u: var(--rar-u); --r: var(--rar-r); --g: var(--rar-g); --gbg: var(--rar-gbg)}
 .r-U{color:var(--u);border-color:var(--u)}.r-R{color:var(--r);border-color:var(--r)}
-.r-IR,.r-HR,.r-P{color:var(--g);border-color:#d4a300;background:var(--gbg)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .p-rar{--u:#7fd39a;--r:#6d9cff;--g:#f0c850;--gbg:#3a3010}}
-:root[data-theme="dark"] .p-rar{--u:#7fd39a;--r:#6d9cff;--g:#f0c850;--gbg:#3a3010}
+.r-IR,.r-HR,.r-P{color:var(--g);border-color: var(--rar-gold);background:var(--gbg)}
 /* All listings pager, above and below the table (user, 2026-11-11) */
 .mpager{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;margin:10px 0}
 .mpager:empty{display:none}
 .mpager button{font:inherit;font-size:14px;padding:6px 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--accent);cursor:pointer}
-.mpager button:disabled{opacity:.4;cursor:default}
+.mpager button:disabled{opacity: .55; cursor: not-allowed; background: var(--bg); color: var(--muted);}
 .mpager button:focus-visible,.mpager select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mpager .pg{font:13px var(--mono)}
 .mpager select{font:13px var(--mono);padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text)}
@@ -166,22 +177,22 @@ button { font: inherit; color: inherit; }
 .colp { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
 .colp select { font: 600 15px var(--font); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
 .fh { display: flex; justify-content: space-between; align-items: baseline; }
-.fh h2 { margin: 0; font: 500 12px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.fh h2 { margin: 0; font: 500 12px var(--font); color: var(--muted); font-variant-numeric: tabular-nums; }
 .tg { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 8px 2px; cursor: pointer; }
-.tg small { margin-left: auto; font: 11px var(--mono); color: var(--muted); }
+.tg small { margin-left: auto; font: 11px var(--font); color: var(--muted); font-variant-numeric: tabular-nums; }
 .facet { border-top: 1px solid var(--line); padding: 8px 0; }
 .facet > summary { list-style: none; cursor: pointer; display: flex; gap: 8px; align-items: center; font: 600 13px var(--font); padding: 4px 2px; }
 .facet > summary::-webkit-details-marker { display: none; }
-.facet > summary small { font: 11px var(--mono); color: var(--muted); font-weight: 400; }
+.facet > summary small { font: 11px var(--font); color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
 .facet > summary::after { content: '+'; margin-left: auto; color: var(--muted); font-weight: 400; }
 .facet[open] > summary::after { content: '−'; }
-.facet .on { font: 11px var(--mono); background: var(--accent); color: #fff; border-radius: 999px; padding: 0 6px; }
+.facet .on { font: 11px var(--font); background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 0 6px; font-variant-numeric: tabular-nums; }
 .fq { width: 100%; margin: 4px 0; font: 13px var(--font); padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
 .fl { display: grid; max-height: 220px; overflow: auto; overscroll-behavior: contain; }
 .fo { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 3px 2px; cursor: pointer; border-radius: 4px; }
 .fo:hover { background: color-mix(in srgb, var(--line) 60%, transparent); }
 .fo span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fo small { font: 11px var(--mono); color: var(--muted); }
+.fo small { font: 11px var(--font); color: var(--muted); font-variant-numeric: tabular-nums; }
 .fo.zero { opacity: .55; }
 .fo[hidden] { display: none; }
 .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
@@ -192,7 +203,7 @@ main { padding: 18px 28px 64px; min-width: 0; }
 .mhead .sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 .fopen, .scrim { display: none; }
 .h2 { display: flex; align-items: baseline; gap: 10px; font-size: 16px; margin: 0 0 10px; }
-.h2 small { margin-left: auto; font: 12px var(--mono); color: var(--muted); font-weight: 400; }
+.h2 small { margin-left: auto; font: 12px var(--font); color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
 section { margin-bottom: 28px; }
 /* summary */
 .sum { display: grid; grid-template-columns: minmax(260px, auto) 1fr; gap: 28px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; }
@@ -206,11 +217,9 @@ section { margin-bottom: 28px; }
 .lg-b i { width: 10px; height: 10px; border-radius: 2px; }
 .lg-b:hover:not(:disabled), .lg-b.on { border-color: var(--accent); }
 .lg-b.on { background: color-mix(in srgb, var(--accent) 10%, transparent); }
-.lg-b:disabled { opacity: .4; cursor: default; }
+.lg-b:disabled { opacity: .55; cursor: not-allowed; background: var(--bg); color: var(--muted); }
 .note { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
-.b-check { background: #fdf3e1; color: #8a5a00; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .b-check { background: #3a2e14; color: #f0c870; } }
-:root[data-theme="dark"] .b-check { background: #3a2e14; color: #f0c870; }
+.b-check { background: var(--check-bg); color: var(--check-text); }
 /* two columns */
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
 .eras2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
@@ -227,7 +236,7 @@ section { margin-bottom: 28px; }
 .selw { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; max-height: 420px; overflow: auto; overscroll-behavior: contain; }
 .dt { width: 100%; border-collapse: collapse; font-size: 13px; }
 .dt th, .dt td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
-.dt th { position: sticky; top: 0; background: var(--surface); z-index: 2; font: 500 12px var(--mono); letter-spacing: .03em; color: var(--muted); box-shadow: 0 1px 0 var(--line); }
+.dt th { position: sticky; top: 0; background: var(--surface); z-index: 2; font: 500 12px var(--font); color: var(--muted); box-shadow: 0 1px 0 var(--line); font-variant-numeric: tabular-nums; }
 .dt .r { text-align: right; } .dt th.r .sh { justify-content: flex-end; width: 100%; }
 .sh { border: 0; background: none; padding: 2px 0; font: inherit; color: inherit; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; white-space: nowrap; }
 .sh span { opacity: .35; font-family: var(--font); }
@@ -260,7 +269,7 @@ section { margin-bottom: 28px; }
 .lt .cn { font-weight: 600; margin-right: 6px; }
 .lt .m { margin-top: 3px; }
 .lt tr.dup td { border-top: 0; } .lt tr.dup .cn { font-weight: 400; color: var(--muted); }
-.lt .chip { font: 11px var(--mono); color: var(--best-text); background: var(--best-bg); border-radius: 4px; padding: 1px 6px; }
+.lt .chip { font: 11px var(--font); color: var(--best-text); background: var(--best-bg); border-radius: 4px; padding: 1px 6px; font-variant-numeric: tabular-nums; }
 .sm { font-size: 12px; color: var(--muted); }
 .pg { display: inline-flex; gap: 10px; align-items: center; justify-content: flex-end; }
 .gap { position: relative; display: inline-block; width: 110px; height: 8px; background: var(--line); border-radius: 4px; }
@@ -271,9 +280,9 @@ section { margin-bottom: 28px; }
 @media (max-width: 1200px) { .two { grid-template-columns: 1fr; } .sum { grid-template-columns: 1fr; gap: 12px; } }
 @media (max-width: 900px) {
   .mshell { grid-template-columns: minmax(0, 1fr); }
-  .mrail { position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); z-index: 30; transform: translateX(-100%); box-shadow: 0 0 40px #0005; }
+  .mrail { position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); z-index: 30; transform: translateX(-100%); box-shadow: 0 0 40px var(--shadow-3); }
   body.fopen .mrail { transform: none; }
-  body.fopen .scrim { display: block; position: fixed; inset: 0; z-index: 25; background: #0006; border: 0; }
+  body.fopen .scrim { display: block; position: fixed; inset: 0; z-index: 25; background: var(--scrim); border: 0; }
   .fopen { display: inline-flex; margin-left: auto; border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: 6px; padding: 8px 14px; min-height: 44px; }
   main { padding: 12px 14px 48px; }
   .hs { display: none; }
@@ -324,7 +333,7 @@ section { margin-bottom: 28px; }
 <a class="skip" href="#main">Skip to report</a>
 <div class="mshell">
   <aside class="mrail" id="rail" aria-label="Collection and filters">
-    <div class="links"><a class="pill-link" href="../">← Card Price Tracker</a><a class="pill-link" id="jpen" hidden>JP vs EN</a></div>
+    <div class="links"><a class="pill-link" href="../">Card Price Tracker</a><a class="pill-link" id="jpen" hidden>JP vs EN</a></div>
     <label class="colp"><span>Collection</span><select id="colPick"></select></label>
     <div id="facets"></div>
     <div class="fx mono" id="fx"></div>
@@ -366,7 +375,7 @@ if (!COL || !COL.rows.length) {   // still offer the other collections and the w
   $('colPick').innerHTML = Object.keys(MCS.collections).filter(k => MCS.collections[k].rows.length).map(k => `<option value="${k}">${MCS.collections[k].name} (${MCS.collections[k].rows.length})</option>`).join('');
   $('colPick').insertAdjacentHTML('afterbegin', '<option value="" selected>Pick a collection</option>');
   $('colPick').onchange = e => { if (e.target.value) location.search = '?collection=' + e.target.value; };
-  $('main').innerHTML = '<div class="empty">No market report for this collection yet. <a data-back>← Card Price Tracker</a></div>';
+  $('main').innerHTML = '<div class="empty">No market report for this collection yet. <a data-back>Card Price Tracker</a></div>';
   document.querySelector('[data-back]').href = document.querySelector('.mrail .links a').getAttribute('href');   // publish() rewrites that one link
   return;
 }
@@ -381,9 +390,7 @@ const abbr = s => s.split(/\s+/).map(w => w[0]).join('').toUpperCase();
 const ERA_ORDER = ['Base', 'Gym', 'Neo', 'Legendary Collection', 'e-Card', 'EX', 'Diamond & Pearl', 'Platinum', 'HeartGold & SoulSilver', 'Black & White', 'XY', 'Sun & Moon', 'Sword & Shield', 'Scarlet & Violet', 'Mega Evolution'];
 const ERA_SET = { Base: 'Base Set', Gym: 'Gym Heroes', Neo: 'Neo Genesis', 'e-Card': 'Expedition', EX: 'Ruby & Sapphire', 'Diamond & Pearl': 'Diamond & Pearl', Platinum: 'Platinum', 'HeartGold & SoulSilver': 'HeartGold & SoulSilver', 'Black & White': 'Black & White', XY: 'XY', 'Sun & Moon': 'Sun & Moon', 'Sword & Shield': 'Sword & Shield', 'Scarlet & Violet': 'Scarlet & Violet', 'Mega Evolution': 'Mega Evolution' };
 // ponytail: stand-in era logo = a set logo from data/set_logos.json; real era marks need set_logos.py to fetch them
-const eraLogo = e => { if (LOGO['EN|' + ERA_SET[e]]) return LOGO['EN|' + ERA_SET[e]];
-  const ks = [...new Set(COL.rows.filter(r => (r.era || 'Other') === e).map(r => r.lang + '|' + r.set))].filter(k => LOGO[k]);
-  return LOGO[ks.filter(k => k.startsWith('EN|')).sort((a, b) => (SD[a.slice(3)] || '9999').localeCompare(SD[b.slice(3)] || '9999'))[0] || ks[0]] || ''; };
+const eraLogo = e => LOGO['EN|' + ERA_SET[e]] || '';   // exact era logo only; a fallback showed another set's logo
 const eraIx = e => { const i = ERA_ORDER.indexOf(e); return i < 0 ? 99 : i; };
 // verdicts: "check" = over +CHECK%, probably a slab or a mis-recorded price; out of the overpriced totals
 const RA = COL.rows.map(r => ({ ...r, era: r.era || 'Other', verdict: r.verdict === 'overpriced' && r.diff_pct > CHECK ? 'check' : r.verdict }));
@@ -455,7 +462,7 @@ function draw() {
   const cmp = rows.filter(r => ['deal', 'fair', 'overpriced'].includes(r.verdict));
   const ask = cmp.reduce((t, r) => t + r.price_rm, 0), mkt = cmp.reduce((t, r) => t + r.market_rm, 0);
   const sellers = new Set(rows.map(r => r.seller)).size;
-  $('sub').textContent = `${n(rows.length)} listings · ${n(sellers)} sellers`;
+  $('sub').textContent = `${n(rows.length)} listings, ${n(sellers)} sellers`;
   // summary: one split bar, legend doubles as the verdict filter
   $('summary').innerHTML = `<div class="sum"><div class="sum-a"><div class="label">Comparable listings (${n(cmp.length)})</div>
       <div class="big">${rm(ask)} <span>asked vs ${rm(mkt)} market</span></div>
@@ -585,7 +592,7 @@ if (['wobbuffet', 'yuka-morii'].includes(CID)) { const a = $('jpen'); a.hidden =
 $('colPick').innerHTML = Object.keys(MCS.collections).filter(k => MCS.collections[k].rows.length).map(k => `<option value="${k}"${k === CID ? ' selected' : ''}>${esc(MCS.collections[k].name)} (${MCS.collections[k].rows.length})</option>`).join('');
 document.title = COL.name + ' Market Report';
 $('colName').textContent = COL.name;
-$('fx').innerHTML = `Prices ${esc(MCS.fx.date)} · USD 1 = RM ${MCS.fx.usd_myr.toFixed(2)} · ¥${MCS.fx.usd_jpy.toFixed(0)} · backup ${esc((MCS.backup || '').replace('card-tracker-backup-', '').replace('.json', ''))}`;
+$('fx').innerHTML = `Prices ${esc(MCS.fx.date)}, USD 1 = RM ${MCS.fx.usd_myr.toFixed(2)} = ¥${MCS.fx.usd_jpy.toFixed(0)}, backup ${esc((MCS.backup || '').replace('card-tracker-backup-', '').replace('.json', ''))}`;
 $('foot').innerHTML = `<b>How market is set.</b> EN = TCGplayer price for the listing's finish. JP = Mercari median (else Cardmarket), normal finish only. Deal ≤ ${TH.deal_pct}%, overpriced ≥ +${TH.over_pct}%, Check > +${CHECK}%, bulk = market under RM ${TH.bulk_rm} (% is meaningless there).`;
 draw();
 })();
