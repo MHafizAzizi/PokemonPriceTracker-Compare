@@ -104,6 +104,9 @@ section{scroll-margin-top:16px}
 .gap .bar{position:absolute;top:6px;height:2px}
 .more{margin-top:10px;font-size:13px}
 
+/* cost to complete */
+.ct tr.tot td{font-weight:600;border-top:2px solid var(--line)}
+.ct td.r b{font-weight:600}
 /* sellers */
 .dn{color:var(--best-text)} .up{color:var(--danger)}
 
@@ -343,6 +346,7 @@ section { margin-bottom: 28px; }
     <header class="mhead"><div><h1><span id="colName"></span> market report</h1><p class="sub" id="sub"></p></div>
       <button type="button" id="fopen" class="fopen">Filters</button></header>
     <section id="summary-s"><div id="summary"></div></section>
+    <section id="cost-s"><h2 class="h2">Cost to complete<small id="costN"></small></h2><div class="selw"><table class="dt ct"><thead id="costHead"></thead><tbody id="costBody"></tbody></table></div><p class="note" id="costNote"></p></section>
     <section><h2 class="h2">Eras<small>click a row to filter</small></h2><div id="eraRows" class="eras2"></div></section>
     <section class="two">
       <div><h2 class="h2">Best deals<small id="dealsN"></small></h2><div id="dealList" class="its"></div></div>
@@ -498,8 +502,33 @@ function draw() {
   $('overN').textContent = over.length ? `top ${Math.min(8, over.length)} of ${n(over.length)}` : '';
   $('dealList').innerHTML = deals.slice(0, 8).map(line).join('') + (deals.length > 8 ? `<button type="button" class="linkish more" data-show="deal">Show all ${n(deals.length)} deals in the table</button>` : '') || '<p class="muted">No deals in this filter.</p>';
   $('overList').innerHTML = over.slice(0, 8).map(line).join('') + (over.length > 8 ? `<button type="button" class="linkish more" data-show="overpriced">Show all ${n(over.length)} overpriced in the table</button>` : '') || '<p class="muted">Nothing overpriced in this filter.</p>';
+  drawCost();
   drawSellers(rows);
   drawTable(rows);
+}
+
+// Cost to complete (2026-11-13): the tab's unowned cards, by rarity. Market = TCGplayer (EN) / Mercari (JP), the baseline;
+// local buy = market but never under the bulk floor (shops do not sell under it). Follows the Language, Era, Set and Rarity filters.
+const RAR = ['Common', 'Uncommon', 'Rare', 'Holo Rare', 'Ultra Rare', 'Illustration rare', 'Special illustration rare', 'Promo'];
+function drawCost() {
+  const cs = (COL.complete || []).filter(c => (!F.lang.length || F.lang.includes(c.lang)) && (!F.era.length || F.era.includes(c.era))
+    && (!F.set.length || F.set.includes(c.lang + '|' + c.set)) && (!F.rarity.length || F.rarity.includes(c.rarity)));
+  const G = {}, add = (k, c) => { const g = G[k] = G[k] || { k, all: 0, need: 0, priced: 0, m: 0, local: 0, listed: 0, c: 0, bc: 0, bm: 0 };
+    g.all++; if (c.owned) return; g.need++;
+    if (c.m != null) { g.priced++; g.m += c.m; g.local += Math.max(c.m, TH.bulk_rm); }
+    if (c.c != null) { g.listed++; g.c += c.c; if (c.m != null) { g.bc += c.c; g.bm += c.m; } } };
+  cs.forEach(c => { add(c.rarity || 'No rarity', c); add('', c); });
+  const tot = G[''] || { all: 0, need: 0 }; delete G[''];
+  const ix = k => { const i = RAR.indexOf(k); return i < 0 ? 99 : i; };
+  const row = (g, label, cls = '') => `<tr class="${cls}"><td>${label}</td><td class="r">${n(g.need)} <span class="muted">of ${n(g.all)}</span></td>
+    <td class="r"><b>${g.priced ? rm(g.m) : '–'}</b></td><td class="r">${g.priced ? rm(g.local) : '–'}</td><td class="r hs">${n(g.priced)} <span class="muted">of ${n(g.need)}</span></td>
+    <td class="r hs">${g.listed ? rm(g.c) + ` <span class="muted">(${n(g.listed)})</span>` : '–'}</td>
+    <td class="r ${g.bm ? (g.bc > g.bm ? 'up' : 'dn') : ''}">${g.bm ? pct((g.bc / g.bm - 1) * 100) : '–'}</td></tr>`;
+  $('costN').textContent = tot.need ? `${n(tot.need)} cards still needed` : '';
+  $('costHead').innerHTML = '<tr><th>Rarity</th><th class="r">Still needed</th><th class="r">Market</th><th class="r">Local buy</th><th class="r hs">Priced</th><th class="r hs">Cheapest listed</th><th class="r">Shops vs market</th></tr>';
+  $('costBody').innerHTML = tot.need ? Object.values(G).filter(g => g.need).sort((a, b) => ix(a.k) - ix(b.k) || b.need - a.need).map(g => row(g, esc(g.k))).join('') + row(tot, 'All', 'tot')
+    : `<tr><td colspan="7" class="muted">${tot.all ? 'You own every card in this filter.' : 'No cards in this filter.'}</td></tr>`;
+  $('costNote').textContent = `Market is TCGplayer for EN and Mercari for JP (normal finish only); CN has no market price. Local buy is the market price, but at least ${rm(TH.bulk_rm)} a card. Both total only the priced cards. Cheapest listed is the lowest shop price per card, with the card count. Shops vs market compares the cards that have both.`;
 }
 
 function drawSellers(rows) {
