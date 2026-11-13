@@ -363,7 +363,7 @@ section { margin-bottom: 28px; }
     <footer id="foot" class="foot"></footer>
   </main>
 </div>
-<script src="market_compare.js?v=40b6885a47"></script>
+<script src="market_compare.js?v=5c77b48b9c"></script>
 <script>
 // Market report · facet rail (2026-11-09; mock design-demos/market-2.html). One filter state drives every section: summary, eras, deals,
 // overpriced, sellers and the listings table. Listings over +CHECK% are tagged "Check" and kept out of the
@@ -375,8 +375,9 @@ const Q = new URLSearchParams(location.search);
 const CID = Q.get('collection') || 'yuka-morii';
 const COL = MCS.collections[CID];
 const $ = id => document.getElementById(id);
-if (!COL || !COL.rows.length) {   // still offer the other collections and the way back
-  $('colPick').innerHTML = Object.keys(MCS.collections).filter(k => MCS.collections[k].rows.length).map(k => `<option value="${k}">${MCS.collections[k].name} (${MCS.collections[k].rows.length})</option>`).join('');
+const has = k => MCS.collections[k].rows.length || (MCS.collections[k].complete || []).length;   // a tab with no listings still has Cost to complete (2026-11-13)
+if (!COL || !has(CID)) {   // still offer the other collections and the way back
+  $('colPick').innerHTML = Object.keys(MCS.collections).filter(has).map(k => `<option value="${k}">${MCS.collections[k].name} (${MCS.collections[k].rows.length})</option>`).join('');
   $('colPick').insertAdjacentHTML('afterbegin', '<option value="" selected>Pick a collection</option>');
   $('colPick').onchange = e => { if (e.target.value) location.search = '?collection=' + e.target.value; };
   $('main').innerHTML = '<div class="empty">No market report for this collection yet. <a data-back>Card Price Tracker</a></div>';
@@ -503,6 +504,10 @@ function draw() {
   $('dealList').innerHTML = deals.slice(0, 8).map(line).join('') + (deals.length > 8 ? `<button type="button" class="linkish more" data-show="deal">Show all ${n(deals.length)} deals in the table</button>` : '') || '<p class="muted">No deals in this filter.</p>';
   $('overList').innerHTML = over.slice(0, 8).map(line).join('') + (over.length > 8 ? `<button type="button" class="linkish more" data-show="overpriced">Show all ${n(over.length)} overpriced in the table</button>` : '') || '<p class="muted">Nothing overpriced in this filter.</p>';
   drawCost();
+  if (!COL.rows.length) {   // no shop listings yet: Cost to complete only
+    document.querySelectorAll('#main > section:not(#cost-s)').forEach(x => { x.style.display = 'none'; });
+    $('sub').textContent = 'No shop listings recorded yet'; return;
+  }
   drawSellers(rows);
   drawTable(rows);
 }
@@ -528,7 +533,7 @@ function drawCost() {
   $('costHead').innerHTML = '<tr><th>Rarity</th><th class="r">Still needed</th><th class="r">Market</th><th class="r">Local buy</th><th class="r hs">Priced</th><th class="r hs">Cheapest listed</th><th class="r">Shops vs market</th></tr>';
   $('costBody').innerHTML = tot.need ? Object.values(G).filter(g => g.need).sort((a, b) => ix(a.k) - ix(b.k) || b.need - a.need).map(g => row(g, esc(g.k))).join('') + row(tot, 'All', 'tot')
     : `<tr><td colspan="7" class="muted">${tot.all ? 'You own every card in this filter.' : 'No cards in this filter.'}</td></tr>`;
-  $('costNote').textContent = `Market is TCGplayer for EN and Mercari for JP (normal finish only); CN has no market price. Local buy is the market price, but at least ${rm(TH.bulk_rm)} a card. Both total only the priced cards. Cheapest listed is the lowest shop price per card, with the card count. Shops vs market compares the cards that have both.`;
+  $('costNote').textContent = `Market is TCGplayer for EN; JP is ${COL.jp_market || 'Mercari median (else Cardmarket), normal finish only'}; CN and KR have no market price. Local buy is the market price, but at least ${rm(TH.bulk_rm)} a card. Both total only the priced cards. Cheapest listed is the lowest shop price per card, with the card count. Shops vs market compares the cards that have both.`;
 }
 
 function drawSellers(rows) {
@@ -613,16 +618,16 @@ document.addEventListener('click', e => {
 // ---------- URL: ?era=<era>&set=<LANG:code or EN:name> pre-fill the Era and Set filters (old links keep working) ----------
 if (Q.get('era') && RA.some(r => r.era === Q.get('era'))) F.era = [Q.get('era')];
 if (Q.get('set')) { const [l, c] = Q.get('set').split(/:(.*)/s); const r = RA.find(x => x.lang === l && (code(x) === c || x.set === c)); if (r) F.set = [skey(r)]; }
-// JP vs EN page (Wobbuffet / Yuka Morii): jp-en/<slug>/ next to market/ on GitHub Pages, the collection folder's copy on the PC
-if (['wobbuffet', 'yuka-morii'].includes(CID)) { const a = $('jpen'); a.hidden = false;
+// JP vs EN page (any tab with one built, COL.jpen): jp-en/<slug>/ next to market/ on GitHub Pages, the collection folder's copy on the PC
+if (COL.jpen) { const a = $('jpen'); a.hidden = false;
   a.href = /\/market\//.test(location.pathname) ? '../jp-en/' + CID + '/' : '../' + COL.name + '/jp_en_trends.html'; }
 
 // ---------- static parts ----------
-$('colPick').innerHTML = Object.keys(MCS.collections).filter(k => MCS.collections[k].rows.length).map(k => `<option value="${k}"${k === CID ? ' selected' : ''}>${esc(MCS.collections[k].name)} (${MCS.collections[k].rows.length})</option>`).join('');
+$('colPick').innerHTML = Object.keys(MCS.collections).filter(has).map(k => `<option value="${k}"${k === CID ? ' selected' : ''}>${esc(MCS.collections[k].name)} (${MCS.collections[k].rows.length})</option>`).join('');
 document.title = COL.name + ' Market Report';
 $('colName').textContent = COL.name;
 $('fx').innerHTML = `Prices ${esc(MCS.fx.date)}, USD 1 = RM ${MCS.fx.usd_myr.toFixed(2)} = ¥${MCS.fx.usd_jpy.toFixed(0)}, backup ${esc((MCS.backup || '').replace('card-tracker-backup-', '').replace('.json', ''))}`;
-$('foot').innerHTML = `<b>How market is set.</b> EN = TCGplayer price for the listing's finish. JP = Mercari median (else Cardmarket), normal finish only. Deal ≤ ${TH.deal_pct}%, overpriced ≥ +${TH.over_pct}%, Check > +${CHECK}%, bulk = market under RM ${TH.bulk_rm} (% is meaningless there).`;
+$('foot').innerHTML = `<b>How market is set.</b> EN = TCGplayer price for the listing's finish. JP = ${esc(COL.jp_market || 'Mercari median (else Cardmarket), normal finish only')}. Deal ≤ ${TH.deal_pct}%, overpriced ≥ +${TH.over_pct}%, Check > +${CHECK}%, bulk = market under RM ${TH.bulk_rm} (% is meaningless there).`;
 draw();
 })();
 

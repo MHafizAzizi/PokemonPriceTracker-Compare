@@ -2617,8 +2617,10 @@ function sideHtml(c, all) {
   // market/ on GitHub Pages (thumbDir is set only there), market_report.html on the PC. ?collection= is the name slug
   // (market_compare.py COLLECTIONS keys), not the collection id: ids are random
   const market = `<a class="pageswitch" href="${(SEED && SEED.thumbDir ? 'market/' : 'market_report.html') + '?collection=' + (c ? c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : '')}">Market report</a>`;
+  // tabs with a JP vs EN page: add a name after running build_jp_en_trends.py "<name>" --docs (2026-11-13)
+  const JPEN_TABS = ['Wobbuffet', 'Yuka Morii', '30th (JP)', 'Asako Ito'];
   // JP vs EN page (Wobbuffet/scripts/build_jp_en_trends.py): jp-en/<slug>/ on GitHub Pages, the collection folder's copy on the PC
-  const jpen = c && !sealedOn && ['Wobbuffet', 'Yuka Morii'].includes(c.name) ? `<a class="pageswitch" href="${SEED && SEED.thumbDir ? 'jp-en/' + c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '/' : '../' + c.name + '/jp_en_trends.html'}">JP vs EN</a>` : '';
+  const jpen = c && !sealedOn && JPEN_TABS.includes(c.name) ? `<a class="pageswitch" href="${SEED && SEED.thumbDir ? 'jp-en/' + c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '/' : '../' + c.name + '/jp_en_trends.html'}">JP vs EN</a>` : '';
   const opt = (v, t, on) => `<option value="${esc(v)}"${on ? ' selected' : ''}>${esc(t)}</option>`;
   const pick = `<label class="colpick"><span>Collection</span><select data-col>${S.collections.map(x => opt(x.id, `${x.name} (${cardsOf(x.id).length})`, !sealedOn && c && x.id === c.id)).join('')}${opt('__sealed', `Sealed products (${SEALED.products.length})`, sealedOn)}</select></label>`;
   const menu = c && !sealedOn ? `<details class="colmenu"><summary aria-label="Collection actions" title="Collection actions">⋯</summary><div class="colpop" role="menu">
