@@ -92,7 +92,7 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
     @page { size: A4 portrait; margin: 10mm; }
     body > *:not(#printArea) { display: none !important; }
     #printArea { display: block; color: var(--print-ink); }
-    .ppage { height: 275mm; display: flex; flex-direction: column; break-after: page; }
+    .ppage { height: 266mm; display: flex; flex-direction: column; break-after: page; }
     .ppage:last-child { break-after: auto; }
     .ppage header { font: 9pt sans-serif; margin-bottom: 3mm; }
     .pgrid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), minmax(0, 1fr)); gap: 3mm; }
@@ -101,9 +101,9 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
     .pgrid img, .pgrid i { flex: 1; min-height: 0; max-width: 100%; aspect-ratio: 63 / 88; object-fit: contain; }
     .pgrid i { display: grid; place-items: center; font: 8pt sans-serif; color: var(--print-muted); border: 0.3mm solid var(--print-faint); }
     .pgrid figcaption { font: 7pt/1.2 sans-serif; text-align: center; padding-top: 1mm; }
-    .pgrid .pk-ph { flex: 1; min-height: 0; max-width: 100%; margin: 0; background: var(--scan-bg); color: var(--print-ink); border: 0.3mm solid var(--print-muted); font-family: sans-serif;
+    .pgrid .pk-ph { flex: 1 1 0; min-height: 0; max-width: 100%; aspect-ratio: 63 / 88; padding: 14% 6% 6%; font-size: calc(15mm / var(--cols)); margin: 0; background: var(--scan-bg); color: var(--print-ink); border: 0.3mm solid var(--print-muted); font-family: sans-serif;
       print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-    .pgrid .pk-ph .ph-bar { background: var(--print-ink); }
+    .pgrid .pk-ph .ph-bar { top: 5%; left: 6%; background: var(--print-ink); }
     .pgrid .pk-ph .ph-num, .pgrid .pk-ph .ph-fin { background: var(--print-faint); }
     .pgrid .pk-ph .ph-set { border-top-color: var(--print-faint); }
     .pgrid .pk-ph small, .pgrid .pk-ph .ph-rel { color: var(--print-muted); }
@@ -416,6 +416,7 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   .pwrap { position: relative; display: flex; min-width: 0; }
   .pwrap .pocket { flex: 1; }
   .pk-pick { position: absolute; top: 12px; left: 12px; z-index: 1; width: 20px; height: 20px; margin: 0; cursor: pointer; accent-color: var(--accent); }
+  .pwrap.off .pocket { opacity: .45; border-style: dashed; }
   .pwrap.picked .pocket { border-color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
   .pocket:hover { border-color: var(--accent); }
   .pocket[aria-current] { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -423,16 +424,18 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   .pk-no { display: grid; place-items: center; font-size: 12px; color: var(--muted); }
   .pocket:not(.got) img { filter: grayscale(1); opacity: .45; }
   /* placeholder tile for a pocket not owned yet; text scales with the pocket (cqw) */
-  .pk-ph { container-type: inline-size; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 2px;
+  .pocket:has(.pk-ph) { container-type: inline-size; }   /* the tile's text scales with the pocket (cqw); print uses mm instead */
+  .pk-ph { font-size: 10cqw; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 2px;
     aspect-ratio: 63 / 88; margin-bottom: 4px; padding: max(14%, 28px) 6% 6%; border: 1px solid var(--muted); border-radius: 4px; background: var(--surface); color: var(--text); text-align: center; overflow: hidden; }
   .pk-ph .ph-bar { position: absolute; top: max(5%, 10px); left: 28px; right: 6%; height: 2%; border-radius: 9px; background: var(--text); }
-  .pk-ph .ph-num { padding: 1px 7%; border-radius: 4px; background: var(--thumb); font: 600 8cqw var(--mono); }
-  .pk-ph .ph-name { font-weight: 700; font-size: 11cqw; line-height: 1.15; overflow-wrap: anywhere; }
-  .pk-ph .ph-set { display: flex; align-items: center; gap: 5%; width: 100%; padding-top: 5%; border-top: 1px solid var(--line); text-align: left; font-size: 7cqw; line-height: 1.2; }
+  .pk-ph .ph-num { padding: 1px 7%; border-radius: 4px; background: var(--thumb); font: 600 .73em var(--mono); }
+  .pk-ph .ph-name { font-weight: 700; font-size: 1em; line-height: 1.15; overflow-wrap: anywhere; }
+  .pk-ph .ph-set { display: flex; align-items: center; gap: 5%; width: 100%; padding-top: 5%; border-top: 1px solid var(--line); text-align: left; font-size: .64em; line-height: 1.2; }
   .pk-ph .ph-set img { flex: none; width: 26%; height: auto; aspect-ratio: auto; object-fit: contain; filter: none; opacity: 1; margin: 0; background: none; border-radius: 0; }
-  .pk-ph .ph-set small { display: block; font-size: 6cqw; font-weight: 600; color: var(--muted); }
-  .pk-ph .ph-fin { padding: 1px 8%; border-radius: 9px; background: var(--thumb); font-weight: 600; font-size: 7cqw; }
-  .pk-ph .ph-rel { font-size: 6cqw; color: var(--muted); }
+  .pk-ph .ph-set > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; }   /* long CN / promo set names */
+  .pk-ph .ph-set small { display: block; font-size: .86em; font-weight: 600; color: var(--muted); }
+  .pk-ph .ph-fin { padding: 1px 8%; border-radius: 9px; background: var(--thumb); font-weight: 600; font-size: .64em; }
+  .pk-ph .ph-rel { font-size: .55em; color: var(--muted); }
   .pocket.blank { border-style: dashed; background: none; }
   .pocket.blank i { background: none; }
   .pk-t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1620,7 +1623,8 @@ function exportDlg() {
     d.close();
     if (!cards.length) { infoBox('No cards to export.'); return; }
     if (v('fmt').value === 'xlsx') exportChecklist(c, cards);
-    else printBinder(c, cards, v('face').value === 'grey', v('price').checked, v('face').value === 'ph');
+    else if (!cards.some(x => !x.nob)) infoBox('Every card here is removed from the binder.');
+    else printBinder(c, cards.filter(x => !x.nob), v('face').value === 'grey', v('price').checked, v('face').value === 'ph');
   };
   if (d.open) d.close();
   d.showModal();
@@ -2659,7 +2663,7 @@ function sideHtml(c, all) {
   return top + filters + foot;
 }
 // Binder view: the filtered rows as binder pages (2x2 to 4x4), one pocket per row (a row is one print + finish already).
-let bPage = 0, bSig = '';
+let bPage = 0, bSig = '', bShowOff = false;   // bShowOff: removed-from-binder cards shown faded
 let pageIds = [];   // ids on the binder page now showing (binder order differs from shownIds)
 const picked = new Set();   // binder multi-select: card ids ticked on the pockets (kept across pages)
 // List view pages: ui.per rows a page ('all' = one page); other filters or another collection start at page 1.
@@ -2710,7 +2714,8 @@ function placeholderHtml(x) {
     <span class="ph-fin">${esc(VARIANT_LABEL[x.variant] || 'Normal')}</span>${rel ? `<span class="ph-rel">Released ${esc(rel)}</span>` : ''}</span>`;
 }
 function binderHtml(cards) {
-  cards = binderSort(cards);
+  const off = cards.filter(x => x.nob).length;   // taken out of the binder (2026-11-14): still in the collection, not in the pockets
+  cards = binderSort(bShowOff ? cards : cards.filter(x => !x.nob));
   const [cols, rows] = bDims(), per = cols * rows;
   const sig = S.active + JSON.stringify(F);
   if (sig !== bSig) { bSig = sig; bPage = 0; }   // other filters = other pockets, so start at page 1
@@ -2720,7 +2725,7 @@ function binderHtml(cards) {
   pageIds = page.map(x => x.id);
   const pocket = x => {
     const src = thumbSrc(x), best = bestStores(x.id), l = !x.owned && listingsOf(x.id).find(k => best.has(k.key));
-    return `<div class="pwrap${picked.has(x.id) ? ' picked' : ''}"><input type="checkbox" class="pk-pick" data-pick="${x.id}"${picked.has(x.id) ? ' checked' : ''} aria-label="Select ${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}"><button type="button" class="pocket${x.owned ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.owned ? ', owned' : ''}">
+    return `<div class="pwrap${picked.has(x.id) ? ' picked' : ''}${x.nob ? ' off' : ''}"><input type="checkbox" class="pk-pick" data-pick="${x.id}"${picked.has(x.id) ? ' checked' : ''} aria-label="Select ${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}"><button type="button" class="pocket${x.owned ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.owned ? ', owned' : ''}">
       ${ui.ph && !x.owned ? placeholderHtml(x) : src ? `<img src="${esc(src)}" alt="" width="126" height="176" loading="lazy">` : '<span class="pk-no">no scan</span>'}
       <span class="pk-t">${esc(x.name)}</span><span class="pk-m" title="${esc(x.set || '')}">${esc(setCodeOf(x))}${x.number ? ' · ' + esc(x.number) : ''}</span>
       <span class="pk-b"><span>${badge(x)}</span>${l ? `<b>${esc(fmt(l.st, l.p))}</b>` : ''}</span></button></div>`;
@@ -2732,13 +2737,13 @@ function binderHtml(cards) {
   const sort = `<label class="bsort"><span>Sort</span><select data-bsort>${BSORTS.map(([k, t]) => `<option value="${k}"${k === (F.sort || '') ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
     <button type="button" class="bdir" data-act="bdir" aria-label="${desc ? 'Descending, switch to ascending' : 'Ascending, switch to descending'}" title="${desc ? 'Descending' : 'Ascending'}">${desc ? '↓' : '↑'}</button>`;
   const size = `<label class="bsize"><span>Pockets</span><select data-bsize>${BSIZES.map(v => `<option value="${v}"${v === cols + 'x' + rows ? ' selected' : ''}>${v.replace('x', '×')}</option>`).join('')}</select></label>`;
-  const pick = n ? `<span class="bpick on"><b>${n}</b> selected<button type="button" class="primary small" data-act="pickown" data-id="1">Mark owned</button><button type="button" class="small" data-act="pickown" data-id="0">Not owned</button><button type="button" class="linkish" data-act="pickclear">Clear</button></span>`
+  const pick = n ? `<span class="bpick on"><b>${n}</b> selected<button type="button" class="primary small" data-act="pickown" data-id="1">Mark owned</button><button type="button" class="small" data-act="pickown" data-id="0">Not owned</button>${[...picked].some(k => !S.cards.find(x => x.id === k)?.nob) ? '<button type="button" class="small" data-act="pickbin" data-id="0">Remove from binder</button>' : ''}${[...picked].some(k => S.cards.find(x => x.id === k)?.nob) ? '<button type="button" class="small" data-act="pickbin" data-id="1">Put back</button>' : ''}<button type="button" class="linkish" data-act="pickclear">Clear</button></span>`
     : '<span class="bpick"><button type="button" class="small" data-act="pickpage" title="Tick pockets to mark several cards owned at once">Select page</button></span>';
   const face = `<span class="seg bface" role="group" aria-label="Pockets not owned">${[['scan', 'Cards'], ['ph', 'Placeholders']].map(([v, t]) => `<button type="button" class="small" data-act="bface" data-id="${v}" aria-pressed="${(v === 'ph') === !!ui.ph}">${t}</button>`).join('')}</span>`;
   const blanks = '<span class="pocket blank" aria-hidden="true"><i></i></span>'.repeat(per - page.length);
   return `<div class="bbar">${sort}<span class="bsep"></span>${pager}${size}${face}<span class="sp"></span>${pick}<button type="button" class="small" data-act="export">Export…</button></div>
     <div class="bsheet" style="--cols:${cols};--rows:${rows}"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
-    <div class="bfoot">${pager}<span class="muted">Pockets ${(from + 1).toLocaleString('en-US')}–${(from + page.length).toLocaleString('en-US')} of ${cards.length.toLocaleString('en-US')} · ${ui.ph ? 'placeholder' : 'grey'} = not owned · ← → turn the page</span></div>`;
+    <div class="bfoot">${pager}<span class="muted">Pockets ${(from + 1).toLocaleString('en-US')}–${(from + page.length).toLocaleString('en-US')} of ${cards.length.toLocaleString('en-US')} · ${ui.ph ? 'placeholder' : 'grey'} = not owned${off ? ` · ${off.toLocaleString('en-US')} removed from binder <button type="button" class="linkish" data-act="boff">${bShowOff ? 'Hide' : 'Show'}</button>` : ''} · ← → turn the page</span></div>`;
 }
 // Card search, above the list: card fields plus the shops, venues and sellers on its listings. "/" jumps here.
 const searchRow = (ph) => `<div class="tsearch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -3144,6 +3149,8 @@ document.addEventListener('click', e => {
   }
   else if (act === 'pickpage') { pageIds.forEach(k => picked.add(k)); render(); }
   else if (act === 'pickclear') { picked.clear(); render(); }
+  else if (act === 'pickbin') { S.cards.filter(x => picked.has(x.id)).forEach(x => { if (id === '1') delete x.nob; else x.nob = true; }); picked.clear(); save(); render(); }
+  else if (act === 'boff') { bShowOff = !bShowOff; render(); }
   else if (act === 'pickown') {
     S.cards.filter(x => picked.has(x.id)).forEach(x => { x.owned = id === '1'; if (x.owned) x.found = false; });   // bought: owned now, no longer a find
     picked.clear(); save(); render();
