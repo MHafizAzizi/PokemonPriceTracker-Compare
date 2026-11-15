@@ -287,6 +287,7 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   .bpg .pg { font: 13px var(--mono); color: var(--muted); white-space: nowrap; }
   .bpg .pg b { color: var(--text); }
   .bpick { display: inline-flex; align-items: center; gap: 8px; }
+  .blay { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
   .bpick.on { background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 6px; padding: 3px 4px 3px 10px; color: var(--accent); }
   .bpick b { font-family: var(--mono); }
   .bfoot { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 16px 0 8px; font-size: 12px; }
@@ -1634,7 +1635,7 @@ function exportDlg() {
     if (!cards.length) { infoBox('No cards to export.'); return; }
     if (v('fmt').value === 'xlsx') exportChecklist(c, cards);
     else if (!cards.some(x => !x.nob)) infoBox('Every card here is removed from the binder.');
-    else printBinder(c, cards.filter(x => !x.nob), v('face').value === 'grey', v('price').checked, v('face').value === 'ph' || (v('face').value === 'both' && 'both'));
+    else printBinder(c, w === 'filter' && !filtersOn() || w === 'all' ? binderPockets(all.filter(x => !x.nob), true) : binderPockets(cards.filter(x => !x.nob), false), v('face').value === 'grey', v('price').checked, v('face').value === 'ph' || (v('face').value === 'both' && 'both'));
   };
   if (d.open) d.close();
   d.showModal();
@@ -1687,7 +1688,7 @@ async function printBinder(c, cards, grey, withPrice, ph) {   // ph: true = plac
   // Every size uses the large scan (the small one, ~245 px, printed blurry at 3x3); the small one is the fallback
   const mm = Math.min((190 - 3 * (cols - 1)) / cols, ((262 - 3 * (rows - 1)) / rows - 8) * 63 / 88);
   const w = Math.min(600, Math.round(mm / 25.4 * 300));
-  const srcs = cards.map(x => fullSrc(x) || thumbSrc(x));
+  const srcs = cards.map(x => x && (fullSrc(x) || thumbSrc(x)));
   const out = new Array(cards.length);
   infoBox(`Preparing scans for printing… 0 / ${cards.length}`);
   const note = $('#dlg p');
@@ -1695,6 +1696,7 @@ async function printBinder(c, cards, grey, withPrice, ph) {   // ph: true = plac
   await Promise.all(Array.from({ length: 6 }, async () => {
     while (next < cards.length) {
       const i = next++, x = cards[i];
+      if (!x) { out[i] = ''; ++ready; continue; }   // saved layout: an emptied pocket
       if (ph === true && !x.owned) { out[i] = ''; if (note) note.textContent = `Preparing scans for printing… ${++ready} / ${cards.length}`; continue; }   // a placeholder needs no scan
       const g = grey && !x.owned, th = thumbSrc(x);
       out[i] = srcs[i] ? (await printImg(srcs[i], w, g)) || (th && th !== srcs[i] && await printImg(th, w, g)) || srcs[i] : '';
@@ -1703,6 +1705,7 @@ async function printBinder(c, cards, grey, withPrice, ph) {   // ph: true = plac
   }));
   $('#dlg').close();
   const fig = (x, i) => {
+    if (!x) return '<figure class="blank"></figure>';
     const src = out[i], pr = withPrice && !x.owned ? minPrice(x) : Infinity;
     // a scan that could not be greyed prints in colour, marked in its caption (Firefox drops CSS-filtered images)
     const unmarked = grey && !x.owned && src && !src.startsWith('data:image/jpeg');
@@ -2729,24 +2732,38 @@ function placeholderHtml(x, src) {   // src: the scan to show inside the tile ("
     <span class="ph-set">${logo ? `<img src="${esc(logo)}" alt="" loading="lazy">` : ''}<span><small>Set</small>${esc(x.set || '')}</span></span>
     ${fin}${rel ? `<span class="ph-rel">Released ${esc(rel)}</span>` : ''}</span>`;
 }
+// Saved layout (2026-11-16, user: keep the binder as it is after adding / removing cards): collection.layout = card ids
+// by pocket, null = empty pocket. In Binder order ↑ saved cards keep their page and pocket, a card removed from the
+// binder (or deleted) leaves an empty pocket, cards added later follow the last saved pocket in binder order.
+// gaps = false (a filter is on, or a filtered export): the saved order only, no empty pockets. Re-sort clears it.
+const layoutOf = () => (S.collections.find(c => c.id === S.active) || {}).layout;
+const layoutOn = () => !!layoutOf() && !F.sort && F.dir !== 'desc';
+function binderPockets(cards, gaps) {
+  if (!layoutOn()) return binderSort(cards);
+  const by = new Map(cards.map(x => [x.id, x])), out = layoutOf().map(id => by.get(id) || null);
+  const placed = new Set(out.filter(Boolean).map(x => x.id));
+  return (gaps ? out : out.filter(Boolean)).concat(binderSort(cards.filter(x => !placed.has(x.id))));
+}
+const filtersOn = () => Object.keys(F).some(k => fOn(k) && !['sort', 'dir'].includes(k));
 function binderHtml(cards) {
   const off = cards.filter(x => x.nob).length;   // taken out of the binder (2026-11-14): still in the collection, not in the pockets
-  cards = binderSort(bShowOff ? cards : cards.filter(x => !x.nob));
+  cards = binderPockets(bShowOff ? cards : cards.filter(x => !x.nob), !filtersOn());
   const [cols, rows] = bDims(), per = cols * rows;
   const sig = S.active + JSON.stringify(F);
   if (sig !== bSig) { bSig = sig; bPage = 0; }   // other filters = other pockets, so start at page 1
   const pages = Math.max(1, Math.ceil(cards.length / per));
   bPage = Math.max(0, Math.min(bPage, pages - 1));
   const from = bPage * per, page = cards.slice(from, from + per);
-  pageIds = page.map(x => x.id);
+  pageIds = page.filter(Boolean).map(x => x.id);
   const pocket = x => {
+    if (!x) return '<span class="pocket blank" aria-hidden="true"><i></i></span>';   // saved layout: an emptied pocket
     const src = thumbSrc(x), best = bestStores(x.id), l = !x.owned && listingsOf(x.id).find(k => best.has(k.key));
     return `<div class="pwrap${picked.has(x.id) ? ' picked' : ''}${x.nob ? ' off' : ''}"><input type="checkbox" class="pk-pick" data-pick="${x.id}"${picked.has(x.id) ? ' checked' : ''} aria-label="Select ${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}"><button type="button" class="pocket${x.owned ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.owned ? ', owned' : ''}">
       ${!x.owned ? placeholderHtml(x, src) : src ? `<img src="${esc(src)}" alt="" width="126" height="176" loading="lazy">` : '<span class="pk-no">no scan</span>'}
       <span class="pk-t">${esc(x.name)}</span><span class="pk-m" title="${esc(x.set || '')}">${esc(setCodeOf(x))}${x.number ? ' · ' + esc(x.number) : ''}</span>
       <span class="pk-b"><span>${badge(x)}</span>${l ? `<b>${esc(fmt(l.st, l.p))}</b>` : ''}</span></button></div>`;
   };
-  for (const id of [...picked]) if (!cards.some(x => x.id === id)) picked.delete(id);   // filtered out: no longer selected
+  for (const id of [...picked]) if (!cards.some(x => x && x.id === id)) picked.delete(id);   // filtered out: no longer selected
   const n = picked.size, desc = F.dir === 'desc';
   const nav = (d, label, off, aria) => `<button type="button" class="bnav" data-act="bpage" data-id="${d}"${off ? ' disabled' : ''} aria-label="${aria}">${label}</button>`;
   const pager = `<span class="bpg">${nav(-1, '←', bPage === 0, 'Previous page')}<span class="pg">Page <b>${bPage + 1}</b> / ${pages}</span>${nav(1, '→', bPage >= pages - 1, 'Next page')}</span>`;
@@ -2756,7 +2773,9 @@ function binderHtml(cards) {
   const pick = n ? `<span class="bpick on"><b>${n}</b> selected<button type="button" class="primary small" data-act="pickown" data-id="1">Mark owned</button><button type="button" class="small" data-act="pickown" data-id="0">Not owned</button>${[...picked].some(k => !S.cards.find(x => x.id === k)?.nob) ? '<button type="button" class="small" data-act="pickbin" data-id="0">Remove from binder</button>' : ''}${[...picked].some(k => S.cards.find(x => x.id === k)?.nob) ? '<button type="button" class="small" data-act="pickbin" data-id="1">Put back</button>' : ''}<button type="button" class="linkish" data-act="pickclear">Clear</button></span>`
     : '<span class="bpick"><button type="button" class="small" data-act="pickpage" title="Tick pockets to mark several cards owned at once">Select page</button></span>';
   const blanks = '<span class="pocket blank" aria-hidden="true"><i></i></span>'.repeat(per - page.length);
-  return `<div class="bbar">${sort}<span class="bsep"></span>${pager}${size}<span class="sp"></span>${pick}<button type="button" class="small" data-act="export">Export…</button></div>
+  const lay = layoutOf() ? `<span class="blay"><span class="muted" title="Saved cards keep their pocket; new cards go after them">Layout saved</span><button type="button" class="small" data-act="blay" data-id="save" title="Save the pockets as they are now">Update</button><button type="button" class="small" data-act="blay" data-id="clear" title="Forget the saved layout: cards move back to binder order and empty pockets close">Re-sort</button></span>`
+    : !F.sort && !desc ? '<button type="button" class="small" data-act="blay" data-id="save" title="Keep every card in its page and pocket from now on: new cards go after them, removed cards leave an empty pocket">Save layout</button>' : '';
+  return `<div class="bbar">${sort}<span class="bsep"></span>${pager}${size}${lay}<span class="sp"></span>${pick}<button type="button" class="small" data-act="export">Export…</button></div>
     <div class="bsheet" style="--cols:${cols};--rows:${rows}"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
     <div class="bfoot">${pager}<span class="muted">Pockets ${(from + 1).toLocaleString('en-US')}–${(from + page.length).toLocaleString('en-US')} of ${cards.length.toLocaleString('en-US')} · tile = not owned${off ? ` · ${off.toLocaleString('en-US')} removed from binder <button type="button" class="linkish" data-act="boff">${bShowOff ? 'Hide' : 'Show'}</button>` : ''} · ← → turn the page</span></div>`;
 }
@@ -3165,6 +3184,12 @@ document.addEventListener('click', e => {
   else if (act === 'pickclear') { picked.clear(); render(); }
   else if (act === 'pickbin') { S.cards.filter(x => picked.has(x.id)).forEach(x => { if (id === '1') delete x.nob; else x.nob = true; }); picked.clear(); save(); render(); }
   else if (act === 'boff') { bShowOff = !bShowOff; render(); }
+  else if (act === 'blay') {   // saved layout: every card of the collection, not just the filtered ones
+    const c = S.collections.find(k => k.id === S.active);
+    if (id === 'clear') delete c.layout;
+    else { const lay = binderPockets(cardsOf(S.active).filter(x => !x.nob), true).map(x => (x ? x.id : null)); while (lay.length && lay[lay.length - 1] === null) lay.pop(); c.layout = lay; }
+    save(); render();
+  }
   else if (act === 'pickown') {
     S.cards.filter(x => picked.has(x.id)).forEach(x => { x.owned = id === '1'; if (x.owned) x.found = false; });   // bought: owned now, no longer a find
     picked.clear(); save(); render();

@@ -28,7 +28,8 @@ seller in a Facebook group or on Carousell) and the price, and the page shows th
 - **Card catalog:** about 87,000 cards from 597 sets (EN, JP, CN, KR) to build your own collections from.
 - **Filters and sorts:** language, era, set, rarity, finish, product, type and shop; sort by any column.
 - **Binder view:** binder pages from 2×2 to 4×4 pockets, each English card followed by its other-language prints.
-  Cards you don't own show their scan in a tile with the card number, finish and set logo. Tick pockets to mark several cards owned at once, or take cards out of the binder.
+  Cards you don't own show their scan in a tile with the card number, finish and set logo. Tick pockets to mark
+  several cards owned at once, take cards out of the binder, or **Save layout** so cards keep their pockets.
 - **Shopping trip:** enter prices stall by stall, then get a buy list grouped by shop with totals.
 - **Export:** print the binder pages or save them as PDF (grey scan, placeholder, colour scan or Both for cards you
   don't own), or a ☐ / ✅ checklist in Excel, one tab per era.
@@ -51,6 +52,9 @@ Prices on these pages are snapshots from the date shown on each page, not live p
 **16 November 2026**
 - Binder: the Both tile is now the only view for cards you don't own (the Cards / Placeholders buttons are gone).
   **Export** still prints grey scans, placeholders, colour scans or Both, with Both as the default.
+- Binder: **Save layout** keeps every card in its page and pocket. A card you remove from the binder leaves an empty
+  pocket, and new cards go after the saved ones. **Update** saves the pockets again; **Re-sort** goes back to the
+  normal binder order.
 
 **15 November 2026**
 - Binder: new **Both** view for cards you don't own. The tile shows the card scan, its number and finish
