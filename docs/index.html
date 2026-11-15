@@ -1618,7 +1618,7 @@ function exportDlg() {
     <label>Format<select name="fmt"><option value="print">Binder pages: print / Save as PDF (with scans)</option><option value="xlsx">Checklist .xlsx (☐ / ✅ per finish)</option></select></label>
     <label>Cards<select name="which"><option value="filter">Current filter (${applyFilters(all).length})</option><option value="all">Whole collection (${all.length})</option>
       <option value="missing">Not owned only (${all.filter(x => !x.owned).length})</option><option value="owned">Owned only (${all.filter(x => x.owned).length})</option></select></label>
-    <label data-for="print">Cards I don't own<select name="face"><option value="grey"${ui.ph ? '' : ' selected'}>Grey scan</option><option value="ph"${ui.ph === true ? ' selected' : ''}>Placeholder (number, name, set, finish, date)</option><option value="both"${ui.ph === 'both' ? ' selected' : ''}>Both (colour scan + number, finish, set logo)</option><option value="scan">Colour scan</option></select></label>
+    <label data-for="print">Cards I don't own<select name="face"><option value="grey">Grey scan</option><option value="ph">Placeholder (number, name, set, finish, date)</option><option value="both" selected>Both (colour scan + number, finish, set logo)</option><option value="scan">Colour scan</option></select></label>
     <label class="ex-chk" data-for="print"><input type="checkbox" name="price"> Show the cheapest price</label>
     <p class="muted" data-for="print" style="margin:0">${cols}×${rows} pockets a page (the binder's Page size). In the print box pick "Save as PDF".</p>
     <div class="actions"><button type="button" id="exNo">Cancel</button><button class="primary" type="submit">Export</button></div></form>`;
@@ -2709,7 +2709,7 @@ const BSORTS = [['', 'Binder order'], ['set', 'Set'], ['ptype', 'Pokémon type']
   ['rarity', 'Rarity'], ['finish', 'Finish'], ['cheapest', 'Cheapest'], ['shops', 'Shops'], ['found', 'Found']];
 const binderSort = cards => (F.sort ? sortCards(cards) : followEn(F.dir === 'desc' ? binderOrder(cards).reverse() : binderOrder(cards)));
 // Placeholder tile for a pocket not owned yet (2026-11-13, after the user's printed "Yuka Morii placeholders.pdf"):
-// number, name, set logo + set name, finish, release date. Shown when the binder's View is Placeholders (ui.ph), and in print.
+// number, name, set logo + set name, finish, release date. In print; the binder shows the "Both" tile (scan inside) since 2026-11-16.
 // A print's set logo: its own; else (KR, a catch-up reprint) the JP set with the same code; else the English set its
 // print links to (ref = "name|set|number"). CN and KR have no logo source (SOURCES.md), so most of them borrow one.
 function logoOf(x) {
@@ -2742,7 +2742,7 @@ function binderHtml(cards) {
   const pocket = x => {
     const src = thumbSrc(x), best = bestStores(x.id), l = !x.owned && listingsOf(x.id).find(k => best.has(k.key));
     return `<div class="pwrap${picked.has(x.id) ? ' picked' : ''}${x.nob ? ' off' : ''}"><input type="checkbox" class="pk-pick" data-pick="${x.id}"${picked.has(x.id) ? ' checked' : ''} aria-label="Select ${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}"><button type="button" class="pocket${x.owned ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.owned ? ', owned' : ''}">
-      ${ui.ph && !x.owned ? placeholderHtml(x, ui.ph === 'both' && src) : src ? `<img src="${esc(src)}" alt="" width="126" height="176" loading="lazy">` : '<span class="pk-no">no scan</span>'}
+      ${!x.owned ? placeholderHtml(x, src) : src ? `<img src="${esc(src)}" alt="" width="126" height="176" loading="lazy">` : '<span class="pk-no">no scan</span>'}
       <span class="pk-t">${esc(x.name)}</span><span class="pk-m" title="${esc(x.set || '')}">${esc(setCodeOf(x))}${x.number ? ' · ' + esc(x.number) : ''}</span>
       <span class="pk-b"><span>${badge(x)}</span>${l ? `<b>${esc(fmt(l.st, l.p))}</b>` : ''}</span></button></div>`;
   };
@@ -2755,11 +2755,10 @@ function binderHtml(cards) {
   const size = `<label class="bsize"><span>Pockets</span><select data-bsize>${BSIZES.map(v => `<option value="${v}"${v === cols + 'x' + rows ? ' selected' : ''}>${v.replace('x', '×')}</option>`).join('')}</select></label>`;
   const pick = n ? `<span class="bpick on"><b>${n}</b> selected<button type="button" class="primary small" data-act="pickown" data-id="1">Mark owned</button><button type="button" class="small" data-act="pickown" data-id="0">Not owned</button>${[...picked].some(k => !S.cards.find(x => x.id === k)?.nob) ? '<button type="button" class="small" data-act="pickbin" data-id="0">Remove from binder</button>' : ''}${[...picked].some(k => S.cards.find(x => x.id === k)?.nob) ? '<button type="button" class="small" data-act="pickbin" data-id="1">Put back</button>' : ''}<button type="button" class="linkish" data-act="pickclear">Clear</button></span>`
     : '<span class="bpick"><button type="button" class="small" data-act="pickpage" title="Tick pockets to mark several cards owned at once">Select page</button></span>';
-  const face = `<span class="seg bface" role="group" aria-label="Pockets not owned">${[['scan', 'Cards'], ['ph', 'Placeholders'], ['both', 'Both']].map(([v, t]) => `<button type="button" class="small" data-act="bface" data-id="${v}" aria-pressed="${v === (ui.ph === 'both' ? 'both' : ui.ph ? 'ph' : 'scan')}">${t}</button>`).join('')}</span>`;
   const blanks = '<span class="pocket blank" aria-hidden="true"><i></i></span>'.repeat(per - page.length);
-  return `<div class="bbar">${sort}<span class="bsep"></span>${pager}${size}${face}<span class="sp"></span>${pick}<button type="button" class="small" data-act="export">Export…</button></div>
+  return `<div class="bbar">${sort}<span class="bsep"></span>${pager}${size}<span class="sp"></span>${pick}<button type="button" class="small" data-act="export">Export…</button></div>
     <div class="bsheet" style="--cols:${cols};--rows:${rows}"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
-    <div class="bfoot">${pager}<span class="muted">Pockets ${(from + 1).toLocaleString('en-US')}–${(from + page.length).toLocaleString('en-US')} of ${cards.length.toLocaleString('en-US')} · ${ui.ph ? 'placeholder' : 'grey'} = not owned${off ? ` · ${off.toLocaleString('en-US')} removed from binder <button type="button" class="linkish" data-act="boff">${bShowOff ? 'Hide' : 'Show'}</button>` : ''} · ← → turn the page</span></div>`;
+    <div class="bfoot">${pager}<span class="muted">Pockets ${(from + 1).toLocaleString('en-US')}–${(from + page.length).toLocaleString('en-US')} of ${cards.length.toLocaleString('en-US')} · tile = not owned${off ? ` · ${off.toLocaleString('en-US')} removed from binder <button type="button" class="linkish" data-act="boff">${bShowOff ? 'Hide' : 'Show'}</button>` : ''} · ← → turn the page</span></div>`;
 }
 // Card search, above the list: card fields plus the shops, venues and sellers on its listings. "/" jumps here.
 const searchRow = (ph) => `<div class="tsearch"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -3128,7 +3127,6 @@ document.addEventListener('click', e => {
   else if (act === 'view') {
     ui.view = id; render(); saveUi();
   }
-  else if (act === 'bface') { ui.ph = id === 'both' ? 'both' : id === 'ph'; render(); saveUi(); }
   else if (act === 'bpage') { bPage += Number(id); render(); }
   else if (act === 'lpage') { lPage += Number(id); render(); toListTop(); }
   else if (act === 'scrim') { setPane('side', false); setPane('det', false); }
