@@ -25,11 +25,17 @@ seller in a Facebook group or on Carousell) and the price, and the page shows th
 
 - **Built-in collections:** Wobbuffet, Yuka Morii, Asako Ito and Chaos Rising, with English, Japanese,
   Chinese and Korean prints.
-- **Card catalog:** about 86,000 cards from 588 sets (EN, JP, CN, KR) to build your own collections from.
+- **Card catalog:** about 87,000 cards from 597 sets (EN, JP, CN, KR) to build your own collections from.
 - **Filters and sorts:** language, era, set, rarity, finish, product, type and shop; sort by any column.
 - **Binder view:** binder pages from 2×2 to 4×4 pockets, each English card followed by its other-language prints.
+  Cards you don't own show as a grey scan, a placeholder (number, name, set, finish) or **Both** (the scan with its
+  number, finish and set logo). Tick pockets to mark several cards owned at once, or take cards out of the binder.
 - **Shopping trip:** enter prices stall by stall, then get a buy list grouped by shop with totals.
-- **Stores view** and **Excel export.**
+- **Export:** print the binder pages or save them as PDF (grey scan, placeholder, colour scan or Both for cards you
+  don't own), or a ☐ / ✅ checklist in Excel, one tab per era.
+- **Stores view:** every shop, venue and seller you have recorded.
+
+![Binder page in Both view: cards you own show their scan, cards you don't own show the scan with number, finish and set logo](docs/readme/binder.png)
 
 ### Extra pages
 
@@ -40,6 +46,32 @@ seller in a Facebook group or on Carousell) and the price, and the page shows th
   local shops and marketplaces.
 
 Prices on these pages are snapshots from the date shown on each page, not live prices.
+
+## Updates
+
+**15 November 2026**
+- Binder: new **Both** view for cards you don't own. The tile shows the card scan, its number and finish
+  beside it, and a large set logo. The same layout can be printed from **Export**.
+
+**14 November 2026**
+- Sharper card scans on the published page (Japanese, Chinese and Korean scans were blurry).
+- Binder: take cards out of the binder without removing them from the collection.
+- Binder: a pocket's price moves to its own line when there is no room beside the badges.
+
+**13 November 2026**
+- Binder: **Cards / Placeholders** switch, and placeholder pages in the print export. Chinese and Korean prints
+  borrow the set logo of the matching Japanese or English set.
+- Market report for every collection, with **Cost to complete** by rarity.
+
+**11 November 2026**
+- **No.** sort groups cards by product (main set, special set, promo, deck), then by card number.
+
+**10 November 2026**
+- Simplified Chinese sets added to the card catalog.
+
+**9 November 2026**
+- New filter panel: filters update each other's counts. Rebuilt card table, Stores view, binder bar and
+  **New collection** dialog.
 
 ## Data sources
 
