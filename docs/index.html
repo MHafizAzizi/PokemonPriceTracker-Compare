@@ -107,6 +107,7 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
     .pgrid .pk-ph .ph-num, .pgrid .pk-ph .ph-fin { background: var(--print-faint); }
     .pgrid .pk-ph .ph-set { border-top-color: var(--print-faint); }
     .pgrid .pk-ph small, .pgrid .pk-ph .ph-rel { color: var(--print-muted); }
+    .pgrid .pk-ph.has-img { padding: 4%; font-size: calc(11mm / var(--cols)); }   /* "Both": no cqw container in print */
   }
   .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: 6px; vertical-align: middle; font-weight: 500; }
   .badge.lang { color: var(--text); border-color: var(--muted); font-weight: 600; }
@@ -436,6 +437,15 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   .pk-ph .ph-set small { display: block; font-size: .86em; font-weight: 600; color: var(--muted); }
   .pk-ph .ph-fin { padding: 1px 8%; border-radius: 9px; background: var(--thumb); font-weight: 600; font-size: .64em; }
   .pk-ph .ph-rel { font-size: .55em; color: var(--muted); }
+  /* "Both" view: the scan sits inside the placeholder tile, in colour, and takes the room left by the text */
+  .pk-ph.has-img { font-size: 7cqw; justify-content: flex-start; gap: 3%; padding: 4%; }
+  .pk-ph .ph-top { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 3%; width: 100%; }   /* scan, number + finish beside it */
+  .pocket .pk-ph .ph-img, .pgrid .pk-ph .ph-img { flex: 1 1 0; min-width: 0; width: 0; height: 100%; object-position: right; aspect-ratio: auto; object-fit: contain; filter: none; opacity: 1; margin: 0; background: none; }
+  .pk-ph .ph-side { flex: none; width: 26%; display: flex; flex-direction: column; align-items: center; gap: .5em; }   /* fixed width: every scan the same size */
+  .pk-ph.has-img .ph-num { padding: 1px 4px; }
+  .pk-ph.has-img .ph-fin { padding: 2px 4px; border-radius: 4px; line-height: 1.2; text-align: center; }
+  .pk-ph.has-img .ph-set { justify-content: center; padding-top: 0; border-top: 0; }
+  .pk-ph.has-img .ph-set img { width: 92%; height: 8em; max-height: none; object-fit: contain; }   /* fixed box: square logos (Black Bolt) as big as wide ones, every scan the same size */
   .pocket.blank { border-style: dashed; background: none; }
   .pocket.blank i { background: none; }
   .pk-t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1608,7 +1618,7 @@ function exportDlg() {
     <label>Format<select name="fmt"><option value="print">Binder pages: print / Save as PDF (with scans)</option><option value="xlsx">Checklist .xlsx (☐ / ✅ per finish)</option></select></label>
     <label>Cards<select name="which"><option value="filter">Current filter (${applyFilters(all).length})</option><option value="all">Whole collection (${all.length})</option>
       <option value="missing">Not owned only (${all.filter(x => !x.owned).length})</option><option value="owned">Owned only (${all.filter(x => x.owned).length})</option></select></label>
-    <label data-for="print">Cards I don't own<select name="face"><option value="grey"${ui.ph ? '' : ' selected'}>Grey scan</option><option value="ph"${ui.ph ? ' selected' : ''}>Placeholder (number, name, set, finish, date)</option><option value="scan">Colour scan</option></select></label>
+    <label data-for="print">Cards I don't own<select name="face"><option value="grey"${ui.ph ? '' : ' selected'}>Grey scan</option><option value="ph"${ui.ph === true ? ' selected' : ''}>Placeholder (number, name, set, finish, date)</option><option value="both"${ui.ph === 'both' ? ' selected' : ''}>Both (colour scan + number, finish, set logo)</option><option value="scan">Colour scan</option></select></label>
     <label class="ex-chk" data-for="print"><input type="checkbox" name="price"> Show the cheapest price</label>
     <p class="muted" data-for="print" style="margin:0">${cols}×${rows} pockets a page (the binder's Page size). In the print box pick "Save as PDF".</p>
     <div class="actions"><button type="button" id="exNo">Cancel</button><button class="primary" type="submit">Export</button></div></form>`;
@@ -1624,7 +1634,7 @@ function exportDlg() {
     if (!cards.length) { infoBox('No cards to export.'); return; }
     if (v('fmt').value === 'xlsx') exportChecklist(c, cards);
     else if (!cards.some(x => !x.nob)) infoBox('Every card here is removed from the binder.');
-    else printBinder(c, cards.filter(x => !x.nob), v('face').value === 'grey', v('price').checked, v('face').value === 'ph');
+    else printBinder(c, cards.filter(x => !x.nob), v('face').value === 'grey', v('price').checked, v('face').value === 'ph' || (v('face').value === 'both' && 'both'));
   };
   if (d.open) d.close();
   d.showModal();
@@ -1671,7 +1681,7 @@ function printImg1(src, w, grey) {
     im.src = src;
   });
 }
-async function printBinder(c, cards, grey, withPrice, ph) {
+async function printBinder(c, cards, grey, withPrice, ph) {   // ph: true = placeholder, 'both' = placeholder with the scan inside
   const [cols, rows] = bDims(), per = cols * rows, n = Math.ceil(cards.length / per);
   // pocket width on A4 (190 x 262 mm usable, 8 mm caption) -> pixels at 300 dpi, capped at the large scan's 600 px.
   // Every size uses the large scan (the small one, ~245 px, printed blurry at 3x3); the small one is the fallback
@@ -1685,7 +1695,7 @@ async function printBinder(c, cards, grey, withPrice, ph) {
   await Promise.all(Array.from({ length: 6 }, async () => {
     while (next < cards.length) {
       const i = next++, x = cards[i];
-      if (ph && !x.owned) { out[i] = ''; if (note) note.textContent = `Preparing scans for printing… ${++ready} / ${cards.length}`; continue; }   // a placeholder needs no scan
+      if (ph === true && !x.owned) { out[i] = ''; if (note) note.textContent = `Preparing scans for printing… ${++ready} / ${cards.length}`; continue; }   // a placeholder needs no scan
       const g = grey && !x.owned, th = thumbSrc(x);
       out[i] = srcs[i] ? (await printImg(srcs[i], w, g)) || (th && th !== srcs[i] && await printImg(th, w, g)) || srcs[i] : '';
       if (note) note.textContent = `Preparing scans for printing… ${++ready} / ${cards.length}`;
@@ -1696,7 +1706,7 @@ async function printBinder(c, cards, grey, withPrice, ph) {
     const src = out[i], pr = withPrice && !x.owned ? minPrice(x) : Infinity;
     // a scan that could not be greyed prints in colour, marked in its caption (Firefox drops CSS-filtered images)
     const unmarked = grey && !x.owned && src && !src.startsWith('data:image/jpeg');
-    return `<figure class="${grey && !x.owned ? 'grey' : ''}">${ph && !x.owned ? placeholderHtml(x) : src ? `<img src="${esc(src)}" alt="">` : '<i>no scan</i>'}
+    return `<figure class="${grey && !x.owned ? 'grey' : ''}">${ph && !x.owned ? placeholderHtml(x, ph === 'both' && src) : src ? `<img src="${esc(src)}" alt="">` : '<i>no scan</i>'}
       <figcaption>${unmarked ? '<i>not owned</i> · ' : ''}<b>${esc(x.name)}</b> ${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''} · ${esc(VARIANT_LABEL[x.variant] || '')}${x.lang && x.lang !== 'EN' ? ' · ' + esc(x.lang) : ''}${pr < Infinity ? ' · ' + rm(pr) : ''}</figcaption></figure>`;
   };
   let html = '';
@@ -2706,12 +2716,15 @@ function logoOf(x) {
   const c = lang === 'KR' && code(x.set);
   return (c && logoOf.by.JP[c.toLowerCase()]) || [].concat(x.ref || []).map(t => logoOf.by.EN[String(t).split('|')[1]]).find(Boolean) || '';
 }
-function placeholderHtml(x) {
+function placeholderHtml(x, src) {   // src: the scan to show inside the tile ("Both" view)
   const logo = logoOf(x), d = setDateOf(x.set);
   const rel = /^\d{4}-\d\d-\d\d$/.test(d) ? new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : d;
-  return `<span class="pk-ph"><span class="ph-bar"></span>${x.number ? `<span class="ph-num">${esc(x.number)}</span>` : ''}<span class="ph-name">${esc(x.name)}</span>
+  const num = x.number ? `<span class="ph-num">${esc(x.number)}</span>` : '', fin = `<span class="ph-fin">${esc(VARIANT_LABEL[x.variant] || 'Normal')}</span>`;
+  if (src) return `<span class="pk-ph has-img"><span class="ph-top"><img class="ph-img" src="${esc(src)}" alt="" loading="lazy"><span class="ph-side">${num}${fin}</span></span>
+    <span class="ph-set">${logo ? `<img src="${esc(logo)}" alt="" loading="lazy">` : ''}</span></span>`;   // "Both": name + set name sit under the pocket already
+  return `<span class="pk-ph"><span class="ph-bar"></span>${num}<span class="ph-name">${esc(x.name)}</span>
     <span class="ph-set">${logo ? `<img src="${esc(logo)}" alt="" loading="lazy">` : ''}<span><small>Set</small>${esc(x.set || '')}</span></span>
-    <span class="ph-fin">${esc(VARIANT_LABEL[x.variant] || 'Normal')}</span>${rel ? `<span class="ph-rel">Released ${esc(rel)}</span>` : ''}</span>`;
+    ${fin}${rel ? `<span class="ph-rel">Released ${esc(rel)}</span>` : ''}</span>`;
 }
 function binderHtml(cards) {
   const off = cards.filter(x => x.nob).length;   // taken out of the binder (2026-11-14): still in the collection, not in the pockets
@@ -2726,7 +2739,7 @@ function binderHtml(cards) {
   const pocket = x => {
     const src = thumbSrc(x), best = bestStores(x.id), l = !x.owned && listingsOf(x.id).find(k => best.has(k.key));
     return `<div class="pwrap${picked.has(x.id) ? ' picked' : ''}${x.nob ? ' off' : ''}"><input type="checkbox" class="pk-pick" data-pick="${x.id}"${picked.has(x.id) ? ' checked' : ''} aria-label="Select ${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}"><button type="button" class="pocket${x.owned ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.owned ? ', owned' : ''}">
-      ${ui.ph && !x.owned ? placeholderHtml(x) : src ? `<img src="${esc(src)}" alt="" width="126" height="176" loading="lazy">` : '<span class="pk-no">no scan</span>'}
+      ${ui.ph && !x.owned ? placeholderHtml(x, ui.ph === 'both' && src) : src ? `<img src="${esc(src)}" alt="" width="126" height="176" loading="lazy">` : '<span class="pk-no">no scan</span>'}
       <span class="pk-t">${esc(x.name)}</span><span class="pk-m" title="${esc(x.set || '')}">${esc(setCodeOf(x))}${x.number ? ' · ' + esc(x.number) : ''}</span>
       <span class="pk-b"><span>${badge(x)}</span>${l ? `<b>${esc(fmt(l.st, l.p))}</b>` : ''}</span></button></div>`;
   };
@@ -2739,7 +2752,7 @@ function binderHtml(cards) {
   const size = `<label class="bsize"><span>Pockets</span><select data-bsize>${BSIZES.map(v => `<option value="${v}"${v === cols + 'x' + rows ? ' selected' : ''}>${v.replace('x', '×')}</option>`).join('')}</select></label>`;
   const pick = n ? `<span class="bpick on"><b>${n}</b> selected<button type="button" class="primary small" data-act="pickown" data-id="1">Mark owned</button><button type="button" class="small" data-act="pickown" data-id="0">Not owned</button>${[...picked].some(k => !S.cards.find(x => x.id === k)?.nob) ? '<button type="button" class="small" data-act="pickbin" data-id="0">Remove from binder</button>' : ''}${[...picked].some(k => S.cards.find(x => x.id === k)?.nob) ? '<button type="button" class="small" data-act="pickbin" data-id="1">Put back</button>' : ''}<button type="button" class="linkish" data-act="pickclear">Clear</button></span>`
     : '<span class="bpick"><button type="button" class="small" data-act="pickpage" title="Tick pockets to mark several cards owned at once">Select page</button></span>';
-  const face = `<span class="seg bface" role="group" aria-label="Pockets not owned">${[['scan', 'Cards'], ['ph', 'Placeholders']].map(([v, t]) => `<button type="button" class="small" data-act="bface" data-id="${v}" aria-pressed="${(v === 'ph') === !!ui.ph}">${t}</button>`).join('')}</span>`;
+  const face = `<span class="seg bface" role="group" aria-label="Pockets not owned">${[['scan', 'Cards'], ['ph', 'Placeholders'], ['both', 'Both']].map(([v, t]) => `<button type="button" class="small" data-act="bface" data-id="${v}" aria-pressed="${v === (ui.ph === 'both' ? 'both' : ui.ph ? 'ph' : 'scan')}">${t}</button>`).join('')}</span>`;
   const blanks = '<span class="pocket blank" aria-hidden="true"><i></i></span>'.repeat(per - page.length);
   return `<div class="bbar">${sort}<span class="bsep"></span>${pager}${size}${face}<span class="sp"></span>${pick}<button type="button" class="small" data-act="export">Export…</button></div>
     <div class="bsheet" style="--cols:${cols};--rows:${rows}"><div class="binder">${page.map(pocket).join('')}${blanks}</div></div>
@@ -3112,7 +3125,7 @@ document.addEventListener('click', e => {
   else if (act === 'view') {
     ui.view = id; render(); saveUi();
   }
-  else if (act === 'bface') { ui.ph = id === 'ph'; render(); saveUi(); }
+  else if (act === 'bface') { ui.ph = id === 'both' ? 'both' : id === 'ph'; render(); saveUi(); }
   else if (act === 'bpage') { bPage += Number(id); render(); }
   else if (act === 'lpage') { lPage += Number(id); render(); toListTop(); }
   else if (act === 'scrim') { setPane('side', false); setPane('det', false); }
