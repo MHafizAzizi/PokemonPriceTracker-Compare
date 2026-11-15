@@ -52,6 +52,7 @@ Prices on these pages are snapshots from the date shown on each page, not live p
 **15 November 2026**
 - Binder: new **Both** view for cards you don't own. The tile shows the card scan, its number and finish
   beside it, and a large set logo. The same layout can be printed from **Export**.
+- Card scans now show for cards in collections you made yourself, and many Japanese scans are sharper.
 
 **14 November 2026**
 - Sharper card scans on the published page (Japanese, Chinese and Korean scans were blurry).
