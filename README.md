@@ -44,12 +44,18 @@ seller in a Facebook group or on Carousell) and the price, and the page shows th
   Also for [Wobbuffet](https://mhafizazizi.github.io/PokemonPriceTracker-Compare/jp-en/wobbuffet/).
 - **[Market report](https://mhafizazizi.github.io/PokemonPriceTracker-Compare/market/)**: listings recorded from
   local shops and marketplaces.
+- **[Sealed products](https://mhafizazizi.github.io/PokemonPriceTracker-Compare/sealed/)**: 2,186 boxes, ETBs, tins,
+  blisters, packs and decks from the XY era on, each with a fair price in RM (median of its last 4 sold weeks on TCGplayer).
+  Type the price you see in a shop to get Deal / Fair / Overpriced, and compare how each era's products moved.
+- Every page has the same switch at the top of the left rail: **Cards | Market | JP vs EN | Sealed**.
 
 Prices on these pages are snapshots from the date shown on each page, not live prices.
 
 ## Updates
 
 **16 November 2026**
+- **Sealed products** is now its own page: fair price in RM, a price check box and an era chart. It left the card
+  tracker, which loads faster. Every page has the new **Cards | Market | JP vs EN | Sealed** switch.
 - Binder: the Both tile is now the only view for cards you don't own (the Cards / Placeholders buttons are gone).
   **Export** still prints grey scans, placeholders, colour scans or Both, with Both as the default.
 - Binder: **Save layout** keeps every card in its page and pocket. A card you remove from the binder leaves an empty

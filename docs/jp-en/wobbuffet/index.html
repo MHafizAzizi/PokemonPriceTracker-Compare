@@ -40,7 +40,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font)}
 
 html, body { overflow-x: clip; }
 h1, h2 { text-wrap: balance; }
-button:active:not(:disabled), .btn:active, a.pill-link:active { transform: translateY(1px); }
+button:active:not(:disabled), .btn:active, .pswitch a:active { transform: translateY(1px); }
 a{color:var(--accent);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .2s}
 a:hover,a:focus-visible{background-size:100% 1px}
 .num,td.n{font-variant-numeric:tabular-nums}
@@ -167,8 +167,13 @@ button { font: inherit; color: inherit; }
 .mshell { display: grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1600px; margin: 0 auto; }
 .mrail { position: sticky; top: 0; height: 100vh; overflow: auto; overscroll-behavior: contain; padding: 20px 16px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px; background: var(--bg); }
 .links { display: flex; gap: 6px; flex-wrap: wrap; }
-.pill-link { font-size: 12px; padding: 3px 10px; border: 1px solid var(--accent); border-radius: 999px; background: none; }
-.pill-link:hover { background: var(--accent); color: var(--surface); }
+/* Page switch (2026-11-16): same bar on the Tracker, market report, JP vs EN and sealed page */
+.pswitch { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.pswitch a { flex: 1; text-align: center; padding: 6px 2px; font-size: 12px; line-height: 1.3; color: var(--text); background: var(--surface); border-right: 1px solid var(--line); text-decoration: none; white-space: nowrap; }
+.pswitch a:last-child { border-right: 0; }
+.pswitch a[href]:not([aria-current]):hover { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.pswitch a[aria-current="page"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.pswitch a[aria-disabled="true"] { color: var(--muted); opacity: .55; cursor: not-allowed; }
 .colp { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
 .colp select { font: 600 15px var(--font); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
 .fh { display: flex; justify-content: space-between; align-items: baseline; }
@@ -405,7 +410,7 @@ section { margin-bottom: 28px; }
 <a class="skip" href="#main">Skip to prices</a>
 <div class="mshell">
   <aside class="mrail" id="rail" aria-label="Collection and filters">
-    <div class="links"><a class="pill-link" href="../../">Card Price Tracker</a><a class="pill-link" href="#" id="mkt">Market report</a></div>
+    <nav class="pswitch" aria-label="Pages"><a href="../../">Cards</a><a href="#" id="mkt">Market</a><a aria-current="page" href="">JP vs EN</a><a href="../../sealed/">Sealed</a></nav>
     <label class="colp"><span>Collection</span><select id="colPick"></select></label>
     <div class="cur" role="group" aria-label="Currency"><button type="button" data-cur="usd">USD</button><button type="button" data-cur="jpy">JPY</button><span class="fxn" id="fxn"></span></div>
     <div id="facets"></div>

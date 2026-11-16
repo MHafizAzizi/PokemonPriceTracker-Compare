@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141416" media="(prefers-color-scheme: dark)">
+<title>Sealed Products</title>
+<meta name="description" content="Sealed Pokémon products with a fair price in RM from weekly TCGplayer sales: check a shop price at a glance.">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('cpt-theme')||''}catch(e){}</script>
+<style>
+/* Hallmark · checked: 2026-11-13 · genre: modern-minimal (inferred) · shape: app screen · market report
+ * floor: fixed 7, 20, 34, 39a, 40, 48, 63, 67 · reflex fixed: 26b, 64 · structural: printed in chat (column order, nav, row height)
+ * built: the project · redesign: polish · v2.0.0 */
+/* Hallmark · dismissed 56 · the sticky side rail and the main bar sit in separate columns; table heads already offset by --listbar-h / --tbar-h or scroll inside .tw */
+/* Hallmark · answered F7 · one container recipe on purpose: this app screen keeps one box for its controls */
+/* Hallmark · answered F24 · the popovers keep edge and shadow because they float over a busy card table */
+:root{
+    --on-accent:#fff;--on-lang:#fff;--lang-en:#2f6fdb;--lang-jp:#c0392b;--lang-cn:#8a5a12;--rar-u:#1d7a3a;--rar-r:#2f6fdb;--rar-g:#7a5400;--rar-gbg:#fff6d6;--rar-gold:#d4a300;--check-bg:#fdf3e1;--check-text:#8a5a00;--scan-bg:#fff;--fin-ink:#3d2f00;--fin-1:#ffe28a;--fin-2:#bfeaff;--fin-3:#ffd0a8;--fin-e1:#e0b400;--fin-e2:#38a8d8;--fin-e3:#e07a30;--print-ink:#1d1d1b;--print-line:#bbb;--print-muted:#888;--print-faint:#ddd;--shadow-0:var(--shadow-0);--shadow-1:rgb(0 0 0 / .13);--shadow-2:rgb(0 0 0 / .19);--shadow-3:rgb(0 0 0 / .31);--scrim:rgb(0 0 0 / .4);--backdrop:rgb(0 0 0 / .45);
+  --bg:#f6f6f4;--surface:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e2dd;--accent:#2f6fdb;
+  --best-bg:#e3f4e8;--best-text:#1d7a3a;--danger:#b3261e;--danger-bg:#fbe9e7;--fair-bg:#eef3fc;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --on-accent:#0d1a33;--rar-u:#7fd39a;--rar-r:#6d9cff;--rar-g:#f0c850;--rar-gbg:#3a3010;--check-bg:#3a2e14;--check-text:#f0c870;
+  --bg:#141416;--surface:#1c1c1f;--text:#ececE8;--muted:#9a9a94;--line:#2e2e33;--accent:#6d9cff;
+  --best-bg:#1d3626;--best-text:#7fd39a;--danger:#f2877f;--danger-bg:#3a2020;--fair-bg:#1f2738;
+}}
+:root[data-theme="dark"]{color-scheme:dark;
+    --on-accent:#0d1a33;--rar-u:#7fd39a;--rar-r:#6d9cff;--rar-g:#f0c850;--rar-gbg:#3a3010;--check-bg:#3a2e14;--check-text:#f0c870;
+  --bg:#141416;--surface:#1c1c1f;--text:#ececE8;--muted:#9a9a94;--line:#2e2e33;--accent:#6d9cff;
+  --best-bg:#1d3626;--best-text:#7fd39a;--danger:#f2877f;--danger-bg:#3a2020;--fair-bg:#1f2738;
+}
+:root[data-theme="light"]{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font)}
+
+html, body { overflow-x: clip; }
+h1, h2 { text-wrap: balance; }
+button:active:not(:disabled), .btn:active, .pswitch a:active { transform: translateY(1px); }
+a{color:var(--accent);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .2s}
+a:hover,a:focus-visible{background-size:100% 1px}
+.num,td.n{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono)}
+
+/* layout: Dark-Editorial sticky side rail + scrolling main */
+.rail{position:sticky;top:0;height:100vh;padding:40px 28px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:28px}
+.rail h1{font-size:20px;line-height:1.25;margin:0}
+.rail .sub{color:var(--muted);font-size:13px;margin-top:6px}
+.rail nav{display:flex;flex-direction:column;gap:2px}
+.rail nav a{display:flex;gap:12px;align-items:baseline;padding:7px 0;color:var(--muted);font-size:14px;background:none}
+.rail nav a .mono{font-size:12px;color:var(--accent)}
+.rail nav a::after{content:"";flex:1;height:1px;background:var(--line);align-self:center;transition:background .2s}
+.rail nav a.on,.rail nav a:hover{color:var(--text)}
+.rail nav a.on::after{background:var(--accent)}
+.rail .fx{margin-top:auto;font-size:12px;color:var(--muted);font-family:var(--mono);line-height:1.7}
+main{padding:40px 40px 64px;min-width:0}
+section{scroll-margin-top:16px}
+.skip{position:absolute;left:-9999px;top:8px;z-index:10;padding:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.skip:focus{left:8px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.label{font-family:var(--font);font-size:12px;color:var(--muted); font-variant-numeric: tabular-nums}
+
+/* 01 summary */
+.kpi.deal b{color:var(--best-text)} .kpi.over b{color:var(--danger)}
+.totals{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.totals .big{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.totals .vs{color:var(--muted);font-size:14px}
+.split{display:flex;height:10px;border-radius:5px;overflow:hidden;margin-top:10px;background:var(--line)}
+.split i{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:12px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;background:var(--c)}
+
+/* 02 eras and sets */
+#eras{margin-top:40px}
+.eras{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.era,.set{font:inherit;color:inherit;text-align:left;cursor:pointer;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0;display:flex;flex-direction:column;gap:6px}
+.era:hover,.set:hover{border-color:var(--muted)}
+.era[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.era:focus-visible,.set:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.era .t{font-weight:600;font-size:14px;line-height:1.3}
+.era b{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.era .split,.set .split{height:6px;margin-top:0}
+.sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.set .logo{height:64px;display:grid;place-items:center}
+.set .logo img{max-width:100%;max-height:64px;object-fit:contain}
+.set .logo span{font-weight:600;font-size:13px;text-align:center;line-height:1.3}
+.set .m{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* three columns */
+#sellers{margin-top:48px}
+.list{display:flex;flex-direction:column;gap:10px}
+.badge{font-family:var(--font);font-size:12px;padding:1px 6px;border-radius:4px;white-space:nowrap;font-variant-numeric: tabular-nums}
+.b-deal{background:var(--best-bg);color:var(--best-text)}
+.b-over{background:var(--danger-bg);color:var(--danger)}
+.b-fair{background:var(--fair-bg);color:var(--accent)}
+.b-bulk,.b-none{background:var(--line);color:var(--muted)}
+/* gap motif: market tick at centre, price dot on log scale */
+.gap{position:relative;height:14px;margin-top:6px}
+.gap::before{content:"";position:absolute;left:0;right:0;top:6px;height:2px;background:var(--line);border-radius:1px}
+.gap .mk{position:absolute;left:50%;top:1px;width:2px;height:12px;background:var(--muted)}
+.gap .bar{position:absolute;top:6px;height:2px}
+.more{margin-top:10px;font-size:13px}
+
+/* cost to complete */
+.ct tr.tot td{font-weight:600;border-top:2px solid var(--line)}
+.ct td.r b{font-weight:600}
+/* sellers */
+.dn{color:var(--best-text)} .up{color:var(--danger)}
+
+/* 05 table */
+.all{margin-top:48px}
+#fSet{width:240px;max-width:100%;min-width:0;text-overflow:ellipsis} /* fixed: a select grows to its longest option (JP set names) */
+.toolbar .count{flex-basis:100%;text-align:right;font-size:13px;color:var(--muted)} /* own line always, so the row looks the same for every filter */
+th button{all:unset;cursor:pointer}
+th button:hover,th[aria-sort] button{color:var(--accent)}
+th button:focus-visible{outline:2px solid var(--accent)}
+th[aria-sort=ascending] button::after{content:" \2191"}
+th[aria-sort=descending] button::after{content:" \2193"}
+.chip{font-family:var(--font);font-size:11px;padding:1px 5px;border-radius:3px;background:var(--best-bg);color:var(--best-text);margin-left:6px; font-variant-numeric: tabular-nums}
+/* % vs market: badge and gap bar share one cell so the eye reads them as one unit */
+.pg{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.pg .gap{width:110px;margin:0;flex:none}
+.pg .badge{min-width:64px;text-align:right}
+/* tag pills under the card name; language, set, rarity and finish are buttons that set that filter */
+.pill{font:12px/18px var(--font);display:inline-flex;align-items:center;gap:4px;padding:0 7px;border-radius:999px;border:1px solid var(--line);background:none;color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+button.pill{cursor:pointer}
+button.pill:hover{border-color:var(--muted);color:var(--text)}
+button.pill:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.pill img{height:12px;width:auto;max-width:44px;object-fit:contain}
+.p-lang{font-family:var(--mono);font-weight:600;color:var(--text);background:var(--line);border-color:transparent}
+.p-rar{font-family:var(--mono)}
+/* pill colours (demo B, picked 2026-10-24): language, set, rarity tier; white on each language colour is >= 4.5:1 */
+.p-lang{color:var(--on-lang);border-color:transparent}
+.l-EN{background:var(--lang-en)}.l-JP{background:var(--lang-jp)}.l-CN{background:var(--lang-cn)}
+.p-rar{--u: var(--rar-u); --r: var(--rar-r); --g: var(--rar-g); --gbg: var(--rar-gbg)}
+.r-U{color:var(--u);border-color:var(--u)}.r-R{color:var(--r);border-color:var(--r)}
+.r-IR,.r-HR,.r-P{color:var(--g);border-color: var(--rar-gold);background:var(--gbg)}
+/* All listings pager, above and below the table (user, 2026-11-11) */
+.mpager{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;margin:10px 0}
+.mpager:empty{display:none}
+.mpager button{font:inherit;font-size:14px;padding:6px 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--accent);cursor:pointer}
+.mpager button:disabled{opacity: .55; cursor: not-allowed; background: var(--bg); color: var(--muted);}
+.mpager button:focus-visible,.mpager select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mpager .pg{font:13px var(--mono)}
+.mpager select{font:13px var(--mono);padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text)}
+.mpager .muted{flex-basis:100%;text-align:center;font-size:12px}
+footer{margin-top:32px;font-size:13px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+
+@media (max-width:820px){
+  .rail{min-width:0;position:sticky;height:auto;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line);background:var(--bg);z-index:5;gap:8px}
+  .rail .sub,.rail .fx{display:none}
+  .rail h1{font-size:16px}
+  .rail nav{flex-direction:row;overflow-x:auto;gap:16px}
+  .rail nav a{white-space:nowrap;padding:2px 0}
+  .rail nav a::after{display:none}
+  main{padding:20px 16px 48px}
+  section{scroll-margin-top:96px}
+  .totals{grid-template-columns:1fr;gap:10px}
+  .pill img{display:none}
+  .pg .badge{min-width:0}
+}
+
+/* facet rail (2026-11-09) */
+/* Market report mock · facet rail (after the Tracker's direction 2) */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.muted { color: var(--muted); }
+.sp { flex: 1; }
+.up { color: var(--danger); } .dn { color: var(--best-text); }
+button { font: inherit; color: inherit; }
+.linkish { border: 0; background: none; padding: 4px 2px; color: var(--accent); font-size: 13px; cursor: pointer; }
+.linkish:hover { text-decoration: underline; }
+.mshell { display: grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1600px; margin: 0 auto; }
+.mrail { position: sticky; top: 0; height: 100vh; overflow: auto; overscroll-behavior: contain; padding: 20px 16px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px; background: var(--bg); }
+/* Page switch (2026-11-16): same bar on the Tracker, market report, JP vs EN and sealed page */
+.pswitch { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.pswitch a { flex: 1; text-align: center; padding: 6px 2px; font-size: 12px; line-height: 1.3; color: var(--text); background: var(--surface); border-right: 1px solid var(--line); text-decoration: none; white-space: nowrap; }
+.pswitch a:last-child { border-right: 0; }
+.pswitch a[href]:not([aria-current]):hover { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.pswitch a[aria-current="page"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.pswitch a[aria-disabled="true"] { color: var(--muted); opacity: .55; cursor: not-allowed; }
+.colp { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+.colp select { font: 600 15px var(--font); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
+.fh { display: flex; justify-content: space-between; align-items: baseline; }
+.fh h2 { margin: 0; font: 500 12px var(--font); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tg { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 8px 2px; cursor: pointer; }
+.tg small { margin-left: auto; font: 11px var(--font); color: var(--muted); font-variant-numeric: tabular-nums; }
+.facet { border-top: 1px solid var(--line); padding: 8px 0; }
+.facet > summary { list-style: none; cursor: pointer; display: flex; gap: 8px; align-items: center; font: 600 13px var(--font); padding: 4px 2px; }
+.facet > summary::-webkit-details-marker { display: none; }
+.facet > summary small { font: 11px var(--font); color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.facet > summary::after { content: '+'; margin-left: auto; color: var(--muted); font-weight: 400; }
+.facet[open] > summary::after { content: '−'; }
+.facet .on { font: 11px var(--font); background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 0 6px; font-variant-numeric: tabular-nums; }
+.fq { width: 100%; margin: 4px 0; font: 13px var(--font); padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
+.fl { display: grid; max-height: 220px; overflow: auto; overscroll-behavior: contain; }
+.fo { display: flex; gap: 8px; align-items: center; font-size: 13px; padding: 3px 2px; cursor: pointer; border-radius: 4px; }
+.fo:hover { background: color-mix(in srgb, var(--line) 60%, transparent); }
+.fo span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fo small { font: 11px var(--font); color: var(--muted); font-variant-numeric: tabular-nums; }
+.fo.zero { opacity: .55; }
+.fo[hidden] { display: none; }
+.sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.fx { margin-top: auto; font-size: 11px; color: var(--muted); line-height: 1.6; }
+main { padding: 18px 28px 64px; min-width: 0; }
+.mhead { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mhead h1 { font-size: 22px; margin: 0; }
+.mhead .sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.fopen, .scrim { display: none; }
+.h2 { display: flex; align-items: baseline; gap: 10px; font-size: 16px; margin: 0 0 10px; }
+.h2 small { margin-left: auto; font: 12px var(--font); color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+section { margin-bottom: 28px; }
+/* summary */
+.sum { display: grid; grid-template-columns: minmax(260px, auto) 1fr; gap: 28px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; }
+.sum .big { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sum .big span { font-size: 14px; font-weight: 400; color: var(--muted); }
+.split { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; background: var(--line); }
+.split i { display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 6px; margin-top: 8px; }
+.lg-b { display: inline-flex; gap: 6px; align-items: center; border: 1px solid transparent; background: none; border-radius: 999px; padding: 2px 10px; font-size: 13px; cursor: pointer; color: var(--muted); }
+.lg-b b { color: var(--text); font-variant-numeric: tabular-nums; }
+.lg-b i { width: 10px; height: 10px; border-radius: 2px; }
+.lg-b:hover:not(:disabled), .lg-b.on { border-color: var(--accent); }
+.lg-b.on { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.lg-b:disabled { opacity: .55; cursor: not-allowed; background: var(--bg); color: var(--muted); }
+.note { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+.b-check { background: var(--check-bg); color: var(--check-text); }
+/* two columns */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.eras2 { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+.erow { display: grid; grid-template-columns: 150px 1fr 44px 64px; gap: 10px; align-items: center; border: 0; background: none; padding: 6px 8px; border-radius: 6px; cursor: pointer; text-align: left; font-size: 13px; }
+.erow:hover { background: color-mix(in srgb, var(--line) 50%, transparent); }
+.erow.on { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.erow .en { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eb { height: 10px; }
+.eb > span { display: flex; height: 100%; border-radius: 3px; overflow: hidden; gap: 1px; }
+.ec { font: 12px var(--mono); text-align: right; }
+.ed { font-size: 12px; }
+#main, .mshell > * { min-width: 0; }   /* a wide table scrolls inside its box, not the page */
+@media (max-width: 900px) { .tw { overflow-x: auto; } }
+.selw { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; max-height: 420px; overflow: auto; overscroll-behavior: contain; }
+.dt { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dt th, .dt td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+.dt th { position: sticky; top: 0; background: var(--surface); z-index: 2; font: 500 12px var(--font); color: var(--muted); box-shadow: 0 1px 0 var(--line); font-variant-numeric: tabular-nums; }
+.dt .r { text-align: right; } .dt th.r .sh { justify-content: flex-end; width: 100%; }
+.sh { border: 0; background: none; padding: 2px 0; font: inherit; color: inherit; display: inline-flex; gap: 6px; align-items: center; cursor: pointer; white-space: nowrap; }
+.sh span { opacity: .35; font-family: var(--font); }
+.sh:hover { color: var(--text); } .sh:hover span { opacity: .8; }
+.sh.on { color: var(--accent); } .sh.on span { opacity: 1; }
+.dt tr.bulk td { color: var(--muted); }
+.its { display: grid; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.it { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); color: var(--text); background: none; }
+.it:hover { background: color-mix(in srgb, var(--line) 40%, transparent); }
+.itm { display: grid; gap: 2px; min-width: 0; }
+.itm b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); min-width: 0; flex-wrap: wrap; }
+.m.s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.m .mono { font-size: 12px; }
+.lg { height: 12px; width: auto; max-width: 36px; object-fit: contain; vertical-align: -2px; margin-right: 4px; }
+.fin { font-size: 11px; color: var(--best-text); }
+.itp { display: grid; justify-items: end; gap: 2px; font-variant-numeric: tabular-nums; }
+.itp .muted { font-size: 12px; }
+.its .more { justify-self: start; margin: 6px 10px; }
+.th { border-radius: 3px; object-fit: cover; background: var(--line); display: block; }
+/* listings */
+.tbar { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 8px 0; }
+.tbar input[type=search] { flex: 0 1 360px; font: 14px var(--font); padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); }
+.tbar .cnt { font-size: 14px; color: var(--muted); } .tbar .cnt b { color: var(--text); }
+.ftag { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 4px 2px 10px; background: var(--surface); }
+.ftag button { border: 0; background: none; cursor: pointer; padding: 2px 6px; color: var(--muted); }
+.tw { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.lt th { top: var(--tbar-h, 0px); }
+.lt td.img { width: 46px; }
+.lt .cn { font-weight: 600; margin-right: 6px; }
+.lt .m { margin-top: 3px; }
+.lt tr.dup td { border-top: 0; } .lt tr.dup .cn { font-weight: 400; color: var(--muted); }
+.lt .chip { font: 11px var(--font); color: var(--best-text); background: var(--best-bg); border-radius: 4px; padding: 1px 6px; font-variant-numeric: tabular-nums; }
+.sm { font-size: 12px; color: var(--muted); }
+.pg { display: inline-flex; gap: 10px; align-items: center; justify-content: flex-end; }
+.gap { position: relative; display: inline-block; width: 110px; height: 8px; background: var(--line); border-radius: 4px; }
+.gap .bar { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.gap .mk { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 2px; background: var(--text); opacity: .5; }
+.morebtn { margin: 12px 0; border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+.foot { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+@media (max-width: 1200px) { .two { grid-template-columns: 1fr; } .sum { grid-template-columns: 1fr; gap: 12px; } }
+@media (max-width: 900px) {
+  .mshell { grid-template-columns: minmax(0, 1fr); }
+  .mrail { position: fixed; inset: 0 auto 0 0; width: min(86vw, 300px); z-index: 30; transform: translateX(-100%); box-shadow: 0 0 40px var(--shadow-3); }
+  body.fopen .mrail { transform: none; }
+  body.fopen .scrim { display: block; position: fixed; inset: 0; z-index: 25; background: var(--scrim); border: 0; }
+  .fopen { display: inline-flex; margin-left: auto; border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: 6px; padding: 8px 14px; min-height: 44px; }
+  main { padding: 12px 14px 48px; }
+  .hs { display: none; }
+  .erow { grid-template-columns: 110px 1fr 36px; } .era .ed { display: none; }
+  .gap { display: none; }
+  .lt td.img { width: 36px; }
+  .tbar input[type=search] { flex: 1 1 100%; }
+}
+
+.colp select { width: 100%; }
+.dt th[aria-sort] button::after, .dt th button::after { content: none !important; }
+.dt td.r, .itp b { white-space: nowrap; }
+.erow .ed b { font-size: 12px; font-weight: 600; }
+.selw { max-height: 360px; }
+.mrail, .mrail label, .facet > summary { color: var(--text); }
+.dt .linkish { text-align: left; }
+.dt td.hs { white-space: nowrap; }
+@media (max-width: 900px) { .eras2 { grid-template-columns: 1fr; } .erow { grid-template-columns: 110px 1fr 36px; } .erow .ed { display: none; } }
+
+/* round 2: eras with logos, 100% bars, sets under an open era; empty-state padding */
+.eras2 { grid-template-columns: 1fr !important; gap: 0; padding: 4px 0; }
+.egrp + .egrp { border-top: 1px solid var(--line); }
+.erow, .srow { display: grid; grid-template-columns: 96px 170px minmax(0, 1fr) 48px 72px 16px; gap: 14px; align-items: center; width: 100%; border: 0; background: none; padding: 8px 14px; cursor: pointer; text-align: left; font-size: 14px; border-radius: 0; }
+.erow .en { font-weight: 600; }
+.elogo, .slogo { height: 28px; display: flex; align-items: center; }
+.elogo img, .slogo img { max-height: 28px; max-width: 96px; object-fit: contain; }
+.eb { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 1px; background: var(--line); }
+.eb > span { display: contents; }
+.ex { color: var(--muted); font-size: 12px; }
+.egrp.open { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.esets { padding: 2px 0 8px; }
+.srow { grid-template-columns: 96px 170px minmax(0, 1fr) 48px 72px 16px; padding: 5px 14px 5px 14px; font-size: 13px; }
+.srow .slogo { height: 22px; } .srow .slogo img { max-height: 22px; max-width: 80px; }
+.srow .sn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.srow .sn .muted { font-size: 12px; }
+.srow:hover, .erow:hover { background: color-mix(in srgb, var(--line) 45%, transparent); }
+.srow.on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.its > p { margin: 0; padding: 14px 16px; }
+@media (max-width: 900px) {
+  .erow, .srow { grid-template-columns: 64px minmax(0, 1fr) 70px 36px; gap: 8px; padding: 8px 10px; }
+  .erow .ed, .erow .ex, .srow .ed, .srow .sn .muted { display: none; }
+  .elogo img { max-width: 64px; } .srow .slogo img { max-width: 60px; }
+}
+
+/* Sealed page (2026-11-16): additions to the market report's styles above */
+.seg2 { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; width: max-content; }
+.seg2 button { font: 13px var(--font); padding: 5px 14px; border: 0; background: var(--surface); color: var(--muted); cursor: pointer; }
+.seg2 button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.fairc b { font-variant-numeric: tabular-nums; }
+.fairc .sm, .fairc.muted b { color: var(--muted); }
+.lt .cn { font-weight: 600; }
+.lt tr[data-id] { cursor: pointer; }
+.lt tr[data-id]:hover td, .lt tr[data-id][aria-selected="true"] td { background: var(--fair-bg); }
+.up { color: var(--best-text); } .dn { color: var(--danger); }
+/* product drawer: price check (spec goal 4) */
+#det { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100vw); z-index: 40; background: var(--surface); border-left: 1px solid var(--line);
+  box-shadow: 0 0 40px var(--shadow-3, rgba(0,0,0,.18)); overflow: auto; padding: 20px 22px 32px; }
+#det[hidden], #detScrim[hidden] { display: none; }
+#detScrim { position: fixed; inset: 0; z-index: 35; background: var(--scrim, rgba(0,0,0,.3)); border: 0; }
+#det h2 { font-size: 18px; margin: 0 36px 4px 0; }
+#detClose { position: absolute; top: 14px; right: 14px; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 18px; cursor: pointer; }
+.dimg { float: right; margin: 44px 0 8px 12px; width: 84px; height: auto; border-radius: 4px; }
+.dfair { font-size: 13px; color: var(--muted); margin: 10px 0 16px; }
+.dfair b { display: block; font-size: 24px; color: var(--text); font-variant-numeric: tabular-nums; }
+.pbox { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; clear: both; }
+.pbox input { width: 130px; font: 600 18px var(--font); padding: 8px 10px; border: 2px solid var(--accent); border-radius: 8px; background: var(--surface); color: var(--text); }
+#zone { position: relative; height: 12px; border-radius: 6px; margin: 18px 0 4px; background: linear-gradient(90deg, var(--best-text) 0 var(--z1), var(--accent) var(--z1) var(--z2), var(--danger) var(--z2) 100%); opacity: .85; }
+#zone .mark { position: absolute; top: -6px; width: 4px; height: 24px; margin-left: -2px; border-radius: 2px; background: var(--text); }
+#zone .mark[hidden] { display: none; }
+.zl { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+#verdict { min-height: 24px; margin: 12px 0 0; font-size: 14px; }
+#verdict .badge { font-size: 13px; padding: 2px 8px; margin-right: 6px; }
+#verdict.muted .badge { background: var(--line); color: var(--muted); }
+.chart { margin-top: 18px; }
+.chart svg { display: block; width: 100%; height: auto; font: 11px var(--mono); fill: var(--muted); }
+.dnote { font-size: 12px; color: var(--muted); }
+/* era compare chart (spec goal 5): one colour per era */
+:root { --e1:#7a5af5; --e2:#c77700; --e3:#1d7a3a; --e4:#2f6fdb; --e5:#c2366e; }
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){ --e1:#a993ff; --e2:#f0a845; --e3:#7fd39a; --e4:#6d9cff; --e5:#f07aa8; }}
+:root[data-theme="dark"]{ --e1:#a993ff; --e2:#f0a845; --e3:#7fd39a; --e4:#6d9cff; --e5:#f07aa8; }
+#eraS { margin-bottom: 28px; }
+#eraS .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.eleg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; }
+.eleg .chip { display: inline-flex; align-items: center; gap: 6px; background: none; color: var(--text); padding: 0; font-size: 13px; }
+.eleg .chip i { width: 10px; height: 10px; border-radius: 2px; }
+.eleg .chip small { color: var(--muted); font-variant-numeric: tabular-nums; }
+#eraChart .empty { padding: 28px 0; text-align: center; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to products</a>
+<div class="mshell">
+  <aside class="mrail" id="rail" aria-label="Pages and filters">
+    <nav class="pswitch" id="pswitch" aria-label="Pages"></nav>
+    <div class="seg2" role="group" aria-label="Currency"><button type="button" data-cur="rm">RM</button><button type="button" data-cur="usd">USD</button></div>
+    <div id="facets"></div>
+    <div class="fx mono" id="fx"></div>
+  </aside>
+  <button type="button" class="scrim" aria-label="Close filters" onclick="document.body.classList.remove('fopen')"></button>
+  <main id="main">
+    <header class="mhead"><div><h1>Sealed products</h1><p class="sub" id="sub"></p></div>
+      <button type="button" id="fopen" class="fopen">Filters</button></header>
+    <section id="eraS"><h2 class="h2">Price over time, by era<small>follows the filters</small></h2>
+      <div class="panel"><div class="eleg" id="eraLegend"></div><div class="chart" id="eraChart"></div>
+      <p class="note">Each line: median % change of that era's products since their first 4 sold weeks; products with 8+ sold weeks; a week without a sale keeps the last price. % because a tin and a box can't share a price axis.</p></div></section>
+    <section id="all">
+      <div class="tbar" id="tbar"><input type="search" id="q" placeholder="Search product or set… e.g. 151 elite" aria-label="Search sealed products" autocomplete="off"><span class="cnt" id="cnt" aria-live="polite"></span></div>
+      <nav class="mpager" id="pgTop" aria-label="Product pages, top"></nav>
+      <div class="tw"><table class="dt lt"><thead id="tHead"></thead><tbody id="tBody"></tbody></table></div>
+      <nav class="mpager" id="pgBot" aria-label="Product pages, bottom"></nav>
+    </section>
+    <footer id="foot" class="foot"></footer>
+  </main>
+</div>
+<button type="button" id="detScrim" aria-label="Close product" hidden></button>
+<div id="det" role="dialog" aria-modal="true" aria-labelledby="detH" hidden></div>
+<script src="sealed.js?v=fd9306c058"></script>
+<script>
+// Sealed products page (2026-11-16, spec docs/superpowers/specs/2026-11-16-sealed-page-design.md): built for judging a local
+// shop price. Data: data/sealed.js from scripts/sealed_prices.py (weekly TCGplayer sold prices, last 52 weeks, USD).
+const D = typeof SEALED !== 'undefined' ? SEALED : { date: '', fx: { usd_myr: 4, date: '' }, products: [] };
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const n = v => v.toLocaleString('en-US');
+const median = v => { const s = [...v].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const mean = v => v.reduce((t, x) => t + x, 0) / v.length;
+
+// ---------- prices ----------
+// fair price = median of the last 4 sold weeks (one odd week can't set it); range = their low / high
+function fairOf(h) {
+  h = h.filter(w => w[1] > 0);   // a $0 week is a data gap, not a price (sealed_prices.py drops them too)
+  if (!h.length) return null;
+  const last = h.slice(-4), p = last.map(w => w[1]);
+  return { fair: median(p), lo: Math.min(...p), hi: Math.max(...p), n: last.length, last: h[h.length - 1][0] };
+}
+const weeksAgo = (week, ref) => Math.round((Date.parse(ref) - Date.parse(week)) / 6048e5);
+const STALE_WEEKS = 12;
+const isStale = r => !!r.fairInfo && weeksAgo(r.fairInfo.last, D.date) > STALE_WEEKS;
+// 52-week change: last 4 sold weeks vs first 4, needs 8+ (the Tracker's old rule)
+const changeOf = h => (h.length >= 8 ? (mean(h.slice(-4).map(w => w[1])) / mean(h.slice(0, 4).map(w => w[1])) - 1) * 100 : null);
+let UI = { cur: 'rm', open: { type: true, lang: true } };
+try { UI = { ...UI, ...JSON.parse(localStorage.getItem('cpt-sealed-ui') || '{}') }; } catch (e) { /* fine */ }
+const saveUI = () => { try { localStorage.setItem('cpt-sealed-ui', JSON.stringify(UI)); } catch (e) { /* fine */ } };
+const money = usd => (usd == null ? '–' : UI.cur === 'usd' ? '$' + usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  : 'RM ' + n(Math.round(usd * D.fx.usd_myr)));
+const pct = p => (p == null ? '–' : (p > 0 ? '+' : '') + (Math.abs(p) >= 100 ? n(Math.round(p)) : p.toFixed(1)) + '%');
+
+// verdict on the price you see, same thresholds as the market report (market_compare.py DEAL / OVER)
+const DEAL = -15, OVER = 30;
+function verdictOf(price, fair) { const p = (price / fair - 1) * 100; return { verdict: p <= DEAL ? 'deal' : p >= OVER ? 'overpriced' : 'fair', pct: p }; }
+function parsePrice(text) {
+  const s = String(text == null ? '' : text).replace(/rm|\$|,|\s/gi, '');
+  if (!/^(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  const v = Number(s); return v > 0 ? v : null;
+}
+const toCur = usd => (UI.cur === 'usd' ? usd : usd * D.fx.usd_myr);   // a USD price in the page's currency
+
+let ROWS = null;
+const rows = () => ROWS || (ROWS = D.products.map(p => ({ ...p, fairInfo: fairOf(p.h), change: changeOf(p.h), sold: p.h.reduce((t, w) => t + w[2], 0) })));
+
+// ---------- filters ----------
+const ERA_ORDER = ['XY', 'Sun & Moon', 'Sword & Shield', 'Scarlet & Violet', 'Mega Evolution'];
+const FK = ['era', 'type', 'set', 'lang'];
+const F = { q: '', era: [], type: [], set: [], lang: [], sort: 'sold', dir: 'asc' };
+const match = (r, skip) => FK.every(k => k === skip || !F[k].length || F[k].includes(r[k]))
+  && (!F.q || F.q.split(/\s+/).every(w => (r.name + ' ' + r.set + ' ' + r.type + ' ' + r.era).toLowerCase().includes(w)));
+// sort keys: natural order first ('asc'); 'desc' flips it; products without the sort value stay last either way
+const SORTS = { sold: [r => r.sold, -1], cheapest: [r => (r.fairInfo ? r.fairInfo.fair : null), 1], rise: [r => r.change, -1], name: [r => r.name, 1] };
+function filtered() {
+  const [get, d] = SORTS[F.sort] || SORTS.sold, s = F.dir === 'desc' ? -d : d;
+  const out = rows().filter(r => match(r, null));
+  const has = out.filter(r => get(r) != null && (F.sort !== 'sold' || r.h.length)), not = out.filter(r => !has.includes(r));
+  has.sort((a, b) => { const x = get(a), y = get(b); return (typeof x === 'string' ? x.localeCompare(y) : x - y) * s || a.name.localeCompare(b.name); });
+  return [...has, ...not.sort((a, b) => a.name.localeCompare(b.name))];
+}
+const FACETS = [
+  ['era', 'Era', (a, b) => ERA_ORDER.indexOf(a) - ERA_ORDER.indexOf(b)],
+  ['type', 'Type', null],
+  ['set', 'Set', (a, b) => a.localeCompare(b)],
+  ['lang', 'Language', (a, b) => ['EN', 'JP'].indexOf(a) - ['EN', 'JP'].indexOf(b), v => ({ EN: 'English', JP: 'Japanese' }[v] || v)],
+];
+function facet([key, label, order, lab = v => v]) {
+  const m = new Map(); rows().filter(r => match(r, key)).forEach(r => m.set(r[key], (m.get(r[key]) || 0) + 1));
+  const cur = F[key], vals = [...new Set([...m.keys(), ...cur])].sort(order || ((a, b) => (m.get(b) || 0) - (m.get(a) || 0) || a.localeCompare(b)));
+  return `<details class="facet" data-k="${key}"${UI.open[key] ? ' open' : ''}><summary>${label}${cur.length ? `<span class="on">${cur.length}</span>` : ''}<small>${vals.length}</small></summary>
+    ${vals.length > 12 ? `<input type="search" class="fq" placeholder="Search ${label.toLowerCase()}…" aria-label="Search ${label}" autocomplete="off">` : ''}
+    <div class="fl" role="group" aria-label="${label}">${vals.map(v => { const c = m.get(v) || 0;
+      return `<label class="fo${c ? '' : ' zero'}"><input type="checkbox" data-k="${key}" data-v="${esc(v)}"${cur.includes(v) ? ' checked' : ''}><span>${esc(lab(v))}</span><small>${n(c)}</small></label>`; }).join('')}</div>
+    ${cur.length ? `<button type="button" class="linkish" data-clear="${key}">Clear</button>` : ''}</details>`;
+}
+
+// ---------- table ----------
+const PAGE = 50; let page = 0;
+const img = r => `<img class="th" loading="lazy" width="30" height="42" alt="" src="https://tcgplayer-cdn.tcgplayer.com/product/${encodeURIComponent(r.id)}_200w.jpg" onerror="this.style.visibility='hidden'">`;
+function fairCell(r) {
+  const f = r.fairInfo;
+  if (!f) return '<td class="r fairc muted"><span class="sm">no recent sales</span></td>';
+  const stale = isStale(r), thin = f.n < 4;
+  const note = stale ? `last sold ${weeksAgo(f.last, D.date)} weeks ago` : thin ? `thin data, ${f.n} wk${f.n > 1 ? 's' : ''}` : '';
+  return `<td class="r fairc${stale || thin ? ' muted' : ''}"><b>${money(f.fair)}</b>${note ? `<div class="sm">${note}</div>` : ''}</td>`;
+}
+const TH = [['name', 'Product', ''], [null, 'Type', 'hs'], ['cheapest', 'Fair price', 'r'], [null, 'Range, 4 wks', 'r hs'], ['rise', '52 wks', 'r'], ['sold', 'Sold', 'r']];
+const th = ([k, label, cls]) => { if (!k) return `<th class="${cls}">${label}</th>`; const on = F.sort === k;
+  return `<th class="${cls}"${on ? ` aria-sort="${(SORTS[k][1] > 0) === (F.dir === 'asc') ? 'ascending' : 'descending'}"` : ''}><button type="button" class="sh${on ? ' on' : ''}" data-sort="${k}">${label}<span aria-hidden="true">${on ? (F.dir === 'asc' ? '↓' : '↑') : '↕'}</span></button></th>`; };
+function drawTable(all) {
+  const pages = Math.max(1, Math.ceil(all.length / PAGE)); page = Math.min(page, pages - 1);
+  const from = page * PAGE, out = all.slice(from, from + PAGE);
+  $('cnt').innerHTML = `<b>${n(all.length)}</b> of ${n(rows().length)} products`;
+  const pager = all.length <= PAGE ? '' : `<button type="button" data-page="-1"${page === 0 ? ' disabled' : ''}>← Prev</button>
+    <span class="pg">Page <select data-jump aria-label="Go to page">${Array.from({ length: pages }, (_, i) => `<option value="${i}"${i === page ? ' selected' : ''}>${i + 1}</option>`).join('')}</select> / ${pages}</span>
+    <button type="button" data-page="1"${page >= pages - 1 ? ' disabled' : ''}>Next →</button><span class="muted">rows ${n(from + 1)}–${n(from + out.length)} of ${n(all.length)}</span>`;
+  $('pgTop').innerHTML = $('pgBot').innerHTML = pager;
+  $('tHead').innerHTML = `<tr><th class="img"><span class="vh">Image</span></th>${TH.map(th).join('')}</tr>`;
+  $('tBody').innerHTML = out.map(r => `<tr data-id="${r.id}" tabindex="0"><td class="img">${img(r)}</td>
+      <td class="card"><span class="cn">${esc(r.name)}</span><div class="sm">${esc(r.lang)} · ${esc(r.set)}</div></td>
+      <td class="hs">${esc(r.type)}</td>${fairCell(r)}
+      <td class="r num hs sm">${r.fairInfo && r.fairInfo.n > 1 ? money(r.fairInfo.lo) + ' – ' + money(r.fairInfo.hi) : ''}</td>
+      <td class="r num ${r.change > 0 ? 'up' : r.change < 0 ? 'dn' : ''}">${pct(r.change)}</td><td class="r num">${n(r.sold)}</td></tr>`).join('')
+    || '<tr><td colspan="7" class="muted">No products match. <button type="button" class="linkish" data-reset>Reset filters</button></td></tr>';
+}
+
+// ---------- line chart (product drawer + era chart) ----------
+// series: [{ color, cls?, pts: [{ t (ms), y }] }]; opt: { fmtY, hline: { y, cls } , label }
+function lineChart(box, series, opt) {
+  const all = series.flatMap(l => l.pts), ys = all.map(p => p.y).concat(opt.hline ? [opt.hline.y] : []);
+  if (!all.length) { box.innerHTML = ''; return; }
+  const W = Math.max(280, box.clientWidth || 400), H = opt.h || 220;
+  const lo0 = Math.min(...ys), hi0 = Math.max(...ys), span = hi0 - lo0 || Math.abs(hi0) || 1;
+  const pow = 10 ** Math.floor(Math.log10(span / 5)), step = [1, 2, 2.5, 5, 10].map(m => m * pow).find(x => span / x <= 5);
+  const lo = Math.floor(lo0 / step) * step, hi = Math.ceil(hi0 / step) * step;
+  const ticks = []; for (let v = lo; v <= hi + step / 2; v += step) ticks.push(v);
+  const left = Math.max(...ticks.map(t => opt.fmtY(t).length)) * 7 + 10, right = 10, top = 8, bottom = 22;
+  const t0 = Math.min(...all.map(p => p.t)), t1 = Math.max(...all.map(p => p.t));
+  const x = t => left + (t - t0) / ((t1 - t0) || 1) * (W - left - right), y = v => top + (hi - v) / ((hi - lo) || 1) * (H - top - bottom);
+  const months = []; for (const d = new Date(Date.UTC(new Date(t0).getUTCFullYear(), new Date(t0).getUTCMonth() + 1, 1)); d.getTime() <= t1; d.setUTCMonth(d.getUTCMonth() + (W < 480 ? 4 : 2))) months.push(d.getTime());
+  const mf = new Intl.DateTimeFormat('en', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opt.label)}">
+    ${ticks.map(t => `<line x1="${left}" x2="${W - right}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${left - 6}" y="${y(t) + 4}" text-anchor="end">${opt.fmtY(t)}</text>`).join('')}
+    ${months.map(t => `<text x="${x(t)}" y="${H - 6}" text-anchor="middle">${mf.format(t)}</text>`).join('')}
+    ${opt.hline ? `<line class="${opt.hline.cls}" x1="${left}" x2="${W - right}" y1="${y(opt.hline.y)}" y2="${y(opt.hline.y)}" stroke="${opt.hline.color || 'var(--text)'}" stroke-width="1.5" stroke-dasharray="5 4"/>` : ''}
+    ${series.map(l => `<polyline class="${l.cls || ''}" fill="none" stroke="${l.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${l.pts.map(p => x(p.t).toFixed(1) + ',' + y(p.y).toFixed(1)).join(' ')}"/>`).join('')}</svg>`;
+}
+
+// ---------- era compare chart ----------
+// one line per era: median % change of its products (8+ sold weeks) on a weekly grid; baseline = mean of a product's
+// first 4 sold weeks; a product counts from its first sold week; a week without a sale carries its last price
+const ERA_COLOR = { XY: 'var(--e1)', 'Sun & Moon': 'var(--e2)', 'Sword & Shield': 'var(--e3)', 'Scarlet & Violet': 'var(--e4)', 'Mega Evolution': 'var(--e5)' };
+function eraSeries(rs) {
+  const q = rs.filter(r => r.h.length >= 8);
+  if (!q.length) return [];
+  const ts = q.flatMap(r => [Date.parse(r.h[0][0]), Date.parse(r.h[r.h.length - 1][0])]), t0 = Math.min(...ts), t1 = Math.max(...ts);
+  const grid = []; for (let t = t0; t <= t1; t += 6048e5) grid.push(t);
+  const eras = [...new Set(q.map(r => r.era))].sort((a, b) => (ERA_ORDER.indexOf(a) + 1 || 99) - (ERA_ORDER.indexOf(b) + 1 || 99));
+  return eras.map(era => {
+    const ps = q.filter(r => r.era === era).map(r => ({ base: mean(r.h.slice(0, 4).map(w => w[1])), h: r.h.map(w => [Date.parse(w[0]), w[1]]) }));
+    const pts = [];
+    grid.forEach(t => {
+      const v = []; ps.forEach(p => { let last = null; for (const w of p.h) { if (w[0] > t + 1e6) break; last = w[1]; } if (last != null) v.push((last / p.base - 1) * 100); });
+      if (v.length) pts.push({ date: new Date(t).toISOString().slice(0, 10), t, pct: median(v) });
+    });
+    return { era, n: ps.length, pts };
+  });
+}
+function drawEra(all) {
+  const ser = eraSeries(all);
+  $('eraLegend').innerHTML = ser.map(s => `<span class="chip"><i style="background:${ERA_COLOR[s.era] || 'var(--muted)'}"></i>${esc(s.era)} <small>(${n(s.n)})</small></span>`).join('');
+  if (!ser.length) { $('eraChart').innerHTML = '<div class="empty">Not enough sales in this filter (needs products with 8+ sold weeks).</div>'; return; }
+  lineChart($('eraChart'), ser.map(s => ({ color: ERA_COLOR[s.era] || 'var(--muted)', pts: s.pts.map(p => ({ t: p.t, y: p.pct })) })),
+    { fmtY: v => (v > 0 ? '+' : '') + Math.round(v) + '%', label: 'Median price change by era', h: 240, hline: { y: 0, cls: 'zero', color: 'var(--muted)' } });
+}
+
+// ---------- product drawer: price check ----------
+let detId = null, detFrom = null;
+// whole units from 100 up, cents below (a RM 9 pack can't be judged in whole ringgit)
+const fmtCur = v => { const d = Math.abs(v) < 100 ? 2 : 0, t = v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); return UI.cur === 'usd' ? '$' + t : 'RM ' + t; };
+// zone edges rounded outward (down for Deal, up for Overpriced) so a typed label price gets that label's verdict
+function zoneEdges(fairC) { const s = Math.abs(fairC) < 100 ? 100 : 1, r = v => Math.round(v * 100) / 100;
+  return { deal: r(Math.floor(fairC * 0.85 * s + 1e-9) / s), over: r(Math.ceil(fairC * 1.3 * s - 1e-9) / s) }; }
+function openDet(id) {
+  const r = rows().find(x => x.id === Number(id)); if (!r) return;
+  detId = r.id; detFrom = document.activeElement;
+  const f = r.fairInfo, stale = isStale(r);
+  const when = f ? (stale ? `last sold ${weeksAgo(f.last, D.date)} weeks ago · old data, check eBay` : f.n < 4 ? `thin data: ${f.n} sold week${f.n > 1 ? 's' : ''}` : `last sold week of ${f.last}`) : '';
+  $('det').innerHTML = `<button type="button" id="detClose" aria-label="Close">×</button>
+    <img class="dimg" alt="" src="https://tcgplayer-cdn.tcgplayer.com/product/${encodeURIComponent(r.id)}_200w.jpg" onerror="this.remove()">
+    <h2 id="detH">${esc(r.name)}</h2><div class="sm">${esc(r.lang)} · ${esc(r.set)} · ${esc(r.type)} · ${esc(r.era)}</div>
+    ${f ? `<div class="dfair">Fair price<b>${money(f.fair)}</b>${f.n > 1 ? `range ${money(f.lo)} – ${money(f.hi)}, ` : ''}${n(r.sold)} sold in 52 weeks<div class="dnote">${when}</div></div>
+    <label class="pbox" for="price">Price you see <span>${UI.cur === 'usd' ? '$' : 'RM'}</span><input id="price" inputmode="decimal" autocomplete="off" placeholder="${Math.round(toCur(f.fair))}"></label>
+    <div id="zone" style="--z1:${zpos(0.85)}%;--z2:${zpos(1.3)}%"><span class="mark" hidden></span></div>
+    <div class="zl"><span>Deal ≤ ${fmtCur(zoneEdges(toCur(f.fair)).deal)}</span><span>Fair</span><span>Overpriced ≥ ${fmtCur(zoneEdges(toCur(f.fair)).over)}</span></div>
+    <p id="verdict" aria-live="polite"></p>` : '<p class="dfair">No recent sales on TCGplayer in the last 52 weeks, so no fair price. Check eBay.</p><p id="verdict"></p>'}
+    <div class="chart" id="detChart"></div>
+    <p class="dnote"><a href="https://www.tcgplayer.com/product/${encodeURIComponent(r.id)}" target="_blank" rel="noopener">TCGplayer product page ↗</a></p>`;
+  $('det').hidden = $('detScrim').hidden = false;
+  document.querySelector('.mshell').inert = true;   // aria-modal: Tab stays in the drawer
+  document.querySelectorAll('#tBody tr').forEach(t => t.setAttribute('aria-selected', t.dataset.id === String(r.id)));
+  checkPrice();
+  ($('price') || $('detClose')).focus();
+}
+// zone bar: fair × 0.6 .. fair × 1.6 on a straight scale
+const zpos = ratio => Math.max(0, Math.min(100, (ratio - 0.6) * 100));
+function checkPrice() {
+  const r = rows().find(x => x.id === detId); if (!r) return;
+  const f = r.fairInfo, box = $('price'), price = box ? parsePrice(box.value) : null, v = $('verdict');
+  const fairC = f ? toCur(f.fair) : null, mark = document.querySelector('#zone .mark');
+  if (f && price) {
+    const res = verdictOf(price, fairC), lab = { deal: 'Deal', fair: 'Fair', overpriced: 'Overpriced' }[res.verdict];
+    v.className = isStale(r) || f.n < 4 ? 'muted' : '';
+    v.innerHTML = `<span class="badge ${{ deal: 'b-deal', fair: 'b-fair', overpriced: 'b-over' }[res.verdict]}">${lab}</span>${fmtCur(price)} is ${pct(res.pct)} vs fair ${fmtCur(fairC)}${isStale(r) ? ' · old data, check eBay' : f.n < 4 ? ' · thin data' : ''}`;
+    mark.hidden = false; mark.style.left = zpos(price / fairC) + '%';
+  } else { v.className = ''; v.innerHTML = ''; if (mark) mark.hidden = true; }
+  lineChart($('detChart'), r.h.length ? [{ color: 'var(--accent)', pts: r.h.map(w => ({ t: Date.parse(w[0]), y: toCur(w[1]) })) }] : [],
+    { fmtY: fmtCur, label: `Weekly sold price of ${r.name}`, hline: f && price ? { y: price, cls: 'typed' } : null });
+}
+function closeDet() {
+  $('det').hidden = $('detScrim').hidden = true; detId = null;
+  document.querySelector('.mshell').inert = false;
+  document.querySelectorAll('#tBody tr[aria-selected]').forEach(t => t.removeAttribute('aria-selected'));
+  if (detFrom && document.contains(detFrom)) detFrom.focus();
+}
+
+function render() {
+  const all = filtered();
+  const nOn = FK.filter(k => F[k].length).length;
+  $('facets').innerHTML = `<div class="fh"><h2>Filters</h2>${nOn || F.q ? '<button type="button" class="linkish" data-reset>Reset all</button>' : ''}</div>${FACETS.map(facet).join('')}`;
+  $('fopen').textContent = 'Filters' + (nOn ? ' · ' + nOn : '');
+  document.querySelectorAll('[data-cur]').forEach(b => b.setAttribute('aria-pressed', b.dataset.cur === UI.cur));
+  if ($('q').value.trim().toLowerCase() !== F.q) $('q').value = F.q;
+  const sold = rows().filter(r => r.h.length).length;
+  $('sub').textContent = `Fair price = median of the last 4 sold weeks on TCGplayer. ${n(rows().length)} products, ${n(sold)} with recent sales.`;
+  drawTable(all);
+  drawEra(all);
+}
+// page switch (2026-11-16): the Tracker remembers the last collection (cpt-col) and its JP vs EN page (cpt-jpen)
+(function () {
+  const PAGES = /\/sealed\//.test(location.pathname);   // docs/sealed/ on GitHub Pages, Tracker/sealed.html on the PC
+  let col = '', jp = '';
+  try { col = localStorage.getItem('cpt-col') || ''; jp = localStorage.getItem('cpt-jpen') || ''; } catch (e) { /* defaults */ }
+  if (PAGES && jp) jp = '../' + jp;
+  const seg = (label, href, cur) => (cur ? `<a aria-current="page" href="">${label}</a>` : href ? `<a href="${esc(href)}">${label}</a>` : `<a aria-disabled="true">${label}</a>`);
+  $('pswitch').innerHTML = seg('Cards', PAGES ? '../' : 'index.html') + seg('Market', (PAGES ? '../market/' : 'market_report.html') + (col ? '?collection=' + encodeURIComponent(col) : ''))
+    + seg('JP vs EN', jp) + seg('Sealed', '', true);
+})();
+$('fx').textContent = `TCGplayer sold prices to ${D.date}, USD 1 = RM ${D.fx.usd_myr.toFixed(2)} (${D.fx.date})`;
+$('foot').innerHTML = '<b>How it is priced.</b> Weekly TCGplayer market price of each unopened product (last 52 weeks), the same source as the product page chart. Fair price = median of the last 4 weeks with sales; range = their lowest and highest week. 52 wks = last 4 sold weeks against the first 4, shown with 8+ sold weeks.';
+
+// ---------- events ----------
+const redraw = () => { page = 0; render(); };
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('.facet input[data-k]')) { const k = t.dataset.k, v = t.dataset.v; F[k] = t.checked ? [...F[k], v] : F[k].filter(x => x !== v);
+    if (k === 'era' && F.era.length) F.set = F.set.filter(s => rows().some(r => r.set === s && F.era.includes(r.era)));   // eras narrow the Set list
+    redraw(); const again = document.querySelector(`.facet input[data-k="${k}"][data-v="${CSS.escape(v)}"]`); if (again) again.focus(); }
+  else if (t.matches('select[data-jump]')) { page = Number(t.value); render(); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'price') checkPrice();
+  if (e.target.id === 'q') { clearTimeout(render.t); render.t = setTimeout(() => { F.q = e.target.value.trim().toLowerCase(); redraw(); }, 150); }
+  if (e.target.matches('.fq')) { const s = e.target.value.toLowerCase(); e.target.parentNode.querySelectorAll('.fo').forEach(o => { o.hidden = !o.textContent.toLowerCase().includes(s); }); }
+});
+document.addEventListener('toggle', e => { if (e.target.matches && e.target.matches('.facet')) { UI.open[e.target.dataset.k] = e.target.open; saveUI(); } }, true);
+document.addEventListener('click', e => {
+  const tr = e.target.closest('#tBody tr[data-id]');
+  if (tr && !e.target.closest('a, button')) { openDet(tr.dataset.id); return; }
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.id === 'detClose' || b.id === 'detScrim') { closeDet(); return; }
+  if (b.dataset.clear) { F[b.dataset.clear] = []; redraw(); }
+  else if (b.hasAttribute('data-reset')) { FK.forEach(k => { F[k] = []; }); F.q = ''; redraw(); }
+  else if (b.dataset.cur) { UI.cur = b.dataset.cur; saveUI(); render(); if (detId) openDet(detId); }   // a typed price was in the other currency: start empty
+  else if (b.dataset.sort) { const k = b.dataset.sort; if (F.sort === k) F.dir = F.dir === 'asc' ? 'desc' : 'asc'; else { F.sort = k; F.dir = 'asc'; } redraw(); }
+  else if (b.dataset.page) { page += Number(b.dataset.page); render(); }
+  else if (b.id === 'fopen') document.body.classList.toggle('fopen');
+});
+addEventListener('resize', () => { clearTimeout(drawEra.t); drawEra.t = setTimeout(() => { drawEra(filtered()); if (detId) checkPrice(); }, 150); });   // charts are drawn to the box width
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && detId) closeDet();
+  else if (e.key === 'Enter' && e.target.matches('#tBody tr[data-id]')) openDet(e.target.dataset.id);
+});
+render();
+</script>
+</body>
+</html>

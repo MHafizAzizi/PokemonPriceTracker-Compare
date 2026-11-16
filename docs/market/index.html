@@ -39,7 +39,7 @@ body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font)}
 
 html, body { overflow-x: clip; }
 h1, h2 { text-wrap: balance; }
-button:active:not(:disabled), .btn:active, a.pill-link:active { transform: translateY(1px); }
+button:active:not(:disabled), .btn:active, .pswitch a:active { transform: translateY(1px); }
 a{color:var(--accent);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .2s}
 a:hover,a:focus-visible{background-size:100% 1px}
 .num,td.n{font-variant-numeric:tabular-nums}
@@ -174,9 +174,13 @@ button { font: inherit; color: inherit; }
 .linkish:hover { text-decoration: underline; }
 .mshell { display: grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1600px; margin: 0 auto; }
 .mrail { position: sticky; top: 0; height: 100vh; overflow: auto; overscroll-behavior: contain; padding: 20px 16px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px; background: var(--bg); }
-.links { display: flex; gap: 6px; flex-wrap: wrap; }
-.pill-link { font-size: 12px; padding: 3px 10px; border: 1px solid var(--accent); border-radius: 999px; background: none; }
-.pill-link:hover { background: var(--accent); color: var(--surface); }
+/* Page switch (2026-11-16): same bar on the Tracker, market report, JP vs EN and sealed page */
+.pswitch { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.pswitch a { flex: 1; text-align: center; padding: 6px 2px; font-size: 12px; line-height: 1.3; color: var(--text); background: var(--surface); border-right: 1px solid var(--line); text-decoration: none; white-space: nowrap; }
+.pswitch a:last-child { border-right: 0; }
+.pswitch a[href]:not([aria-current]):hover { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.pswitch a[aria-current="page"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+.pswitch a[aria-disabled="true"] { color: var(--muted); opacity: .55; cursor: not-allowed; }
 .colp { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
 .colp select { font: 600 15px var(--font); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
 .fh { display: flex; justify-content: space-between; align-items: baseline; }
@@ -336,7 +340,7 @@ section { margin-bottom: 28px; }
 <a class="skip" href="#main">Skip to report</a>
 <div class="mshell">
   <aside class="mrail" id="rail" aria-label="Collection and filters">
-    <div class="links"><a class="pill-link" href="index.html">Card Price Tracker</a><a class="pill-link" id="jpen" hidden>JP vs EN</a></div>
+    <nav class="pswitch" aria-label="Pages"><a href="../">Cards</a><a aria-current="page" href="">Market</a><a id="jpen" aria-disabled="true">JP vs EN</a><a href="../sealed/">Sealed</a></nav>
     <label class="colp"><span>Collection</span><select id="colPick"></select></label>
     <div id="facets"></div>
     <div class="fx mono" id="fx"></div>
@@ -363,7 +367,7 @@ section { margin-bottom: 28px; }
     <footer id="foot" class="foot"></footer>
   </main>
 </div>
-<script src="market_compare.js?v=5c77b48b9c"></script>
+<script src="market_compare.js?v=c52602fc14"></script>
 <script>
 // Market report · facet rail (2026-11-09; mock design-demos/market-2.html). One filter state drives every section: summary, eras, deals,
 // overpriced, sellers and the listings table. Listings over +CHECK% are tagged "Check" and kept out of the
@@ -381,7 +385,7 @@ if (!COL || !has(CID)) {   // still offer the other collections and the way back
   $('colPick').insertAdjacentHTML('afterbegin', '<option value="" selected>Pick a collection</option>');
   $('colPick').onchange = e => { if (e.target.value) location.search = '?collection=' + e.target.value; };
   $('main').innerHTML = '<div class="empty">No market report for this collection yet. <a data-back>Card Price Tracker</a></div>';
-  document.querySelector('[data-back]').href = document.querySelector('.mrail .links a').getAttribute('href');   // publish() rewrites that one link
+  document.querySelector('[data-back]').href = document.querySelector('.pswitch a').getAttribute('href');   // publish() rewrites that one link
   return;
 }
 const LOGO = MCS.logos || {}, SD = MCS.set_dates || {}, TH = MCS.thresholds;
@@ -619,7 +623,7 @@ document.addEventListener('click', e => {
 if (Q.get('era') && RA.some(r => r.era === Q.get('era'))) F.era = [Q.get('era')];
 if (Q.get('set')) { const [l, c] = Q.get('set').split(/:(.*)/s); const r = RA.find(x => x.lang === l && (code(x) === c || x.set === c)); if (r) F.set = [skey(r)]; }
 // JP vs EN page (any tab with one built, COL.jpen): jp-en/<slug>/ next to market/ on GitHub Pages, the collection folder's copy on the PC
-if (COL.jpen) { const a = $('jpen'); a.hidden = false;
+if (COL.jpen) { const a = $('jpen'); a.removeAttribute('aria-disabled');
   a.href = /\/market\//.test(location.pathname) ? '../jp-en/' + CID + '/' : '../' + COL.name + '/jp_en_trends.html'; }
 
 // ---------- static parts ----------
