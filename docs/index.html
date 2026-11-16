@@ -1118,7 +1118,7 @@ const sinkOwned = out => [...out.filter(x => !x.owned), ...out.filter(x => x.own
 // F.sort / F.dir without the owned sink: the list sinks owned cards after this, the binder does not (a pocket is a place)
 function sortCards(out) {
   if (F.sort === 'ptype') return ptOrder(out, F.dir === 'desc');
-  if (F.sort && F.sort !== 'set') out = followEn(binderOrder(out));   // ties keep binder order, in the list and the binder alike
+  if (F.sort && F.sort !== 'set') out = byRank(out);   // ties keep binder order, in the list and the binder alike
   const dir = F.dir === 'desc' ? -1 : 1;   // descending flips the key only: ties keep binder order, prints stay after their EN card
   if (F.sort === 'name') out = [...out].sort((a, b) => dir * (a.name.localeCompare(b.name) || String(a.number).localeCompare(String(b.number), undefined, { numeric: true })));
   else if (F.sort === 'cheapest') {   // no price stays last in both directions
@@ -1139,7 +1139,7 @@ function sortCards(out) {
 const PTYPE = ['Grass', 'Fire', 'Water', 'Lightning', 'Psychic', 'Fighting', 'Darkness', 'Metal', 'Dragon', 'Colorless', 'Fairy'];
 const ptRank = x => { const i = PTYPE.indexOf(x.type); return i >= 0 ? i : CAT_TRAINER.includes(x.type) ? 11 : x.type === 'Energy' ? 12 : 13; };
 function ptOrder(cards, desc) {
-  const pos = new Map(followEn(binderOrder(cards)).map((x, i) => [x.id, i]));   // prints right after their EN card
+  const pos = new Map(byRank(cards).map((x, i) => [x.id, i]));   // prints right after their EN card
   return [...cards].sort((a, b) => (desc ? -1 : 1) * (ptRank(a) - ptRank(b)) || pos.get(a.id) - pos.get(b.id));
 }
 // Prints follow their English card (user, 2026-11-08; Default order and By set only): a row whose ref names an English
@@ -2686,7 +2686,19 @@ const bDims = () => (BSIZES.includes(ui.bsize) ? ui.bsize : '4x4').split('x').ma
 // sort keeps owned cards in their pocket; "Binder order" (F.sort = '') is binderOrder, ↓ reverses it.
 const BSORTS = [['', 'Binder order'], ['set', 'Set'], ['ptype', 'Pokémon type'], ['name', 'Card name'], ['no', 'No.'], ['lang', 'Language'],
   ['rarity', 'Rarity'], ['finish', 'Finish'], ['cheapest', 'Cheapest'], ['shops', 'Shops'], ['found', 'Found']];
-const binderSort = cards => (F.sort ? sortCards(cards) : followEn(F.dir === 'desc' ? binderOrder(cards).reverse() : binderOrder(cards)));
+const binderSort = cards => (F.sort ? sortCards(cards) : byRank(cards, F.dir === 'desc'));
+// Binder rank (2026-11-17, user: "To buy" put the binder out of order): binder order + prints after their EN card, worked
+// out over the WHOLE collection and then applied to the rows shown. Worked out on the filtered rows, a print whose EN card
+// was filtered out (owned, under To buy) lost its anchor and dropped back to its own set. Kept per render (render clears it).
+const rankMemo = new Map();
+function byRank(list, desc) {
+  if (!list.length) return list;
+  const k = list[0].cid + (desc ? '|d' : '|a');
+  let pos = rankMemo.get(k);
+  if (!pos) { const b = binderOrder(cardsOf(list[0].cid)); pos = new Map(followEn(desc ? b.reverse() : b).map((x, i) => [x.id, i])); rankMemo.set(k, pos); }
+  const at = x => (pos.has(x.id) ? pos.get(x.id) : 1e9);
+  return [...list].sort((a, b) => at(a) - at(b));
+}
 // Placeholder tile for a pocket not owned yet (2026-11-13, after the user's printed "Yuka Morii placeholders.pdf"):
 // number, name, set logo + set name, finish, release date. In print; the binder shows the "Both" tile (scan inside) since 2026-11-16.
 // A print's set logo: its own; else (KR, a catch-up reprint) the JP set with the same code; else the English set its
@@ -2828,7 +2840,7 @@ function selectCard(id) {
   if (!ui.det) setPane('det', true);
 }
 function render() {
-  linkIdx = null;
+  linkIdx = null; rankMemo.clear();
   // scan fallback needs the catalog: load it once when the open tab has a card with no scan of its own
   if (!catIdx && !render.cat && activeCol() && cardsOf(activeCol().id).some(x => !thumbSrc0(x) || (x.lang || 'EN') !== 'EN')) {
     render.cat = true; catalogIndex().then(ix => { if (ix) render(); }).catch(() => {});
