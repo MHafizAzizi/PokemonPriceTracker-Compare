@@ -58,6 +58,8 @@ Prices on these pages are snapshots from the date shown on each page, not live p
   tracker, which loads faster. Every page has the new **Cards | Market | JP vs EN | Sealed** switch.
 - Binder: the Both tile is now the only view for cards you don't own (the Cards / Placeholders buttons are gone).
   **Export** still prints grey scans, placeholders, colour scans or Both, with Both as the default.
+- Card list: the **Finish** column is now a coloured tag (Holo, Reverse, 1st Edition, Poké Ball, Master Ball) and stays
+  visible with the filter panel open on a laptop screen.
 - Binder: **Save layout** keeps every card in its page and pocket. A card you remove from the binder leaves an empty
   pocket, and new cards go after the saved ones. **Update** saves the pockets again; **Re-sort** goes back to the
   normal binder order.

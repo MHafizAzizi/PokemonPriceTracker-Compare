@@ -136,6 +136,8 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   .p-rar.r-IR, .p-rar.r-HR, .p-rar.r-P { color: var(--g); border-color: var(--rar-gold); background: var(--gbg); }
   .p-fin { color: var(--fin-ink); font-weight: 600; border-color: transparent; background: linear-gradient(110deg, var(--fin-1), var(--fin-2) 50%, var(--fin-3)); }
   .p-fin.reverse { color: var(--text); border: 1px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(110deg, var(--fin-e1), var(--fin-e2) 50%, var(--fin-e3)) border-box; }
+  .p-fin.first { color: var(--text); background: none; border-color: var(--text); }
+  .cfin .pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle; }
   .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .chip { border: 1px solid var(--line); background: var(--surface); color: var(--text); border-radius: 999px; padding: 3px 10px; font-size: 13px; display: inline-flex; gap: 6px; align-items: baseline; cursor: pointer; }
   .chip:hover { border-color: var(--accent); }
@@ -335,14 +337,15 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   @media (min-width: 901px) {
     .ctbl table { table-layout: fixed; }
     .ctbl th:nth-child(1) { width: 72px; } .ctbl th:nth-child(3) { width: 150px; } .ctbl th:nth-child(4) { width: 100px; }
-    .ctbl th:nth-child(5) { width: 72px; } .ctbl th:nth-child(6) { width: 82px; } .ctbl th:nth-child(7) { width: 130px; }
+    .ctbl th:nth-child(5) { width: 72px; } .ctbl th:nth-child(6) { width: 82px; } .ctbl th:nth-child(7) { width: 120px; }
     .ctbl th:nth-child(8) { width: 112px; } .ctbl th:nth-child(9) { width: 76px; } .ctbl th:nth-child(10) { width: 84px; }
   }
   /* a narrow list column (rail and detail panel both open): the minor columns go first, so Card keeps its room */
   /* (zero-width, not display: none: an open Shops row spans every column, and a removed column breaks the fixed widths) */
 
-  @container (max-width: 1100px) { .ctbl th:nth-child(5), .ctbl th:nth-child(7) { width: 0 !important; } .ctbl th:nth-child(5), .ctbl td.clang, .ctbl th:nth-child(7), .ctbl td.cfin { visibility: hidden; padding: 0; overflow: hidden; } }
-  @container (max-width: 860px) { .ctbl th:nth-child(4), .ctbl th:nth-child(6) { width: 0 !important; } .ctbl th:nth-child(4), .ctbl td.cno, .ctbl th:nth-child(6), .ctbl td.crar { visibility: hidden; padding: 0; overflow: hidden; } }
+  @container (max-width: 1100px) { .ctbl th:nth-child(5) { width: 0 !important; } .ctbl th:nth-child(5), .ctbl td.clang { visibility: hidden; padding: 0; overflow: hidden; } }
+  /* Finish stays until 860px (2026-11-16, user: "add a finish column"): it tells a card's normal and reverse rows apart */
+  @container (max-width: 860px) { .ctbl th:nth-child(4), .ctbl th:nth-child(6), .ctbl th:nth-child(7) { width: 0 !important; } .ctbl th:nth-child(4), .ctbl td.cno, .ctbl th:nth-child(6), .ctbl td.crar, .ctbl th:nth-child(7), .ctbl td.cfin { visibility: hidden; padding: 0; overflow: hidden; } }
   /* narrower still (2026-11-10, user screenshot): Cheapest, then Set, go too, so Card never shrinks to 0 and its thumbnail never lands on the Set text; Card clips instead of overflowing */
   .ctbl td.cname { overflow: hidden; }
   @container (max-width: 640px) { .ctbl th:nth-child(8) { width: 0 !important; } .ctbl th:nth-child(8), .ctbl td.ccheap { visibility: hidden; padding: 0; overflow: hidden; } }
@@ -2667,6 +2670,9 @@ function listPager(n, pages, from, to, where) {
 // Binder order (Default sort): newest era, newest set (SEED.setDates = EN set name -> TCGdex release date; sets
 // without a date, e.g. JP, follow the dated ones of their era), then number, then Normal before Holo / Reverse.
 const VAR_RANK = ['first', 'normal', 'holo', 'reverse', 'reverse2', 'pokeball', 'masterball'];
+// Finish tag in the card table (2026-11-16, user: "make it a coloured tag like the rarity"): holo = foil fill, reverse kinds = foil edge, 1st Edition = outline, normal = none
+const FIN_SHORT = { holo: 'Holo', reverse: 'Reverse', reverse2: 'Reverse ★★', pokeball: 'Poké Ball', masterball: 'Master Ball', first: '1st Edition' };
+const finPill = v => !v || v === 'normal' ? '' : `<span class="pill p-fin ${v === 'holo' || v === 'first' ? v : 'reverse'}" title="${esc(VARIANT_LABEL[v] || v)}">${esc(FIN_SHORT[v] || VARIANT_LABEL[v] || v)}</span>`;
 const binRank = e => { const r = eraRank(e); return r === 99 ? -1 : r; };   // eras not in ERA_ORDER (McDonald's, Trainer kits) go last
 const binderOrder = cards => [...cards].sort((a, b) => binRank(b.era) - binRank(a.era)
   || setDateOf(b.set).localeCompare(setDateOf(a.set))
@@ -2882,7 +2888,7 @@ function render() {
       <td class="cno">${esc(num)}</td>
       <td class="clang"><span class="pill p-lang l-${esc(lang)}">${esc(lang)}</span></td>
       <td class="crar">${x.rarity ? `<span class="pill p-rar r-${rarLetters(x.rarity)}" title="${esc(x.rarity)}">${esc(rarLetters(x.rarity))}</span>` : ''}</td>
-      <td class="cfin">${esc(fin)}</td>
+      <td class="cfin">${finPill(x.variant)}</td>
       <td class="num ccheap">${cheap ? `<b title="${esc((cheap.seller || cheap.st.name) + (cheap.seller ? ' · ' + shopLabel(cheap.st) : ''))}">${esc(fmt(cheap.st, cheap.p))}</b>` : '<span class="muted">—</span>'}</td>
       <td class="num cshops">${n ? `<button type="button" class="linkish" data-act="shops" data-id="${x.id}" aria-expanded="${open}" aria-label="${n} shop${n === 1 ? '' : 's'} for ${who}">${n} ${open ? '▴' : '▾'}</button>` : `<button type="button" class="linkish" data-act="addprice" data-card="${x.id}" aria-label="Add a shop for ${who}">+</button>`}</td>
       <td class="acts"><button type="button" class="icon-btn" data-act="editcard" data-id="${x.id}" aria-label="Edit: ${who}" title="Edit card"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button><button type="button" class="icon-btn own${x.owned ? ' on' : ''}" data-act="own" data-id="${x.id}" aria-pressed="${!!x.owned}" aria-label="Owned: ${who}" title="${x.owned ? 'Owned. Click to undo' : 'I have this card: mark it owned (the row and its prices stay)'}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button></td></tr>
