@@ -457,9 +457,8 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   .pocket.blank i { background: none; }
   .pk-t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pk-m { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pk-b { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 2px 6px; min-height: 20px; }   /* no room: the price drops to its own line */
+  .pk-b { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; min-height: 20px; }
   .pk-b .badge { margin: 0 4px 0 0; white-space: nowrap; }
-  .pk-b b { margin-left: auto;  font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--best-text); white-space: nowrap; font-variant-numeric: tabular-nums; }
   .bpager { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; margin: 14px 0 6px; }
   .bpager .pg { font-family: var(--mono); font-size: 13px; }
   .bpager .muted { order: 9; flex-basis: 100%; text-align: center; }
@@ -472,8 +471,8 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
     .bsheet::before { left: 6px; top: 10px; bottom: 10px; }
     .binder { gap: 6px; }
     .pocket { padding: 4px; }
-    .pk-t, .pk-m, .pk-b .badge { display: none; }
-    .pk-b b { font-size: 10px; }
+    .pk-t, .pk-m, .pk-b { display: none; }   /* narrow: the tile / scan alone fills the pocket */
+    .pocket .pk-ph, .pocket > img, .pocket .pk-no { margin-bottom: 0; }
   }
   @media (min-width: 901px) {
     .det { position: fixed; right: 0; top: 0; width: var(--det-w); z-index: 20; box-shadow: -12px 0 40px var(--shadow-1); }
@@ -2679,8 +2678,8 @@ const binderOrder = cards => [...cards].sort((a, b) => binRank(b.era) - binRank(
   || (a.set || '').localeCompare(b.set || '')
   || String(a.number).localeCompare(String(b.number), undefined, { numeric: true })
   || (VAR_RANK.indexOf(a.variant) >>> 0) - (VAR_RANK.indexOf(b.variant) >>> 0));
-// Binder page sizes, columns x rows (real 4-, 9-, 12- and 16-pocket pages); kept per device like the view
-const BSIZES = ['2x2', '3x3', '3x4', '4x3', '4x4'];
+// Binder page sizes, columns x rows (real 4-, 9-, 12-, 16- and 25-pocket pages); kept per device like the view
+const BSIZES = ['2x2', '3x3', '3x4', '4x3', '4x4', '5x5'];   // 5x5 added 2026-11-17 (user)
 const bDims = () => (BSIZES.includes(ui.bsize) ? ui.bsize : '4x4').split('x').map(Number);
 // Binder (2026-11-09): one top bar (Sort + ↑ / ↓ shared with the list's headers, pages, Pockets, Select, Export); every
 // sort keeps owned cards in their pocket; "Binder order" (F.sort = '') is binderOrder, ↓ reverses it.
@@ -2745,11 +2744,11 @@ function binderHtml(cards) {
   pageIds = page.filter(Boolean).map(x => x.id);
   const pocket = x => {
     if (!x) return '<span class="pocket blank" aria-hidden="true"><i></i></span>';   // saved layout: an emptied pocket
-    const src = thumbSrc(x), best = bestStores(x.id), l = !x.owned && listingsOf(x.id).find(k => best.has(k.key));
+    const src = thumbSrc(x);   // no price in the pocket (2026-11-17, user): the tile fills it; prices are in the panel
     return `<div class="pwrap${picked.has(x.id) ? ' picked' : ''}${x.nob ? ' off' : ''}"><input type="checkbox" class="pk-pick" data-pick="${x.id}"${picked.has(x.id) ? ' checked' : ''} aria-label="Select ${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}"><button type="button" class="pocket${x.owned ? ' got' : ''}" data-act="sel" data-id="${x.id}"${x.id === selId ? ' aria-current="true"' : ''} aria-label="${esc(x.name)} ${esc(x.set || '')} ${esc(x.number || '')}${x.owned ? ', owned' : ''}">
       ${!x.owned ? placeholderHtml(x, src) : src ? `<img src="${esc(src)}" alt="" width="126" height="176" loading="lazy">` : '<span class="pk-no">no scan</span>'}
       <span class="pk-t">${esc(x.name)}</span><span class="pk-m" title="${esc(x.set || '')}">${esc(setCodeOf(x))}${x.number ? ' · ' + esc(x.number) : ''}</span>
-      <span class="pk-b"><span>${badge(x)}</span>${l ? `<b>${esc(fmt(l.st, l.p))}</b>` : ''}</span></button></div>`;
+      <span class="pk-b"><span>${badge(x)}</span></span></button></div>`;
   };
   for (const id of [...picked]) if (!cards.some(x => x && x.id === id)) picked.delete(id);   // filtered out: no longer selected
   const n = picked.size, desc = F.dir === 'desc';
