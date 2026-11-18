@@ -1275,7 +1275,7 @@ function infoBox(msg) {
 
 // ---------- actions ----------
 // Add a set (user, 2026-11-06): a tab with every card of one catalog set, saved as catalog rules so Refresh works.
-async function addCatalogSet(lang, set, depth = 'master', name = set) {
+async function addCatalogSet(lang, set, depth = 'master', name = enSet({ lang, set })) {
   const rules = { src: 'catalog', any: [{ lang, set }], ...(depth === 'card' ? { depth } : {}) };
   const res = await catalogRows(rules, { confirmed: true });
   const col = { id: uid(), name: name || set };
@@ -1908,7 +1908,7 @@ function untrackedLangs(x) {
   const a = artOf(x);
   if (!a) return [];
   const lang = x.lang || 'EN', have = new Set(S.cards.map(catKey));
-  return (catIdx.byArt.get(a) || []).filter(r => r.lang !== lang && !have.has(catKey(r)))
+  return (catIdx.byArt.get(a) || []).filter(r => r.lang !== lang && !have.has(catKey(r))).map(r => ({ ...r, set: enSet(r) }))
     .sort((p, q) => LANGS.findIndex(([c]) => c === p.lang) - LANGS.findIndex(([c]) => c === q.lang) || String(p.set).localeCompare(q.set));
 }
 const rm = v => `RM ${v.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
@@ -2056,7 +2056,7 @@ async function catalogRows(rules, opts = {}) {
   if (cards > RULES_BIG && !opts.confirmed) return { cards, rows: [], dates: {}, big: true };
   const seen = new Set();
   const rows = rules.depth === 'card' ? hit.filter(x => !seen.has(card(x)) && seen.add(card(x))) : hit;
-  return { cards, dates: {}, rows: rows.map(x => ({ name: x.name, set: x.set, number: x.number, era: x.era, type: x.type,
+  return { cards, dates: {}, rows: rows.map(x => ({ name: x.name, set: enSet(x), number: x.number, era: x.era, type: x.type,
     rarity: x.rarity, variant: x.variant, lang: x.lang, alt: x.local, img: localScans ? x.img : '', key: stem(x.img) })) };
 }
 function catalogLists(ix) {
@@ -2179,9 +2179,9 @@ function ncLabel(k, v, ix) {
   if (k === 'product') return PRODUCT_LABEL[v] || v;
   if (k === 'lang') return (LANGS.find(([c]) => c === v) || [v, v])[1];
   if (k !== 'set' || !ix) return v;
-  const s = ix.sets.find(x => x[0] === v), lang = s ? s[2] : '';
+  const s = ix.sets.find(x => x[0] === v), lang = s ? s[2] : '', shown = enSet({ lang, set: v });   // value stays the catalog name
   const code = lang === 'EN' ? ((SEED && SEED.setCodes) || {})[v] : setCode({ lang, set: v });
-  return v + (code && code !== v && !v.includes(`(${code})`) ? ` · ${code}` : '') + (lang ? ` (${lang})` : '');
+  return shown + (code && code !== v && !shown.includes(`(${code})`) ? ` · ${code}` : '') + (lang ? ` (${lang})` : '');
 }
 async function newColDialog(tab = 'rules') {
   const d = $('#dlg');
@@ -2236,7 +2236,7 @@ async function newColDialog(tab = 'rules') {
   // One set pane
   const lr = l => (LANGS.findIndex(([c]) => c === l) >>> 0);
   const langs = ix ? [...new Set(ix.sets.map(s => s[2]))].sort((a, b) => lr(a) - lr(b)) : [];
-  const setOpts = l => ix.sets.filter(s => s[2] === l).sort((a, b) => eraRank(b[1]) - eraRank(a[1]) || a[0].localeCompare(b[0]))
+  const setOpts = l => ix.sets.filter(s => s[2] === l).sort((a, b) => eraRank(b[1]) - eraRank(a[1]) || enSet({ lang: l, set: a[0] }).localeCompare(enSet({ lang: l, set: b[0] })))
     .map(s => `<option value="${esc(s[0])}">${esc(ncLabel('set', s[0], ix))}</option>`).join('');
   if (ix) { q('[data-s="lang"]').innerHTML = langs.map(l => `<option value="${esc(l)}">${esc(ncLabel('lang', l))}</option>`).join(''); q('[data-s="set"]').innerHTML = setOpts(langs[0]); }
   // a rule's values: catalog = what the selects / inputs hold; Pokémon names -> dex numbers from the catalog species
@@ -2293,7 +2293,7 @@ async function newColDialog(tab = 'rules') {
     msg(r.rows.length ? `<b>${r.cards.toLocaleString('en-US')}</b> card${r.cards === 1 ? '' : 's'} · ${r.rows.length.toLocaleString('en-US')} rows${have ? ` · ${have.toLocaleString('en-US')} already owned` : ''}${note ? ` <span class="muted">${note}</span>` : ''}` : '<span class="muted">No cards match. Widen a rule.</span>');
     const seen = new Set();
     q('.nc-thumbs').innerHTML = r.rows.filter(x => x.img && !seen.has(x.img) && seen.add(x.img)).slice(0, 12)
-      .map(x => `<img src="${esc(x.img)}" alt="${esc(x.name)}" title="${esc(x.name)} · ${esc(x.set)} ${esc(x.number)}" loading="lazy" width="36" height="50">`).join('');
+      .map(x => `<img src="${esc(x.img)}" alt="${esc(x.name)}" title="${esc(x.name)} · ${esc(enSet(x))} ${esc(x.number)}" loading="lazy" width="36" height="50">`).join('');
     q('[data-nc="create"]').disabled = !r.rows.length;
   };
   const clearRes = text => { res = null; rs = null; msg(`<span class="muted">${text}</span>`); q('.nc-thumbs').innerHTML = ''; q('[data-nc="create"]').disabled = true; };
@@ -2373,7 +2373,7 @@ async function newColDialog(tab = 'rules') {
       if (cur === 'set') {
         const set = q('[data-s="set"]').value; if (!set || b.disabled) return;
         b.disabled = true;   // a double click must not add the set twice
-        const r = await addCatalogSet(q('[data-s="lang"]').value, set, depth(), name || set);
+        const r = await addCatalogSet(q('[data-s="lang"]').value, set, depth(), name || enSet({ lang: q('[data-s="lang"]').value, set }));
         d.close();
         return infoBox(`"${name || set}": ${r.added} card row(s) added.${localScans ? ' Scans show while the page is opened through serve.bat; Scan a folder still works.' : ''}`);
       }
