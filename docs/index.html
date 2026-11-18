@@ -89,10 +89,10 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   /* export A: binder pages for print / PDF (#printArea, filled by printBinder); A4 portrait, one binder page a sheet */
   #printArea { display: none; }
   @media print {
-    @page { size: A4 portrait; margin: 10mm; }
+    @page { size: A4 portrait; margin: 0; }   /* no page margin = no room for the browser's title / URL / date header and footer (2026-11-18); .ppage pads instead */
     body > *:not(#printArea) { display: none !important; }
     #printArea { display: block; color: var(--print-ink); }
-    .ppage { height: 266mm; display: flex; flex-direction: column; break-after: page; }
+    .ppage { box-sizing: border-box; height: 286mm; padding: 10mm; display: flex; flex-direction: column; break-after: page; }
     .ppage:last-child { break-after: auto; }
     .ppage header { font: 9pt sans-serif; margin-bottom: 3mm; }
     .pgrid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), minmax(0, 1fr)); gap: 3mm; }
@@ -108,6 +108,13 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
     .pgrid .pk-ph .ph-set { border-top-color: var(--print-faint); }
     .pgrid .pk-ph small, .pgrid .pk-ph .ph-rel { color: var(--print-muted); }
     .pgrid .pk-ph.has-img { padding: 4%; font-size: calc(11mm / var(--cols)); }   /* "Both": no cqw container in print */
+    /* real card size (2026-11-18): 63 x 88 mm pockets to cut out and slip into a binder; no captions (they would not fit A4 at 3x3), dashed cut lines */
+    .ppage.real { height: auto; padding: 8mm; }
+    .ppage.real .pgrid { flex: none; grid-template-columns: repeat(var(--cols), 63mm); grid-template-rows: repeat(var(--rows), 88mm); gap: 2mm; justify-content: center; }
+    .ppage.real figure { outline: 0.2mm dashed var(--print-line); }
+    .ppage.real figcaption { display: none; }
+    .ppage.real .pgrid .pk-ph { font-size: 5mm; }
+    .ppage.real .pgrid .pk-ph.has-img { font-size: 3.7mm; }
   }
   .badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: 6px; vertical-align: middle; font-weight: 500; }
   .badge.lang { color: var(--text); border-color: var(--muted); font-weight: 600; }
@@ -1591,6 +1598,7 @@ function exportDlg() {
       <option value="missing">Not owned only (${all.filter(x => !x.owned).length})</option><option value="owned">Owned only (${all.filter(x => x.owned).length})</option></select></label>
     <label data-for="print">Cards I don't own<select name="face"><option value="grey">Grey scan</option><option value="ph">Placeholder (number, name, set, finish, date)</option><option value="both" selected>Both (colour scan + number, finish, set logo)</option><option value="scan">Colour scan</option></select></label>
     <label class="ex-chk" data-for="print"><input type="checkbox" name="price"> Show the cheapest price</label>
+    <label class="ex-chk" data-for="print"><input type="checkbox" name="real"> Real card size (63 × 88 mm) to cut out for the binder. Print at 100% scale, up to 3×3 a sheet, no captions</label>
     <p class="muted" data-for="print" style="margin:0">${cols}×${rows} pockets a page (the binder's Page size). In the print box pick "Save as PDF".</p>
     <div class="actions"><button type="button" id="exNo">Cancel</button><button class="primary" type="submit">Export</button></div></form>`;
   const f = d.querySelector('form'), v = n => f.elements[n];
@@ -1605,7 +1613,7 @@ function exportDlg() {
     if (!cards.length) { infoBox('No cards to export.'); return; }
     if (v('fmt').value === 'xlsx') exportChecklist(c, cards);
     else if (!cards.some(x => !x.nob)) infoBox('Every card here is removed from the binder.');
-    else printBinder(c, w === 'filter' && !filtersOn() || w === 'all' ? binderPockets(all.filter(x => !x.nob), true) : binderPockets(cards.filter(x => !x.nob), false), v('face').value === 'grey', v('price').checked, v('face').value === 'ph' || (v('face').value === 'both' && 'both'));
+    else printBinder(c, w === 'filter' && !filtersOn() || w === 'all' ? binderPockets(all.filter(x => !x.nob), true) : binderPockets(cards.filter(x => !x.nob), false), v('face').value === 'grey', v('price').checked, v('face').value === 'ph' || (v('face').value === 'both' && 'both'), v('real').checked);
   };
   if (d.open) d.close();
   d.showModal();
@@ -1636,6 +1644,7 @@ function printImg1(src, w, grey) {
     if (cross) im.crossOrigin = 'anonymous';
     im.onload = () => {
       try {
+        w = Math.min(w, im.naturalWidth);
         const h = Math.round(w * 88 / 63), cv = document.createElement('canvas'), g = cv.getContext('2d');
         cv.width = w; cv.height = h; g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
         const k = Math.min(w / im.naturalWidth, h / im.naturalHeight), dw = im.naturalWidth * k, dh = im.naturalHeight * k;
@@ -1652,12 +1661,15 @@ function printImg1(src, w, grey) {
     im.src = src;
   });
 }
-async function printBinder(c, cards, grey, withPrice, ph) {   // ph: true = placeholder, 'both' = placeholder with the scan inside
-  const [cols, rows] = bDims(), per = cols * rows, n = Math.ceil(cards.length / per);
-  // pocket width on A4 (190 x 262 mm usable, 8 mm caption) -> pixels at 300 dpi, capped at the large scan's 600 px.
+async function printBinder(c, cards, grey, withPrice, ph, real) {   // ph: true = placeholder, 'both' = placeholder with the scan inside; real: 63 x 88 mm cards
+  let [cols, rows] = bDims();
+  if (real) { cols = Math.min(cols, 3); rows = Math.min(rows, 3); }   // 4 real cards are wider than A4: a 4x4 binder prints 3x3 sheets
+  const per = cols * rows, n = Math.ceil(cards.length / per);
+  // pocket width on A4 (190 x 262 mm usable, 8 mm caption) -> pixels at 300 dpi, capped at 900 px; printImg1 never
+  // upscales, so EN scans stay 600 px and JP scans (733-868 px) keep their detail (2026-11-18)
   // Every size uses the large scan (the small one, ~245 px, printed blurry at 3x3); the small one is the fallback
-  const mm = Math.min((190 - 3 * (cols - 1)) / cols, ((262 - 3 * (rows - 1)) / rows - 8) * 63 / 88);
-  const w = Math.min(600, Math.round(mm / 25.4 * 300));
+  const mm = real ? 63 : Math.min((190 - 3 * (cols - 1)) / cols, ((262 - 3 * (rows - 1)) / rows - 8) * 63 / 88);
+  const w = Math.min(900, Math.round(mm / 25.4 * 300));
   const srcs = cards.map(x => x && (fullSrc(x) || thumbSrc(x)));
   const out = new Array(cards.length);
   infoBox(`Preparing scans for printing… 0 / ${cards.length}`);
@@ -1685,7 +1697,7 @@ async function printBinder(c, cards, grey, withPrice, ph) {   // ph: true = plac
   let html = '';
   for (let p = 0; p < n; p++) {
     const pg = cards.slice(p * per, p * per + per);
-    html += `<section class="ppage" style="--cols:${cols};--rows:${rows}"><header>${esc(c.name)} · page ${p + 1} / ${n}</header>
+    html += `<section class="ppage${real ? ' real' : ''}" style="--cols:${cols};--rows:${rows}"><header>${esc(c.name)} · page ${p + 1} / ${n}</header>
       <div class="pgrid">${pg.map((x, j) => fig(x, p * per + j)).join('')}${'<figure class="blank"></figure>'.repeat(per - pg.length)}</div></section>`;
   }
   let area = $('#printArea');
