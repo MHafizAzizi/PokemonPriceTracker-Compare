@@ -515,17 +515,16 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   .sopen:hover strong { color: var(--accent); text-decoration: underline; }
   .shd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 10px; }
   .shd h2 { font-size: 17px; margin: 0; }
-  .stbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .stbl th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--line); }
-  .stbl td { padding: 7px 8px; border-top: 1px solid var(--line); vertical-align: top; }
-  .stbl td.r, .stbl th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .stbl tr.was td { opacity: .55; }
+  .stp .slink { color: var(--accent); text-decoration: none; }
+  .stp .slink:hover { text-decoration: underline; }
+  .stp td.sseller { overflow: hidden; }
+  @media (min-width: 901px) { @container (max-width: 640px) { .ctbl.stp td.sseller { visibility: hidden; padding: 0; } } }
+  .stp td.sseller span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+  .stp td.sseller .muted { font-size: 12px; }
+  .stp td.sprice .slink, .stp td.sprice .linkish { font: 600 14px var(--font); padding: 4px 2px; }
   .scol { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
-  .scol select { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; max-width: 260px; }
-  .stbl .slink { color: var(--accent); text-decoration: none; }
-  .stbl .slink:hover { text-decoration: underline; }
-  .stbl tbody tr { cursor: pointer; }
-  .stbl tbody tr:hover td { background: var(--line); }
+  .scol select { font: 13px var(--font); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); max-width: 260px; }
+  @media (min-width: 901px) { .ctbl.stp th:nth-child(8) { width: 150px; } .ctbl.stp th:nth-child(9) { width: 100px; } .ctbl.stp th:nth-child(10) { width: 110px; } }
   .sn .muted { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sbar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
   .sbar i { display: block; height: 100%; background: var(--accent); }
@@ -638,6 +637,9 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
     .ctbl td.cname { grid-column: 2; grid-row: 1; }
     .ctbl td.ccheap { grid-column: 3; grid-row: 1; }
     .ctbl td.acts { grid-column: 2; grid-row: 2; text-align: left; }
+    .stp td.sprice { grid-column: 3; grid-row: 1; }
+    .stp td.sseller { grid-column: 2 / span 2; grid-row: 2; display: flex; gap: 8px; }
+    .stp td.sseller span { display: inline; }
     .ctbl td.cshops { grid-column: 3; grid-row: 2; }
     .ctbl td.acts .icon-btn, .ctbl td.cshops button { min-width: 44px; min-height: 44px; }
     .meta-line { display: block; font: 12px var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2630,13 +2632,13 @@ function saveUi() {
     localStorage.setItem(UI_KEY, JSON.stringify(keep));
   } catch (e) { /* not saved, fine */ }
 }
-let selId = null, openStoreId = null, cardsF = null, storeCol = '';   // storeCol: '' = all collections   // openStoreId: the store page open on Stores; cardsF: the Cards filters kept while it is open
+let selId = null, openStoreId = null, cardsF = null, storeCol = '', sSig = '', storeSort = { k: 'price', d: 1, def: true };   // storeCol: '' = all collections   // openStoreId: the store page open on Stores; cardsF: the Cards filters kept while it is open
 const openStore = () => S.stores.find(s => s.id === openStoreId);
 // The store page starts unfiltered; leaving it gives the Cards view its own filters back
 function setStore(id) {
   if (id && !openStoreId) { cardsF = JSON.parse(JSON.stringify(F)); resetFilters(); }
   if (!id && openStoreId && cardsF) { Object.assign(F, cardsF); cardsF = null; }
-  openStoreId = id; storeCol = '';
+  openStoreId = id; storeCol = ''; storeSort = { k: 'price', d: 1, def: true };
 }
 function layout() {
   const sh = $('#shell');
@@ -2830,6 +2832,12 @@ function headHtml(c, view) {
     <button type="button" class="tripbtn" data-act="trip">Shopping trip</button>`}
     <button type="button" data-act="${stores ? 'addstore' : 'addcard'}" class="primary">${stores ? '+ Add store' : '+ Add card'}</button>${paneBtn('det', 'M15 4v16')}</header>`;
 }
+// Table bits shared by the Cards rows and the store page: scan, language, set code + logo, printed number
+function cardBits(x) {
+  const lang = x.lang || 'EN';
+  return { src: thumbSrc(x), lang, code: setCodeOf(x), logo: (SEED.logos || {})[`${lang}|${x.set}`],
+    num: (x.number || '').includes('/') ? x.number : (SEED.printed || {})[`${lang}|${x.set}|${x.number}|${x.name}`] || x.number || '' };
+}
 // Filter tags: facet picks and the search only (the Status block shows status, the Sort tag the sort)
 function filterTags() {
   const tagText = k => MULTI.includes(k) ? F[k].map(v => fval(k, v)).join(', ') : fval(k, F[k]);
@@ -2860,31 +2868,60 @@ function storePage(st) {
     const x = S.cards.find(k => k.id === cid); if (!x || !keep.has(cid)) return;
     Object.entries(r).forEach(([key, p]) => { if (key.split('~')[0] === st.id) rows.push({ x, key, p, v: hasPrice(p) ? Number(p.price) : Infinity }); });
   });
-  rows.sort((a, b) => a.v - b.v || a.x.name.localeCompare(b.x.name));
+  // Same look as the Cards table (2026-11-19, user): sortable heads, owned rows sink and grey, rows a page.
+  // Default price ↑ (no price last either way); a head click sorts by it, again for ↓, a third time back to price.
+  const d = storeSort.d, txt = (a, b) => String(a || '').localeCompare(String(b || ''), undefined, { numeric: true });
+  const key = { name: (a, b) => d * txt(a.x.name, b.x.name), set: (a, b) => d * txt(a.x.set, b.x.set), no: (a, b) => d * txt(a.x.number, b.x.number),
+    seller: (a, b) => d * txt(a.p.seller, b.p.seller), date: (a, b) => d * txt(a.p.date, b.p.date),
+    price: (a, b) => (a.v === Infinity) - (b.v === Infinity) || d * (a.v - b.v) }[storeSort.k];
+  rows.sort((a, b) => (a.x.owned ? 1 : 0) - (b.x.owned ? 1 : 0) || key(a, b) || txt(a.x.name, b.x.name));
   const colName = id => (S.collections.find(c => c.id === id) || {}).name || '';
   // a benchmark store shows RM at the Rates, its own currency in the tooltip (user, 2026-11-19)
   const showP = p => !hasPrice(p) ? '<i>no price</i>' : isBench(st) ? `<span title="${esc(fmt(st, p))}">${esc(rm(inRM(Number(p.price), st.currency)))}</span>` : esc(fmt(st, p));
-  const sellers = rows.some(l => l.p.seller), dates = rows.some(l => l.p.date), tags = filterTags();
-  const nf = Object.keys(F).filter(k => fOn(k) && !['q', 'sort', 'dir'].includes(k)).length;
+  const tags = filterTags(), nf = Object.keys(F).filter(k => fOn(k) && !['q', 'sort', 'dir'].includes(k)).length;
   // Collection pick (2026-11-19, user): All collections or one; count = that collection's listings at this store
   const per = new Map();
   storeCards(st.id, true).forEach(x => per.set(x.cid, (per.get(x.cid) || 0) + Object.keys(S.prices[x.id]).filter(k => k.split('~')[0] === st.id).length));
   const colSel = `<label class="scol">Collection <select data-scol aria-label="Collection"><option value="">All collections</option>${S.collections.filter(c => per.has(c.id)).map(c => `<option value="${esc(c.id)}"${c.id === storeCol ? ' selected' : ''}>${esc(c.name)} (${per.get(c.id).toLocaleString('en-US')})</option>`).join('')}</select></label>`;
-  const body = rows.map(({ x, key, p }) => `<tr class="${x.owned ? 'was' : ''}" data-act="price" data-card="${x.id}" data-store="${esc(key)}" title="Edit this price">
-      <td><b>${esc(x.name)}</b>${VARIANT_LABEL[x.variant] && x.variant !== 'normal' ? ` <span class="muted">${esc(VARIANT_LABEL[x.variant])}</span>` : ''}${x.lang && x.lang !== 'EN' ? ` <span class="muted">${esc(x.lang)}</span>` : ''}${x.owned ? ' <span class="muted">owned</span>' : ''}</td>
-      <td>${esc(x.set || '')}</td><td>${esc(x.number || '')}</td><td>${esc(colName(x.cid))}</td>
-      ${sellers ? `<td>${esc(p.seller || '')}</td>` : ''}${dates ? `<td>${esc(p.date || '')}</td>` : ''}
-      <td class="r">${/^https?:\/\//i.test(p.url || '')
+  // pages: the Cards pager (lPage, rows a page); back to page 1 when the store, collection, filters or sort change
+  const n = rows.length, size = ui.per || 50, sig = [st.id, storeCol, JSON.stringify(F), storeSort.k, d].join('|');
+  if (sig !== sSig) { sSig = sig; lPage = 0; }
+  const pages = size === 'all' ? 1 : Math.max(1, Math.ceil(n / size));
+  lPage = Math.max(0, Math.min(lPage, pages - 1));
+  const from = size === 'all' ? 0 : lPage * size, page = size === 'all' ? rows : rows.slice(from, from + size);
+  const th = (k, label, cls = '') => { const on = storeSort.k === k && !(k === 'price' && d === 1 && storeSort.def);
+    return `<th class="${cls}"${on ? ` aria-sort="${d === 1 ? 'ascending' : 'descending'}"` : ''}><button type="button" class="sorth${on ? ' on' : ''}" data-act="ssort" data-id="${k}">${label}<span aria-hidden="true">${!on ? '↕' : d === 1 ? '↑' : '↓'}</span></button></th>`; };
+  const body = page.map(({ x, key: lk, p }) => {
+    const { src, lang, code, logo, num } = cardBits(x), who = `${esc(x.name)} ${esc(code)} ${esc(num)}`;
+    const thumb = src ? `<span class="thumb"><img src="${esc(src)}" alt="" width="26" height="36" loading="lazy" onerror="this.parentNode.textContent='no scan'"></span>` : '<span class="thumb">no scan</span>';
+    return `<tr data-row="${x.id}" aria-selected="${x.id === selId}"${x.owned ? ' class="owned"' : ''}>
+      <td class="found"><label><input type="checkbox" data-found="${x.id}"${x.found ? ' checked' : ''} aria-label="Found: ${who}" title="Found / available"></label></td>
+      <td class="cname"><button type="button" class="cardc" data-act="sel" data-id="${x.id}" aria-label="Details: ${who}">${thumb}<span class="nm"><span><strong title="${esc(x.name)}">${esc(x.name)}</strong>${x.owned ? '<span class="badge own">Owned</span>' : ''}</span>
+        <span class="meta-line">${esc(lang)} · ${esc(code)} ${esc(num)}${x.rarity ? ' · ' + esc(rarLetters(x.rarity)) : ''}${x.variant && x.variant !== 'normal' ? ' · ' + esc(VARIANT_LABEL[x.variant] || x.variant) : ''}</span></span></button></td>
+      <td class="cset" title="${esc(x.set || '')}">${logo ? `<img src="${esc(logo)}" alt="" width="40" height="14" loading="lazy">` : ''}${esc(code)}</td>
+      <td class="cno">${esc(num)}</td>
+      <td class="clang"><span class="pill p-lang l-${esc(lang)}">${esc(lang)}</span></td>
+      <td class="crar">${x.rarity ? `<span class="pill p-rar r-${rarLetters(x.rarity)}" title="${esc(x.rarity)}">${esc(rarLetters(x.rarity))}</span>` : ''}</td>
+      <td class="cfin">${finPill(x.variant)}</td>
+      <td class="sseller"><span>${esc(p.seller || '')}</span>${storeCol ? '' : `<span class="muted">${esc(colName(x.cid))}</span>`}</td>
+      <td class="cno sdate">${esc(p.date || '')}</td>
+      <td class="num sprice">${/^https?:\/\//i.test(p.url || '')
         ? `<a class="slink" href="${esc(p.url)}" target="_blank" rel="noopener" data-act="golink" title="Open the listing">${showP(p)} ↗</a>`
-        : `<button type="button" class="linkish" data-act="price" data-card="${x.id}" data-store="${esc(key)}" aria-label="Edit ${esc(x.name)} price">${showP(p)}</button>`}</td></tr>`).join('');
-  return `<div class="panel"><div class="shd"><button type="button" class="linkish" data-act="closestore">← All stores</button>
-    <h2>${esc(st.name)}</h2><span class="muted">${esc([st.venue && st.venue !== st.name ? st.venue : '', st.currency || 'RM'].filter(Boolean).join(' · '))} · ${rows.length.toLocaleString('en-US')} ${isBench(st) ? 'benchmark price' : 'listing'}${rows.length === 1 ? '' : 's'}</span>
+        : `<button type="button" class="linkish" data-act="price" data-card="${x.id}" data-store="${esc(lk)}" aria-label="Edit ${esc(x.name)} price">${showP(p)}</button>`}</td></tr>`;
+  }).join('');
+  return `<div class="shd"><button type="button" class="linkish" data-act="closestore">← All stores</button>
+    <h2>${esc(st.name)}</h2><span class="muted">${esc([st.venue && st.venue !== st.name ? st.venue : '', st.currency || 'RM'].filter(Boolean).join(' · '))} · ${n.toLocaleString('en-US')} ${isBench(st) ? 'benchmark price' : 'listing'}${n === 1 ? '' : 's'}</span>
     <span class="slinks">${linkBits(st)}</span></div>
     <div class="listbar">${searchRow('Search card, set, number, seller…')}<div class="resbar">
       <button type="button" class="fopen" data-act="filters">Filters${nf ? ` · ${nf}` : ''}</button>${colSel}
       <span class="count" aria-live="polite"><b>${keep.size.toLocaleString('en-US')}</b> ${keep.size === all.length ? '' : `of ${all.length.toLocaleString('en-US')} `}card${all.length === 1 ? '' : 's'}</span>
       ${tags ? `<div class="ftags">${tags}</div>` : ''}</div></div>
-    ${rows.length ? `<div style="overflow-x:auto"><table class="stbl"><thead><tr><th>Card</th><th>Set</th><th>No.</th><th>Collection</th>${sellers ? '<th>Seller</th>' : ''}${dates ? '<th>Date</th>' : ''}<th class="r">${isBench(st) ? 'Market price' : 'Price'}</th></tr></thead><tbody>${body}</tbody></table></div>` : all.length ? '<p class="muted">No listings match the filters. <button type="button" class="small" data-act="resetf">Reset filters</button></p>' : '<p class="muted">No listings yet.</p>'}</div>`;
+    ${n ? `${listPager(n, pages, from, from + page.length, 'top')}
+    <div class="panel tbl ctbl stp"><table>
+      <thead><tr><th class="found">Found</th>${th('name', 'Card')}${th('set', 'Set')}${th('no', 'No.')}<th>Lang</th><th>Rarity</th><th>Finish</th>${th('seller', storeCol ? 'Seller' : 'Seller · collection')}${th('date', 'Date')}${th('price', isBench(st) ? 'Market price' : 'Price', 'num')}</tr></thead>
+      <tbody>${body}</tbody></table></div>
+    ${listPager(n, pages, from, from + page.length, 'bottom')}`
+    : `<div class="panel"><div class="empty">${all.length ? 'No listings match the filters. <button type="button" class="small" data-act="resetf">Reset filters</button>' : 'No listings yet.'}</div></div>`}`;
 }
 function renderDet() {
   const box = $('#detIn');
@@ -2956,7 +2993,8 @@ function render() {
   if (lastCol !== c.id) { resetFilters(); lastCol = c.id; selId = null; cardsF = null; }
   const cards = applyFilters(all);
   shownIds = cards.map(x => x.id);
-  if (!cards.some(x => x.id === selId)) selId = cards.length ? cards[0].id : null;
+  // the store page lists cards of every collection: keep its pick (renderDet finds any card)
+  if (!(ui.view === 'stores' && openStore() && S.cards.some(x => x.id === selId)) && !cards.some(x => x.id === selId)) selId = cards.length ? cards[0].id : null;
   $('#sideIn').innerHTML = sideHtml(c, all);
   if (trip.on) { app.innerHTML = headHtml(c, 'list') + searchRow() + tripView(c, all, cards); renderDet(); return; }
   if (ui.view === 'stores') { if (openStore()) $('#sideIn').innerHTML = sideHtml(c, storeCards(openStoreId)); app.innerHTML = headHtml(c, 'stores') + storesHtml(); renderDet(); return; }
@@ -2979,8 +3017,7 @@ function render() {
   lPage = Math.max(0, Math.min(lPage, lPages - 1));
   const lFrom = per === 'all' ? 0 : lPage * per, pageCards = per === 'all' ? cards : cards.slice(lFrom, lFrom + per);
   const rows = pageCards.map(x => {
-    const src = thumbSrc(x), lang = x.lang || 'EN', code = setCodeOf(x), logo = (SEED.logos || {})[`${lang}|${x.set}`];
-    const num = (x.number || '').includes('/') ? x.number : (SEED.printed || {})[`${lang}|${x.set}|${x.number}|${x.name}`] || x.number || '';
+    const { src, lang, code, logo, num } = cardBits(x);
     const fin = x.variant && x.variant !== 'normal' ? VARIANT_LABEL[x.variant] || x.variant : '';
     const best = x.owned ? new Set() : bestStores(x.id), cheap = shopsOf(x.id).find(l => best.has(l.key) && hasPrice(l.p)), bl = benchLine(x);
     const n = shopsOf(x.id).length, open = openRows.has(x.id), who = `${esc(x.name)} ${esc(code)} ${esc(num)}`;
@@ -3083,6 +3120,11 @@ document.addEventListener('click', e => {
   else if (act === 'editstore') editStore(id);
   else if (act === 'openstore') { setStore(id); render(); window.scrollTo(0, 0); }
   else if (act === 'closestore') { setStore(null); render(); }
+  else if (act === 'ssort') {   // like the Cards heads: ↑, ↓, then back to the default (price ↑)
+    const o = storeSort;
+    storeSort = o.def && id === 'price' ? { k: id, d: -1 } : o.k !== id || o.def ? { k: id, d: 1 } : o.d === 1 ? { k: id, d: -1 } : { k: 'price', d: 1, def: true };
+    keepFocus(render);
+  }
   else if (act === 'delstore') deleteStore(id);
   else if (act === 'price') listingDialog(el.dataset.card, el.dataset.store);
   else if (act === 'addprice') listingDialog(el.dataset.card, null);

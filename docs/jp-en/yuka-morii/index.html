@@ -166,6 +166,7 @@ button { font: inherit; color: inherit; }
 .linkish:hover { text-decoration: underline; }
 .mshell { display: grid; grid-template-columns: 280px minmax(0, 1fr); max-width: 1600px; margin: 0 auto; }
 .mrail { position: sticky; top: 0; height: 100vh; overflow: auto; overscroll-behavior: contain; padding: 20px 16px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px; background: var(--bg); }
+.mrail > * { flex-shrink: 0; }   /* the rail is a scroller: nothing in it shrinks (a squeezed page switch went 2px tall, 2026-11-19) */
 .links { display: flex; gap: 6px; flex-wrap: wrap; }
 /* Page switch (2026-11-16): same bar on the Tracker, market report, JP vs EN and sealed page */
 .pswitch { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
