@@ -338,6 +338,9 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   .cfin { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ctbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .ccheap b { color: var(--best-text); }
+  .ccheap .bench { display: block; font-size: 11px; color: var(--muted); font-weight: 400; white-space: nowrap; }
+  .chip.benchc { border-style: dashed; color: var(--muted); }
+  .chip.benchc b { color: var(--muted); font-weight: 500; }
   .ctbl td.acts { white-space: nowrap; text-align: right; }
   .ctbl td.found label { display: grid; place-items: center; min-width: 40px; min-height: 40px; cursor: pointer; }
   .ctbl tr.exp td { height: auto; padding: 4px 10px 10px; background: color-mix(in srgb, var(--sel) 50%, transparent); }
@@ -507,6 +510,22 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   .store { display: grid; grid-template-columns: minmax(0, 1fr) 80px 40px 36px 104px; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
   .sn { display: grid; min-width: 0; }
   .sn strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+  .sgroup.bench h2 .muted { font-size: 12px; font-weight: 400; }
+  .sopen { border: 0; background: none; padding: 0; font: inherit; color: inherit; text-align: left; min-width: 0; cursor: pointer; }
+  .sopen:hover strong { color: var(--accent); text-decoration: underline; }
+  .shd { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 10px; }
+  .shd h2 { font-size: 17px; margin: 0; }
+  .stbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stbl th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .stbl td { padding: 7px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+  .stbl td.r, .stbl th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stbl tr.was td { opacity: .55; }
+  .scol { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .scol select { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; max-width: 260px; }
+  .stbl .slink { color: var(--accent); text-decoration: none; }
+  .stbl .slink:hover { text-decoration: underline; }
+  .stbl tbody tr { cursor: pointer; }
+  .stbl tbody tr:hover td { background: var(--line); }
   .sn .muted { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sbar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
   .sbar i { display: block; height: 100%; background: var(--accent); }
@@ -948,13 +967,21 @@ function listingsOf(cardId) {
     .filter(l => l.st)
     .sort((a, b) => rank(a.st.id) - rank(b.st.id) || a.key.localeCompare(b.key));
 }
+// Benchmark shop (2026-11-19, user): TCGplayer market prices from tcgcsv_prices.py are a yardstick, not a recorded listing.
+// shopsOf = real listings only (cheapest, Shops count, price / shop filters); benchOf = the benchmark prices, shown apart.
+const isBench = st => /tcgcsv/i.test(st.notes || '');
+const shopsOf = cardId => listingsOf(cardId).filter(l => !isBench(l.st));
+const benchOf = cardId => listingsOf(cardId).filter(l => isBench(l.st) && hasPrice(l.p));
+// shown in RM at the Rates (user, 2026-11-19); the stored price stays USD, in the tooltip
+const benchRM = l => rm(inRM(Number(l.p.price), l.st.currency));
+const benchLine = x => benchOf(x.id).map(l => `${esc(l.st.name)} ${esc(benchRM(l))}`).join(' · ');
 const sellerNames = () => [...new Set(Object.values(S.prices).flatMap(r => Object.values(r).map(p => p.seller).filter(Boolean)))].sort();
 const cheapestOf = id => { const best = bestStores(id); return listingsOf(id).filter(l => best.has(l.key)).map(l => `${listLabel(l.st, l.seller)} ${fmt(l.st, l.p)}`).join(', ') || '-'; };
 
 // Cheapest per row. Prices in other currencies are compared in RM at the exchange rates.
 function bestStores(cardId) {
   const list = [];
-  listingsOf(cardId).forEach(l => { if (hasPrice(l.p)) list.push({ id: l.key, v: inRM(Number(l.p.price), l.st.currency) }); });   // ids are listing keys
+  shopsOf(cardId).forEach(l => { if (hasPrice(l.p)) list.push({ id: l.key, v: inRM(Number(l.p.price), l.st.currency) }); });   // ids are listing keys
   const best = new Set();
   if (!list.length) return best;
   const min = Math.min(...list.map(x => x.v));
@@ -1087,7 +1114,7 @@ const setShow = v => {
 // short set code: EN from SEED.setCodes (set_meta.json), other languages from the "(CODE)" in the set name
 const setCodeOf = x => ((x.lang || 'EN') === 'EN' ? ((SEED && SEED.setCodes) || {})[x.set] || x.set : setCode(x)) || '';
 const minPrice = x => {
-  const v = listingsOf(x.id).map(l => (hasPrice(l.p) ? inRM(Number(l.p.price), l.st.currency) : NaN)).filter(n => !isNaN(n));
+  const v = shopsOf(x.id).map(l => (hasPrice(l.p) ? inRM(Number(l.p.price), l.st.currency) : NaN)).filter(n => !isNaN(n));
   return v.length ? Math.min(...v) : Infinity;
 };
 // Column sorts (table headers, 2026-11-09): value of a card for each key; ties go by name
@@ -1098,7 +1125,7 @@ const SORT_KEY = {
   lang: x => LANGS.findIndex(([k]) => k === (x.lang || 'EN')) >>> 0,
   rarity: x => TIER_ORDER.indexOf(tierOf(x.rarity, x)) >>> 0,
   finish: x => VAR_RANK.indexOf(x.variant || 'normal') >>> 0,
-  shops: x => listingsOf(x.id).length,
+  shops: x => shopsOf(x.id).length,
 };
 const SORT_NAME = { name: 'Card', set: 'Set', ptype: 'Pokémon type', no: 'No.', lang: 'Language', rarity: 'Rarity', finish: 'Finish', cheapest: 'Cheapest', shops: 'Shops', found: 'Found' };
 function applyFilters(all) {
@@ -1109,13 +1136,13 @@ function applyFilters(all) {
       && !listingsOf(x.id).some(l => [l.st.name, l.st.venue, l.seller].some(hit))) return false;
     if (!fHas('era', x.era) || !fHas('set', x.set) || !fHas('type', x.type) || !fHas('rarity', tierOf(x.rarity, x))
       || !fHas('variant', x.variant) || !fHas('lang', x.lang || 'EN') || !fHas('product', productOf(x))) return false;
-    if (F.shop.length && !((F.shop.includes('__none') && !Object.keys(S.prices[x.id] || {}).length)
+    if (F.shop.length && !((F.shop.includes('__none') && !shopsOf(x.id).length)
       || listingsOf(x.id).some(l => F.shop.includes(l.st.id)))) return false;
     if (F.status === 'found' && !x.found) return false;
     if (F.status === 'notfound' && x.found) return false;
     if (F.owned === 'owned' && !x.owned) return false;
     if (F.owned === 'missing' && x.owned) return false;
-    const has = Object.keys(S.prices[x.id] || {}).length > 0;
+    const has = shopsOf(x.id).length > 0;   // a benchmark price is not a find
     if (F.price === 'priced' && !has) return false;
     if (F.price === 'unpriced' && (has || x.owned)) return false;   // an owned card needs no price
     return true;
@@ -1211,7 +1238,7 @@ function facetRail(all) {
     try { return applyFilters(all).length; } finally { Object.assign(F, keep); }
   };
   const c = (key, get) => facetCounts(facetRows(all, [key]), get);
-  const shops = c('shop', x => (Object.keys(S.prices[x.id] || {}).length ? [...new Set(listingsOf(x.id).map(l => l.st.id))] : '__none'));
+  const shops = c('shop', x => { const ids = [...new Set(listingsOf(x.id).map(l => l.st.id))]; return shopsOf(x.id).length ? ids : ids.concat('__none'); });
   const setDate = s => setDateOf(s) || '9999', setEra = {};
   all.forEach(x => { if (x.set && !(x.set in setEra)) setEra[x.set] = eraRank(x.era); });   // sets grouped by era, then release order
   const setLabel = s => { const x = all.find(k => k.set === s), code = x ? setCodeOf(x) : ''; return code && code !== s && !s.includes(`(${code})`) ? `${s} (${code})` : s; };
@@ -2603,7 +2630,14 @@ function saveUi() {
     localStorage.setItem(UI_KEY, JSON.stringify(keep));
   } catch (e) { /* not saved, fine */ }
 }
-let selId = null;
+let selId = null, openStoreId = null, cardsF = null, storeCol = '';   // storeCol: '' = all collections   // openStoreId: the store page open on Stores; cardsF: the Cards filters kept while it is open
+const openStore = () => S.stores.find(s => s.id === openStoreId);
+// The store page starts unfiltered; leaving it gives the Cards view its own filters back
+function setStore(id) {
+  if (id && !openStoreId) { cardsF = JSON.parse(JSON.stringify(F)); resetFilters(); }
+  if (!id && openStoreId && cardsF) { Object.assign(F, cardsF); cardsF = null; }
+  openStoreId = id; storeCol = '';
+}
 function layout() {
   const sh = $('#shell');
   sh.classList.toggle('no-side', !ui.side);
@@ -2662,7 +2696,7 @@ function sideHtml(c, all) {
   const foot = `<div class="databox${backupDue() ? ' due' : ''}"><div class="dbk"><b>Backup ${esc(backupAge())}</b><span>${S.cards.length.toLocaleString('en-US')} cards · ${S.stores.length} shops · this browser only</span></div>
       <div class="dbb">${b('json-out', 'Back up', 'primary small')}${b('json-in', 'Import', 'small')}${b('snaps', 'Snapshots', 'small')}</div></div>
     <div class="railset">${b('rates', `Rates · USD 1 = RM ${Number(rate).toFixed(2)}`, 'linkish')}${b('theme', 'Light / dark', 'linkish')}</div>`;
-  const filters = !c ? '' : ui.view === 'stores' ? '<p class="muted railnote">Card filters are hidden on Stores.</p>' : facetRail(all);
+  const filters = !c ? '' : ui.view === 'stores' && !openStore() ? '<p class="muted railnote">Open a store to filter its cards.</p>' : facetRail(all);
   return top + filters + foot;
 }
 // Binder view: the filtered rows as binder pages (2x2 to 4x4), one pocket per row (a row is one print + finish already).
@@ -2796,18 +2830,61 @@ function headHtml(c, view) {
     <button type="button" class="tripbtn" data-act="trip">Shopping trip</button>`}
     <button type="button" data-act="${stores ? 'addstore' : 'addcard'}" class="primary">${stores ? '+ Add store' : '+ Add card'}</button>${paneBtn('det', 'M15 4v16')}</header>`;
 }
+// Filter tags: facet picks and the search only (the Status block shows status, the Sort tag the sort)
+function filterTags() {
+  const tagText = k => MULTI.includes(k) ? F[k].map(v => fval(k, v)).join(', ') : fval(k, F[k]);
+  return Object.keys(F).filter(k => fOn(k) && !['status', 'owned', 'price', 'sort', 'dir'].includes(k)).map(k => `<span class="ftag" title="${esc(tagText(k))}">${FLABEL[k]}: ${esc(MULTI.includes(k) && F[k].length > 2 ? F[k].length + ' selected' : tagText(k))}<button type="button" data-act="clearf" data-id="${k}" aria-label="Remove filter ${FLABEL[k]}">×</button></span>`).join('');
+}
 // Stores view: online and in-person stores side by side, most listings first, a bar for the listing count
 function storesHtml() {
   if (!S.stores.length) return '<div class="panel"><div class="empty">No stores yet. <button type="button" class="small" data-act="addstore">+ Add store</button></div></div>';
+  const open = openStore();
+  if (open) return storePage(open);
   const cnt = new Map(S.stores.map(s => [s.id, listingCount(s.id)]));   // once per store per render
   const max = Math.max(1, ...cnt.values());
-  const group = (cls, title, list) => `<section class="sgroup ${cls}"><h2>${title}<small>${list.length} store${list.length === 1 ? '' : 's'} · ${list.reduce((t, s) => t + cnt.get(s.id), 0).toLocaleString('en-US')} listings</small></h2>
+  const group = (cls, title, list) => `<section class="sgroup ${cls}"><h2>${title}<small>${list.length} store${list.length === 1 ? '' : 's'} · ${list.reduce((t, s) => t + cnt.get(s.id), 0).toLocaleString('en-US')} ${cls === 'bench' ? 'prices' : 'listings'}</small></h2>
     ${list.length ? [...list].sort((a, b) => cnt.get(b.id) - cnt.get(a.id)).map(s => `<div class="store">
-      <div class="sn"><strong title="${esc(s.name)}">${esc(s.name)}</strong><span class="muted">${esc([s.venue && s.venue !== s.name ? s.venue : '', s.currency || 'RM', s.notes].filter(Boolean).join(' · '))}</span></div>
+      <button type="button" class="sn sopen" data-act="openstore" data-id="${s.id}" title="See ${esc(s.name)}'s listings"><strong>${esc(s.name)}</strong><span class="muted">${esc([s.venue && s.venue !== s.name ? s.venue : '', s.currency || 'RM', s.notes].filter(Boolean).join(' · '))}</span></button>
       <div class="sbar"><i style="width:${cnt.get(s.id) / max * 100}%"></i></div><span class="slc">${cnt.get(s.id).toLocaleString('en-US')}</span>
       <span class="slinks">${linkBits(s)}</span>
       <span class="sacts"><button type="button" class="small" data-act="editstore" data-id="${s.id}">Edit</button><button type="button" class="small danger" data-act="delstore" data-id="${s.id}" aria-label="Delete ${esc(s.name)}">Delete</button></span></div>`).join('') : '<p class="muted">None yet.</p>'}</section>`;
-  return `<div class="stores2">${group('online', 'Online', S.stores.filter(s => s.type !== 'physical'))}${group('inperson', 'In person', S.stores.filter(s => s.type === 'physical'))}</div>`;
+  const bench = S.stores.filter(isBench), shops = S.stores.filter(s => !isBench(s));
+  return `<div class="stores2">${group('online', 'Online', shops.filter(s => s.type !== 'physical'))}${group('inperson', 'In person', shops.filter(s => s.type === 'physical'))}${bench.length ? group('bench', 'Benchmark prices <span class="muted">market prices, not listings</span>', bench) : ''}</div>`;
+}
+// One store's listings over every collection (2026-11-19, user): cheapest first, no price last; a row opens the price dialog,
+// a price with a listing link opens that link (data-act="golink" is a no-op so the row's dialog does not open too)
+const storeCards = (sid, any) => S.cards.filter(x => (any || !storeCol || x.cid === storeCol) && Object.keys(S.prices[x.id] || {}).some(k => k.split('~')[0] === sid));
+function storePage(st) {
+  const all = storeCards(st.id), keep = new Set(applyFilters(all).map(x => x.id)), rows = [];
+  Object.entries(S.prices).forEach(([cid, r]) => {
+    const x = S.cards.find(k => k.id === cid); if (!x || !keep.has(cid)) return;
+    Object.entries(r).forEach(([key, p]) => { if (key.split('~')[0] === st.id) rows.push({ x, key, p, v: hasPrice(p) ? Number(p.price) : Infinity }); });
+  });
+  rows.sort((a, b) => a.v - b.v || a.x.name.localeCompare(b.x.name));
+  const colName = id => (S.collections.find(c => c.id === id) || {}).name || '';
+  // a benchmark store shows RM at the Rates, its own currency in the tooltip (user, 2026-11-19)
+  const showP = p => !hasPrice(p) ? '<i>no price</i>' : isBench(st) ? `<span title="${esc(fmt(st, p))}">${esc(rm(inRM(Number(p.price), st.currency)))}</span>` : esc(fmt(st, p));
+  const sellers = rows.some(l => l.p.seller), dates = rows.some(l => l.p.date), tags = filterTags();
+  const nf = Object.keys(F).filter(k => fOn(k) && !['q', 'sort', 'dir'].includes(k)).length;
+  // Collection pick (2026-11-19, user): All collections or one; count = that collection's listings at this store
+  const per = new Map();
+  storeCards(st.id, true).forEach(x => per.set(x.cid, (per.get(x.cid) || 0) + Object.keys(S.prices[x.id]).filter(k => k.split('~')[0] === st.id).length));
+  const colSel = `<label class="scol">Collection <select data-scol aria-label="Collection"><option value="">All collections</option>${S.collections.filter(c => per.has(c.id)).map(c => `<option value="${esc(c.id)}"${c.id === storeCol ? ' selected' : ''}>${esc(c.name)} (${per.get(c.id).toLocaleString('en-US')})</option>`).join('')}</select></label>`;
+  const body = rows.map(({ x, key, p }) => `<tr class="${x.owned ? 'was' : ''}" data-act="price" data-card="${x.id}" data-store="${esc(key)}" title="Edit this price">
+      <td><b>${esc(x.name)}</b>${VARIANT_LABEL[x.variant] && x.variant !== 'normal' ? ` <span class="muted">${esc(VARIANT_LABEL[x.variant])}</span>` : ''}${x.lang && x.lang !== 'EN' ? ` <span class="muted">${esc(x.lang)}</span>` : ''}${x.owned ? ' <span class="muted">owned</span>' : ''}</td>
+      <td>${esc(x.set || '')}</td><td>${esc(x.number || '')}</td><td>${esc(colName(x.cid))}</td>
+      ${sellers ? `<td>${esc(p.seller || '')}</td>` : ''}${dates ? `<td>${esc(p.date || '')}</td>` : ''}
+      <td class="r">${/^https?:\/\//i.test(p.url || '')
+        ? `<a class="slink" href="${esc(p.url)}" target="_blank" rel="noopener" data-act="golink" title="Open the listing">${showP(p)} ↗</a>`
+        : `<button type="button" class="linkish" data-act="price" data-card="${x.id}" data-store="${esc(key)}" aria-label="Edit ${esc(x.name)} price">${showP(p)}</button>`}</td></tr>`).join('');
+  return `<div class="panel"><div class="shd"><button type="button" class="linkish" data-act="closestore">← All stores</button>
+    <h2>${esc(st.name)}</h2><span class="muted">${esc([st.venue && st.venue !== st.name ? st.venue : '', st.currency || 'RM'].filter(Boolean).join(' · '))} · ${rows.length.toLocaleString('en-US')} ${isBench(st) ? 'benchmark price' : 'listing'}${rows.length === 1 ? '' : 's'}</span>
+    <span class="slinks">${linkBits(st)}</span></div>
+    <div class="listbar">${searchRow('Search card, set, number, seller…')}<div class="resbar">
+      <button type="button" class="fopen" data-act="filters">Filters${nf ? ` · ${nf}` : ''}</button>${colSel}
+      <span class="count" aria-live="polite"><b>${keep.size.toLocaleString('en-US')}</b> ${keep.size === all.length ? '' : `of ${all.length.toLocaleString('en-US')} `}card${all.length === 1 ? '' : 's'}</span>
+      ${tags ? `<div class="ftags">${tags}</div>` : ''}</div></div>
+    ${rows.length ? `<div style="overflow-x:auto"><table class="stbl"><thead><tr><th>Card</th><th>Set</th><th>No.</th><th>Collection</th>${sellers ? '<th>Seller</th>' : ''}${dates ? '<th>Date</th>' : ''}<th class="r">${isBench(st) ? 'Market price' : 'Price'}</th></tr></thead><tbody>${body}</tbody></table></div>` : all.length ? '<p class="muted">No listings match the filters. <button type="button" class="small" data-act="resetf">Reset filters</button></p>' : '<p class="muted">No listings yet.</p>'}</div>`;
 }
 function renderDet() {
   const box = $('#detIn');
@@ -2819,14 +2896,15 @@ function renderDet() {
   const best = x.owned ? new Set() : bestStores(x.id), src = thumbSrc(x), o = otherLangs(x), own = minPrice(x), u = untrackedLangs(x);
   const tw = src && !thumbSrc0(x) && !ownCatSrc(x) && twinScan(x);
   const low = o.length ? Math.min(...o.map(k => k.best)) : Infinity;
-  const L = listingsOf(x.id).map(l => `<button type="button" class="li${best.has(l.key) ? ' best' : ''}${x.owned ? ' was' : ''}" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Edit this price">
+  const L = shopsOf(x.id).map(l => `<button type="button" class="li${best.has(l.key) ? ' best' : ''}${x.owned ? ' was' : ''}" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Edit this price">
       <span class="who">${esc(l.seller || l.st.name)}</span><span class="ven">${esc(l.seller ? shopLabel(l.st) : (l.st.venue || l.st.type || ''))}${l.p.date ? ' · ' + esc(l.p.date) : ''}</span>
       <span class="p">${hasPrice(l.p) ? esc(fmt(l.st, l.p)) : '<i>no price</i>'}</span></button>`).join('');
   box.innerHTML = `<div class="det-top"><span>Card</span>${close}</div>
     <div class="det-hd">${src ? `<img src="${esc(src)}" alt="Scan of ${esc(x.name)}" width="110" height="154" data-act="zoom" data-card="${x.id}" title="Enlarge" onerror="this.outerHTML='<div class=&quot;det-noscan&quot;>no scan</div>'">` : '<div class="det-noscan">no scan</div>'}
       <div><h2>${esc(x.name)}</h2>${tw ? `<p class="muted">Scan: ${esc((LANGS.find(([c]) => c === tw.lang) || [tw.lang, tw.lang])[1])} print (same art)</p>` : ''}${x.alt ? `<p class="muted">${esc(x.alt)}</p>` : ''}<p class="muted">${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''}</p>${metaLine(x)}${badge(x)}</div></div>
-    <h3>Shops (${listingsOf(x.id).length})</h3>${x.owned && L ? '<p class="muted">Owned: these prices are kept as history.</p>' : ''}${L || '<p class="muted">No shops yet.</p>'}
+    <h3>Shops (${shopsOf(x.id).length})</h3>${x.owned && L ? '<p class="muted">Owned: these prices are kept as history.</p>' : ''}${L || '<p class="muted">No shops yet.</p>'}
     <button type="button" class="add-wide" data-act="addprice" data-card="${x.id}">+ Add shop or seller</button>
+    ${benchOf(x.id).length ? `<h3>Benchmark</h3>${benchOf(x.id).map(l => `<button type="button" class="li" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Market price, not a listing"><span class="who">${esc(l.st.name)}</span><span class="ven">market price · ${esc(fmt(l.st, l.p))}${l.p.date ? ' · ' + esc(l.p.date) : ''}</span><span class="p">${esc(benchRM(l))}</span></button>`).join('')}` : ''}
     ${o.length ? `<h3>Other languages</h3>${o.map(k => `<div class="ol"><span>${esc((LANGS.find(([c]) => c === k.lang) || [k.lang, k.lang])[1])}</span><span${k.best === low && low < own ? ' class="best"' : ''}>${k.best === Infinity ? 'no price' : rm(k.best)}</span></div>`).join('')}` : ''}
     ${u.length ? `${o.length ? '' : '<h3>Other languages</h3>'}${u.map(r => `<div class="oln"><span>${esc((LANGS.find(([c]) => c === r.lang) || [r.lang, r.lang])[1])}</span><span>${esc(r.set)} · ${esc(r.number)}${r.rarity ? ' · ' + esc(tierOf(r.rarity, r)) : ''} — not in your collections</span></div>`).join('')}` : ''}
     <label class="det-found"><input type="checkbox" data-found="${x.id}"${x.found ? ' checked' : ''}> Found / available</label>
@@ -2875,23 +2953,24 @@ function render() {
   }
 
   const all = cardsOf(c.id);
-  if (lastCol !== c.id) { resetFilters(); lastCol = c.id; selId = null; }
+  if (lastCol !== c.id) { resetFilters(); lastCol = c.id; selId = null; cardsF = null; }
   const cards = applyFilters(all);
   shownIds = cards.map(x => x.id);
   if (!cards.some(x => x.id === selId)) selId = cards.length ? cards[0].id : null;
   $('#sideIn').innerHTML = sideHtml(c, all);
   if (trip.on) { app.innerHTML = headHtml(c, 'list') + searchRow() + tripView(c, all, cards); renderDet(); return; }
-  if (ui.view === 'stores') { app.innerHTML = headHtml(c, 'stores') + storesHtml(); renderDet(); return; }
+  if (ui.view === 'stores') { if (openStore()) $('#sideIn').innerHTML = sideHtml(c, storeCards(openStoreId)); app.innerHTML = headHtml(c, 'stores') + storesHtml(); renderDet(); return; }
 
   // chips of one card's listings, cheapest first (no price last); shown when its Shops cell is opened
   const chipsFor = x => {
     const best = x.owned ? new Set() : bestStores(x.id);   // an owned card's prices are history, not a buy
     const rmOf = l => (hasPrice(l.p) ? inRM(Number(l.p.price), l.st.currency) : Infinity);
-    const chips = [...listingsOf(x.id)].sort((a, b) => rmOf(a) - rmOf(b)).map(l => {
+    const chips = [...shopsOf(x.id)].sort((a, b) => rmOf(a) - rmOf(b)).map(l => {
       const name = l.seller || l.st.name, sub = l.seller ? shopLabel(l.st) : (l.st.venue && l.st.venue !== l.st.name ? l.st.venue : '');
       return `<button type="button" class="chip${best.has(l.key) ? ' best' : ''}" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Edit this price"><span class="cw">${esc(name)}</span>${sub ? `<span class="muted" title="${esc(sub)}"> · ${esc(sub)}</span>` : ''}${hasPrice(l.p) ? `<b>${esc(fmt(l.st, l.p))}</b>` : '<i>no price</i>'}</button>`;
     }).join('');
-    return `<div class="chips">${chips}<button type="button" class="chip add" data-act="addprice" data-card="${x.id}" aria-label="Add a shop for ${esc(x.name)}">+ Add shop</button></div>`;
+    const bch = benchOf(x.id).map(l => `<button type="button" class="chip benchc" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Benchmark (market price, not a listing)"><span class="cw">${esc(l.st.name)}</span><span class="muted"> · benchmark</span><b title="${esc(fmt(l.st, l.p))}">${esc(benchRM(l))}</b></button>`).join('');
+    return `<div class="chips">${chips}${bch}<button type="button" class="chip add" data-act="addprice" data-card="${x.id}" aria-label="Add a shop for ${esc(x.name)}">+ Add shop</button></div>`;
   };
 
   const per = ui.per || 50, sig = c.id + JSON.stringify(F);
@@ -2903,8 +2982,8 @@ function render() {
     const src = thumbSrc(x), lang = x.lang || 'EN', code = setCodeOf(x), logo = (SEED.logos || {})[`${lang}|${x.set}`];
     const num = (x.number || '').includes('/') ? x.number : (SEED.printed || {})[`${lang}|${x.set}|${x.number}|${x.name}`] || x.number || '';
     const fin = x.variant && x.variant !== 'normal' ? VARIANT_LABEL[x.variant] || x.variant : '';
-    const best = x.owned ? new Set() : bestStores(x.id), cheap = listingsOf(x.id).find(l => best.has(l.key) && hasPrice(l.p));
-    const n = listingsOf(x.id).length, open = openRows.has(x.id), who = `${esc(x.name)} ${esc(code)} ${esc(num)}`;
+    const best = x.owned ? new Set() : bestStores(x.id), cheap = shopsOf(x.id).find(l => best.has(l.key) && hasPrice(l.p)), bl = benchLine(x);
+    const n = shopsOf(x.id).length, open = openRows.has(x.id), who = `${esc(x.name)} ${esc(code)} ${esc(num)}`;
     const thumb = src ? `<span class="thumb"><img src="${esc(src)}" alt="" width="26" height="36" loading="lazy" onerror="this.parentNode.textContent='no scan'"></span>` : '<span class="thumb">no scan</span>';
     return `<tr data-row="${x.id}" aria-selected="${x.id === selId}"${x.owned ? ' class="owned"' : ''}>
       <td class="found"><label><input type="checkbox" data-found="${x.id}"${x.found ? ' checked' : ''} aria-label="Found: ${who}" title="Found / available"></label></td>
@@ -2915,7 +2994,7 @@ function render() {
       <td class="clang"><span class="pill p-lang l-${esc(lang)}">${esc(lang)}</span></td>
       <td class="crar">${x.rarity ? `<span class="pill p-rar r-${rarLetters(x.rarity)}" title="${esc(x.rarity)}">${esc(rarLetters(x.rarity))}</span>` : ''}</td>
       <td class="cfin">${finPill(x.variant)}</td>
-      <td class="num ccheap">${cheap ? `<b title="${esc((cheap.seller || cheap.st.name) + (cheap.seller ? ' · ' + shopLabel(cheap.st) : ''))}">${esc(fmt(cheap.st, cheap.p))}</b>` : '<span class="muted">—</span>'}</td>
+      <td class="num ccheap">${cheap ? `<b title="${esc((cheap.seller || cheap.st.name) + (cheap.seller ? ' · ' + shopLabel(cheap.st) : ''))}">${esc(fmt(cheap.st, cheap.p))}</b>` : '<span class="muted">—</span>'}${bl ? `<span class="bench" title="Benchmark (market price, not a listing): ${esc(benchOf(x.id).map(l => fmt(l.st, l.p)).join(', '))}">${bl}</span>` : ''}</td>
       <td class="num cshops">${n ? `<button type="button" class="linkish" data-act="shops" data-id="${x.id}" aria-expanded="${open}" aria-label="${n} shop${n === 1 ? '' : 's'} for ${who}">${n} ${open ? '▴' : '▾'}</button>` : `<button type="button" class="linkish" data-act="addprice" data-card="${x.id}" aria-label="Add a shop for ${who}">+</button>`}</td>
       <td class="acts"><button type="button" class="icon-btn" data-act="editcard" data-id="${x.id}" aria-label="Edit: ${who}" title="Edit card"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button><button type="button" class="icon-btn own${x.owned ? ' on' : ''}" data-act="own" data-id="${x.id}" aria-pressed="${!!x.owned}" aria-label="Owned: ${who}" title="${x.owned ? 'Owned. Click to undo' : 'I have this card: mark it owned (the row and its prices stay)'}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button></td></tr>
       ${open ? `<tr class="exp"><td class="gap"></td><td colspan="9">${chipsFor(x)}</td></tr>` : ''}`;
@@ -2933,9 +3012,7 @@ function render() {
     return `<th class="${cls}"${on ? ` aria-sort="${F.dir ? 'descending' : 'ascending'}"` : ''}><button type="button" class="sorth${on ? ' on' : ''}" data-act="sorth" data-id="${key}">${label}<span aria-hidden="true">${!on ? '↕' : F.dir ? '↓' : '↑'}</span></button></th>`; };
   const hint = !Object.keys(S.prices).some(id => Object.keys(S.prices[id]).length)
     ? '<div class="banner">Tick a card, then press + Shop on its row to record where you found it and its price.</div>' : '';
-  const tagText = k => MULTI.includes(k) ? F[k].map(v => fval(k, v)).join(', ') : fval(k, F[k]);
-  // tags: facet picks and the search only (the Status block shows status, the Sort tag the sort)
-  const tags = Object.keys(F).filter(k => fOn(k) && !['status', 'owned', 'price', 'sort', 'dir'].includes(k)).map(k => `<span class="ftag" title="${esc(tagText(k))}">${FLABEL[k]}: ${esc(MULTI.includes(k) && F[k].length > 2 ? F[k].length + ' selected' : tagText(k))}<button type="button" data-act="clearf" data-id="${k}" aria-label="Remove filter ${FLABEL[k]}">×</button></span>`).join('');
+  const tags = filterTags();
 
   app.innerHTML = `
     ${headHtml(c, ui.view === 'binder' ? 'binder' : 'list')}
@@ -2980,7 +3057,7 @@ document.addEventListener('click', e => {
   else if (act === 'col') { S.active = id; save(); render(); if (narrow()) setPane('side', false); }
   else if (act === 'pane') setPane(id);
   else if (act === 'view') {
-    ui.view = id; render(); saveUi();
+    ui.view = id; setStore(null); render(); saveUi();
   }
   else if (act === 'bpage') { bPage += Number(id); render(); }
   else if (act === 'lpage') { lPage += Number(id); render(); toListTop(); }
@@ -3004,6 +3081,8 @@ document.addEventListener('click', e => {
   else if (act === 'rates') ratesDialog();
   else if (act === 'hidetip') { S.hideFileTip = true; save(); render(); }
   else if (act === 'editstore') editStore(id);
+  else if (act === 'openstore') { setStore(id); render(); window.scrollTo(0, 0); }
+  else if (act === 'closestore') { setStore(null); render(); }
   else if (act === 'delstore') deleteStore(id);
   else if (act === 'price') listingDialog(el.dataset.card, el.dataset.store);
   else if (act === 'addprice') listingDialog(el.dataset.card, null);
@@ -3127,6 +3206,8 @@ document.addEventListener('input', e => {
   }, 150);
 });
 document.addEventListener('change', e => {
+  const sc = e.target.closest('select[data-scol]');
+  if (sc) { storeCol = sc.value; keepFocus(render); return; }
   const s = e.target.closest('select[data-col]');
   if (!s) return;
   S.active = s.value; save();
