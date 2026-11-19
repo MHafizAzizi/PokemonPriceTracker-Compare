@@ -377,6 +377,14 @@ section { margin-bottom: 28px; }
 .eleg .chip { display: inline-flex; align-items: center; gap: 6px; background: none; color: var(--text); padding: 0; font-size: 13px; }
 .eleg .chip i { width: 10px; height: 10px; border-radius: 2px; }
 .eleg .chip small { color: var(--muted); font-variant-numeric: tabular-nums; }
+.chart { position: relative; }
+.chart svg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.chart .hov line { stroke: var(--muted); stroke-dasharray: 3 3; }
+.chart .hov circle { stroke: var(--surface); stroke-width: 2; }
+.ctip { position: absolute; top: 0; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font: 12px/1.45 var(--font); color: var(--text); box-shadow: 0 4px 14px var(--shadow-3, rgba(0,0,0,.18)); white-space: nowrap; z-index: 2; }
+.ctip b { display: block; font-weight: 600; margin-bottom: 2px; }
+.ctip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+.ctip small { color: var(--muted); font-size: 12px; }
 #eraChart .empty { padding: 28px 0; text-align: center; color: var(--muted); font-size: 14px; }
 </style>
 </head>
@@ -513,7 +521,9 @@ function drawTable(all) {
 }
 
 // ---------- line chart (product drawer + era chart) ----------
-// series: [{ color, cls?, pts: [{ t (ms), y }] }]; opt: { fmtY, hline: { y, cls } , label }
+// series: [{ color, cls?, name?, pts: [{ t (ms), y, note? }] }]; opt: { fmtY, fmtTip?, hline: { y, cls } , label }
+// Hover / arrow keys (2026-11-19, user: "a pricing point when hovering on the trendline"): a guide line at the nearest
+// week, a dot per line and a box with each line's value (fmtTip, else fmtY) and its note.
 function lineChart(box, series, opt) {
   const all = series.flatMap(l => l.pts), ys = all.map(p => p.y).concat(opt.hline ? [opt.hline.y] : []);
   if (!all.length) { box.innerHTML = ''; return; }
@@ -531,7 +541,30 @@ function lineChart(box, series, opt) {
     ${ticks.map(t => `<line x1="${left}" x2="${W - right}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${left - 6}" y="${y(t) + 4}" text-anchor="end">${opt.fmtY(t)}</text>`).join('')}
     ${months.map(t => `<text x="${x(t)}" y="${H - 6}" text-anchor="middle">${mf.format(t)}</text>`).join('')}
     ${opt.hline ? `<line class="${opt.hline.cls}" x1="${left}" x2="${W - right}" y1="${y(opt.hline.y)}" y2="${y(opt.hline.y)}" stroke="${opt.hline.color || 'var(--text)'}" stroke-width="1.5" stroke-dasharray="5 4"/>` : ''}
-    ${series.map(l => `<polyline class="${l.cls || ''}" fill="none" stroke="${l.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${l.pts.map(p => x(p.t).toFixed(1) + ',' + y(p.y).toFixed(1)).join(' ')}"/>`).join('')}</svg>`;
+    ${series.map(l => `<polyline class="${l.cls || ''}" fill="none" stroke="${l.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${l.pts.map(p => x(p.t).toFixed(1) + ',' + y(p.y).toFixed(1)).join(' ')}"/>`).join('')}
+    <g class="hov" style="display:none"><line y1="${top}" y2="${H - bottom}"/>${series.map(l => `<circle r="4" fill="${l.color}"/>`).join('')}</g></svg><div class="ctip" hidden></div>`;
+  const svg = box.querySelector('svg'), g = svg.querySelector('.hov'), tip = box.querySelector('.ctip'), dots = g.querySelectorAll('circle');
+  const times = [...new Set(all.map(p => p.t))].sort((a, b) => a - b), df = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  const near = (pts, t) => pts.reduce((b, p) => (Math.abs(p.t - t) < Math.abs(b.t - t) ? p : b), pts[0]);
+  let at = -1;
+  const show = i => {
+    at = Math.max(0, Math.min(times.length - 1, i)); const t = times[at], X = x(t);
+    g.style.display = ''; g.querySelector('line').setAttribute('x1', X); g.querySelector('line').setAttribute('x2', X);
+    const rows = series.map((l, k) => { const p = l.pts.length ? near(l.pts, t) : null;
+      if (p) { dots[k].setAttribute('cx', x(p.t)); dots[k].setAttribute('cy', y(p.y)); dots[k].style.display = ''; } else dots[k].style.display = 'none';
+      return p ? `<div><i style="background:${l.color}"></i>${l.name ? esc(l.name) + ' ' : ''}<strong>${esc((opt.fmtTip || opt.fmtY)(p.y))}</strong>${p.note ? ` <small>${esc(p.note)}</small>` : ''}</div>` : ''; }).join('');
+    tip.innerHTML = `<b>${df.format(t)}</b>${rows}`; tip.hidden = false;
+    const k = box.clientWidth / W, px = X * k, w = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(box.clientWidth - w, px + 12 + w > box.clientWidth ? px - w - 12 : px + 12)) + 'px';
+  };
+  const hide = () => { g.style.display = 'none'; tip.hidden = true; };
+  svg.setAttribute('tabindex', '0');
+  svg.addEventListener('pointermove', e => { const r = svg.getBoundingClientRect(), t = t0 + ((e.clientX - r.left) * W / r.width - left) / ((W - left - right) || 1) * ((t1 - t0) || 1);
+    let i = 0; times.forEach((v, j) => { if (Math.abs(v - t) < Math.abs(times[i] - t)) i = j; }); show(i); });
+  svg.addEventListener('pointerleave', () => { if (document.activeElement !== svg) hide(); });
+  svg.addEventListener('focus', () => show(at < 0 ? times.length - 1 : at));
+  svg.addEventListener('blur', hide);
+  svg.addEventListener('keydown', e => { const d = { ArrowLeft: -1, ArrowRight: 1, Home: -1e9, End: 1e9 }[e.key]; if (d) { e.preventDefault(); show(at + d); } else if (e.key === 'Escape') svg.blur(); });
 }
 
 // ---------- era compare chart ----------
@@ -548,8 +581,8 @@ function eraSeries(rs) {
     const ps = q.filter(r => r.era === era).map(r => ({ base: mean(r.h.slice(0, 4).map(w => w[1])), h: r.h.map(w => [Date.parse(w[0]), w[1]]) }));
     const pts = [];
     grid.forEach(t => {
-      const v = []; ps.forEach(p => { let last = null; for (const w of p.h) { if (w[0] > t + 1e6) break; last = w[1]; } if (last != null) v.push((last / p.base - 1) * 100); });
-      if (v.length) pts.push({ date: new Date(t).toISOString().slice(0, 10), t, pct: median(v) });
+      const v = [], pr = []; ps.forEach(p => { let last = null; for (const w of p.h) { if (w[0] > t + 1e6) break; last = w[1]; } if (last != null) { v.push((last / p.base - 1) * 100); pr.push(last); } });
+      if (v.length) pts.push({ date: new Date(t).toISOString().slice(0, 10), t, pct: median(v), price: median(pr), n: v.length });
     });
     return { era, n: ps.length, pts };
   });
@@ -558,8 +591,9 @@ function drawEra(all) {
   const ser = eraSeries(all);
   $('eraLegend').innerHTML = ser.map(s => `<span class="chip"><i style="background:${ERA_COLOR[s.era] || 'var(--muted)'}"></i>${esc(s.era)} <small>(${n(s.n)})</small></span>`).join('');
   if (!ser.length) { $('eraChart').innerHTML = '<div class="empty">Not enough sales in this filter (needs products with 8+ sold weeks).</div>'; return; }
-  lineChart($('eraChart'), ser.map(s => ({ color: ERA_COLOR[s.era] || 'var(--muted)', pts: s.pts.map(p => ({ t: p.t, y: p.pct })) })),
-    { fmtY: v => (v > 0 ? '+' : '') + Math.round(v) + '%', label: 'Median price change by era', h: 240, hline: { y: 0, cls: 'zero', color: 'var(--muted)' } });
+  // hover note: the era's median sold price that week (the products in the filter), so a Type filter gives a real price
+  lineChart($('eraChart'), ser.map(s => ({ color: ERA_COLOR[s.era] || 'var(--muted)', name: s.era, pts: s.pts.map(p => ({ t: p.t, y: p.pct, note: `median ${fmtCur(toCur(p.price))}, ${n(p.n)} products` })) })),
+    { fmtY: v => (v > 0 ? '+' : '') + Math.round(v) + '%', fmtTip: v => (v > 0 ? '+' : '') + v.toFixed(1) + '%', label: 'Median price change by era', h: 240, hline: { y: 0, cls: 'zero', color: 'var(--muted)' } });
 }
 
 // ---------- product drawer: price check ----------
