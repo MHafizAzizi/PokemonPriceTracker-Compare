@@ -415,7 +415,7 @@ section { margin-bottom: 28px; }
 </div>
 <button type="button" id="detScrim" aria-label="Close product" hidden></button>
 <div id="det" role="dialog" aria-modal="true" aria-labelledby="detH" hidden></div>
-<script src="sealed.js?v=ab57d45afb"></script>
+<script src="sealed.js?v=44569ef377"></script>
 <script>
 // Sealed products page (2026-11-16, spec docs/superpowers/specs/2026-11-16-sealed-page-design.md): built for judging a local
 // shop price. Data: data/sealed.js from scripts/sealed_prices.py (weekly TCGplayer sold prices, last 52 weeks, USD).
@@ -427,12 +427,15 @@ const median = v => { const s = [...v].sort((a, b) => a - b), m = s.length >> 1;
 const mean = v => v.reduce((t, x) => t + x, 0) / v.length;
 
 // ---------- prices ----------
-// fair price = median of the last 4 sold weeks (one odd week can't set it); range = their low / high
+// fair price = median of the last 4 sold weeks (one odd week can't set it); range = their low / high.
+// Trend-aware (user, 2026-11-24): when all 4 weeks move the same way every week, the median lags, so the newest week is
+// the fair price and `trend` says which way ('up' / 'down').
 function fairOf(h) {
   h = h.filter(w => w[1] > 0);   // a $0 week is a data gap, not a price (sealed_prices.py drops them too)
   if (!h.length) return null;
-  const last = h.slice(-4), p = last.map(w => w[1]);
-  return { fair: median(p), lo: Math.min(...p), hi: Math.max(...p), n: last.length, last: h[h.length - 1][0] };
+  const last = h.slice(-4), p = last.map(w => w[1]), d = p.slice(1).map((v, i) => v - p[i]);
+  const trend = p.length === 4 ? (d.every(x => x > 0) ? 'up' : d.every(x => x < 0) ? 'down' : undefined) : undefined;
+  return { fair: trend ? p[3] : median(p), lo: Math.min(...p), hi: Math.max(...p), n: last.length, last: h[h.length - 1][0], trend };
 }
 const weeksAgo = (week, ref) => Math.round((Date.parse(ref) - Date.parse(week)) / 6048e5);
 const STALE_WEEKS = 12;
@@ -457,7 +460,10 @@ function parsePrice(text) {
 const toCur = usd => (UI.cur === 'usd' ? usd : usd * D.fx.usd_myr);   // a USD price in the page's currency
 
 let ROWS = null;
-const rows = () => ROWS || (ROWS = D.products.map(p => ({ ...p, fairInfo: fairOf(p.h), change: changeOf(p.h), sold: p.h.reduce((t, w) => t + w[2], 0) })));
+// fair price vs US launch MSRP (data/sealed_msrp.csv, hand table), in %; null without one of the two
+const vsMsrpOf = (f, msrp) => (f && msrp ? (f.fair / msrp - 1) * 100 : null);
+const rows = () => ROWS || (ROWS = D.products.map(p => { const fairInfo = fairOf(p.h);
+  return { ...p, fairInfo, change: changeOf(p.h), sold: p.h.reduce((t, w) => t + w[2], 0), vsMsrp: vsMsrpOf(fairInfo, p.msrp) }; }));
 
 // ---------- filters ----------
 const ERA_ORDER = ['XY', 'Sun & Moon', 'Sword & Shield', 'Scarlet & Violet', 'Mega Evolution'];
@@ -466,7 +472,7 @@ const F = { q: '', era: [], type: [], set: [], lang: [], sort: 'sold', dir: 'asc
 const match = (r, skip) => FK.every(k => k === skip || !F[k].length || F[k].includes(r[k]))
   && (!F.q || F.q.split(/\s+/).every(w => (r.name + ' ' + r.set + ' ' + r.type + ' ' + r.era).toLowerCase().includes(w)));
 // sort keys: natural order first ('asc'); 'desc' flips it; products without the sort value stay last either way
-const SORTS = { sold: [r => r.sold, -1], cheapest: [r => (r.fairInfo ? r.fairInfo.fair : null), 1], rise: [r => r.change, -1], name: [r => r.name, 1] };
+const SORTS = { sold: [r => r.sold, -1], cheapest: [r => (r.fairInfo ? r.fairInfo.fair : null), 1], rise: [r => r.change, -1], msrp: [r => r.vsMsrp, -1], name: [r => r.name, 1] };
 function filtered() {
   const [get, d] = SORTS[F.sort] || SORTS.sold, s = F.dir === 'desc' ? -d : d;
   const out = rows().filter(r => match(r, null));
@@ -497,10 +503,11 @@ function fairCell(r) {
   const f = r.fairInfo;
   if (!f) return '<td class="r fairc muted"><span class="sm">no recent sales</span></td>';
   const stale = isStale(r), thin = f.n < 4;
-  const note = stale ? `last sold ${weeksAgo(f.last, D.date)} weeks ago` : thin ? `thin data, ${f.n} wk${f.n > 1 ? 's' : ''}` : '';
+  const note = stale ? `last sold ${weeksAgo(f.last, D.date)} weeks ago` : thin ? `thin data, ${f.n} wk${f.n > 1 ? 's' : ''}`
+    : f.trend ? `${f.trend === 'up' ? 'rising' : 'falling'}, newest week` : '';
   return `<td class="r fairc${stale || thin ? ' muted' : ''}"><b>${money(f.fair)}</b>${note ? `<div class="sm">${note}</div>` : ''}</td>`;
 }
-const TH = [['name', 'Product', ''], [null, 'Type', 'hs'], ['cheapest', 'Fair price', 'r'], [null, 'Range, 4 wks', 'r hs'], ['rise', '52 wks', 'r'], ['sold', 'Sold', 'r']];
+const TH = [['name', 'Product', ''], [null, 'Type', 'hs'], ['cheapest', 'Fair price', 'r'], ['msrp', 'MSRP', 'r hs'], [null, 'Range, 4 wks', 'r hs'], ['rise', '52 wks', 'r'], ['sold', 'Sold', 'r']];
 const th = ([k, label, cls]) => { if (!k) return `<th class="${cls}">${label}</th>`; const on = F.sort === k;
   return `<th class="${cls}"${on ? ` aria-sort="${(SORTS[k][1] > 0) === (F.dir === 'asc') ? 'ascending' : 'descending'}"` : ''}><button type="button" class="sh${on ? ' on' : ''}" data-sort="${k}">${label}<span aria-hidden="true">${on ? (F.dir === 'asc' ? '↓' : '↑') : '↕'}</span></button></th>`; };
 function drawTable(all) {
@@ -515,9 +522,10 @@ function drawTable(all) {
   $('tBody').innerHTML = out.map(r => `<tr data-id="${r.id}" tabindex="0"><td class="img">${img(r)}</td>
       <td class="card"><span class="cn">${esc(r.name)}</span><div class="sm">${esc(r.lang)} · ${esc(r.set)}</div></td>
       <td class="hs">${esc(r.type)}</td>${fairCell(r)}
+      <td class="r num hs">${r.msrp ? `${money(r.msrp)}${r.vsMsrp != null ? `<div class="sm ${r.vsMsrp > 0 ? 'up' : 'dn'}">${pct(r.vsMsrp)}</div>` : ''}` : '<span class="sm muted">–</span>'}</td>
       <td class="r num hs sm">${r.fairInfo && r.fairInfo.n > 1 ? money(r.fairInfo.lo) + ' – ' + money(r.fairInfo.hi) : ''}</td>
       <td class="r num ${r.change > 0 ? 'up' : r.change < 0 ? 'dn' : ''}">${pct(r.change)}</td><td class="r num">${n(r.sold)}</td></tr>`).join('')
-    || '<tr><td colspan="7" class="muted">No products match. <button type="button" class="linkish" data-reset>Reset filters</button></td></tr>';
+    || '<tr><td colspan="8" class="muted">No products match. <button type="button" class="linkish" data-reset>Reset filters</button></td></tr>';
 }
 
 // ---------- line chart (product drawer + era chart) ----------
@@ -607,11 +615,11 @@ function openDet(id) {
   const r = rows().find(x => x.id === Number(id)); if (!r) return;
   detId = r.id; detFrom = document.activeElement;
   const f = r.fairInfo, stale = isStale(r);
-  const when = f ? (stale ? `last sold ${weeksAgo(f.last, D.date)} weeks ago · old data, check eBay` : f.n < 4 ? `thin data: ${f.n} sold week${f.n > 1 ? 's' : ''}` : `last sold week of ${f.last}`) : '';
+  const when = f ? (stale ? `last sold ${weeksAgo(f.last, D.date)} weeks ago · old data, check eBay` : f.n < 4 ? `thin data: ${f.n} sold week${f.n > 1 ? 's' : ''}` : `last sold week of ${f.last}${f.trend ? ` · ${f.trend === 'up' ? 'rising' : 'falling'} 4 weeks in a row, so fair = newest week` : ''}`) : '';
   $('det').innerHTML = `<button type="button" id="detClose" aria-label="Close">×</button>
     <img class="dimg" alt="" src="https://tcgplayer-cdn.tcgplayer.com/product/${encodeURIComponent(r.id)}_200w.jpg" onerror="this.remove()">
     <h2 id="detH">${esc(r.name)}</h2><div class="sm">${esc(r.lang)} · ${esc(r.set)} · ${esc(r.type)} · ${esc(r.era)}</div>
-    ${f ? `<div class="dfair">Fair price<b>${money(f.fair)}</b>${f.n > 1 ? `range ${money(f.lo)} – ${money(f.hi)}, ` : ''}${n(r.sold)} sold in 52 weeks<div class="dnote">${when}</div></div>
+    ${f ? `<div class="dfair">Fair price<b>${money(f.fair)}</b>${f.n > 1 ? `range ${money(f.lo)} – ${money(f.hi)}, ` : ''}${n(r.sold)} sold in 52 weeks${r.msrp ? `<div class="dnote">${r.msrp_jpy ? `JP MSRP ¥${n(r.msrp_jpy)} (${money(r.msrp)} today)` : `US MSRP ${money(r.msrp)}`}, fair price ${pct(r.vsMsrp)} vs MSRP</div>` : ''}<div class="dnote">${when}</div></div>
     <label class="pbox" for="price">Price you see <span>${UI.cur === 'usd' ? '$' : 'RM'}</span><input id="price" inputmode="decimal" autocomplete="off" placeholder="${Math.round(toCur(f.fair))}"></label>
     <div id="zone" style="--z1:${zpos(0.85)}%;--z2:${zpos(1.3)}%"><span class="mark" hidden></span></div>
     <div class="zl"><span>Deal ≤ ${fmtCur(zoneEdges(toCur(f.fair)).deal)}</span><span>Fair</span><span>Overpriced ≥ ${fmtCur(zoneEdges(toCur(f.fair)).over)}</span></div>
@@ -654,7 +662,7 @@ function render() {
   document.querySelectorAll('[data-cur]').forEach(b => b.setAttribute('aria-pressed', b.dataset.cur === UI.cur));
   if ($('q').value.trim().toLowerCase() !== F.q) $('q').value = F.q;
   const sold = rows().filter(r => r.h.length).length;
-  $('sub').textContent = `Fair price = median of the last 4 sold weeks on TCGplayer. ${n(rows().length)} products, ${n(sold)} with recent sales.`;
+  $('sub').textContent = `Fair price = median of the last 4 sold weeks on TCGplayer (newest week when they rise or fall every week). ${n(rows().length)} products, ${n(sold)} with recent sales.`;
   drawTable(all);
   drawEra(all);
 }
@@ -669,7 +677,7 @@ function render() {
     + seg('JP vs EN', jp) + seg('Sealed', '', true);
 })();
 $('fx').textContent = `TCGplayer sold prices to ${D.date}, USD 1 = RM ${D.fx.usd_myr.toFixed(2)} (${D.fx.date})`;
-$('foot').innerHTML = '<b>How it is priced.</b> Weekly TCGplayer market price of each unopened product (last 52 weeks), the same source as the product page chart. Fair price = median of the last 4 weeks with sales; range = their lowest and highest week. 52 wks = last 4 sold weeks against the first 4, shown with 8+ sold weeks.';
+$('foot').innerHTML = '<b>How it is priced.</b> Weekly TCGplayer market price of each unopened product (last 52 weeks), the same source as the product page chart. Fair price = median of the last 4 weeks with sales, or the newest week when those 4 rise or fall every week; range = their lowest and highest week. 52 wks = last 4 sold weeks against the first 4, shown with 8+ sold weeks. MSRP = launch retail price from official and retailer announcements: US MSRP for EN, Japanese MSRP (tax included) for JP at today's yen rate (– = not found yet); the % under it is the fair price against it.';
 
 // ---------- events ----------
 const redraw = () => { page = 0; render(); };

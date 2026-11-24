@@ -53,6 +53,11 @@ Prices on these pages are snapshots from the date shown on each page, not live p
 
 ## Updates
 
+**24 November 2026**
+- **Sealed**: new **MSRP** column (US launch retail price, with how far the fair price is above or below it;
+  sortable) for the special sets from Sun & Moon on and the Mega Evolution sets. The fair price now follows a product
+  that rose or fell four weeks in a row (newest week) instead of lagging behind it.
+
 **16 November 2026**
 - **Sealed products** is now its own page: fair price in RM, a price check box and an era chart. It left the card
   tracker, which loads faster. Every page has the new **Cards | Market | JP vs EN | Sealed** switch.
