@@ -415,7 +415,7 @@ section { margin-bottom: 28px; }
 </div>
 <button type="button" id="detScrim" aria-label="Close product" hidden></button>
 <div id="det" role="dialog" aria-modal="true" aria-labelledby="detH" hidden></div>
-<script src="sealed.js?v=093498224c"></script>
+<script src="sealed.js?v=5a5312a6d8"></script>
 <script>
 // Sealed products page (2026-11-16, spec docs/superpowers/specs/2026-11-16-sealed-page-design.md): built for judging a local
 // shop price. Data: data/sealed.js from scripts/sealed_prices.py (weekly TCGplayer sold prices, last 52 weeks, USD).
@@ -677,7 +677,7 @@ function render() {
     + seg('JP vs EN', jp) + seg('Sealed', '', true);
 })();
 $('fx').textContent = `TCGplayer sold prices to ${D.date}, USD 1 = RM ${D.fx.usd_myr.toFixed(2)} (${D.fx.date})`;
-$('foot').innerHTML = '<b>How it is priced.</b> Weekly TCGplayer market price of each unopened product (last 52 weeks), the same source as the product page chart. Fair price = median of the last 4 weeks with sales, or the newest week when those 4 rise or fall every week; range = their lowest and highest week. 52 wks = last 4 sold weeks against the first 4, shown with 8+ sold weeks. MSRP = launch retail price from official and retailer announcements: US MSRP for EN, Japanese MSRP (tax included) for JP at today's yen rate (– = not found yet); the % under it is the fair price against it.';
+$('foot').innerHTML = '<b>How it is priced.</b> Weekly TCGplayer market price of each unopened product (last 52 weeks), the same source as the product page chart. Fair price = median of the last 4 weeks with sales, or the newest week when those 4 rise or fall every week; range = their lowest and highest week. 52 wks = last 4 sold weeks against the first 4, shown with 8+ sold weeks. MSRP = launch retail price from official and retailer announcements: US MSRP for EN, Japanese MSRP (tax included) for JP at the current yen rate (– = not found yet); the % under it is the fair price against it.';
 
 // ---------- events ----------
 const redraw = () => { page = 0; render(); };
