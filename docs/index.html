@@ -499,7 +499,7 @@ button:active:not(:disabled), .btn:active, a.pill-link:active { transform: trans
   }
   @media (min-width: 901px) {
     .det { position: fixed; right: 0; top: 0; width: var(--det-w); z-index: 20; box-shadow: -12px 0 40px var(--shadow-1); }
-    .shell:not(.no-det) .main { padding-right: calc(var(--det-w) + 40px); }   /* open panel sits beside the cards, not over them */
+    .shell:not(.no-det) .main { margin-right: var(--det-w); padding-right: 40px; }   /* open panel sits beside the cards, not over them; margin, not padding: Firefox re-runs the container queries only when .main's own box resizes (2026-11-24) */
     .main { padding: 0 40px 48px; }
     .topbar { margin: 0 -40px 24px; padding: 0 40px; }
   }
@@ -1000,12 +1000,12 @@ function listingsOf(cardId) {
 }
 // Benchmark shop (2026-11-19, user): TCGplayer market prices from tcgcsv_prices.py are a yardstick, not a recorded listing.
 // shopsOf = real listings only (cheapest, Shops count, price / shop filters); benchOf = the benchmark prices, shown apart.
-const isBench = st => /tcgcsv/i.test(st.notes || '');
+const isBench = st => /tcgcsv|poketrace/i.test(st.notes || '');   // + eBay sold medians from ebay_bench.py (2026-11-24)
 const shopsOf = cardId => listingsOf(cardId).filter(l => !isBench(l.st));
 const benchOf = cardId => listingsOf(cardId).filter(l => isBench(l.st) && hasPrice(l.p));
 // shown in RM at the Rates (user, 2026-11-19); the stored price stays USD, in the tooltip
 const benchRM = l => rm(inRM(Number(l.p.price), l.st.currency));
-const benchLine = x => benchOf(x.id).map(l => `${esc(l.st.name)} ${esc(benchRM(l))}`).join(' · ');
+const benchLine = x => benchOf(x.id).map(l => `${esc(l.st.name)} ${esc(benchRM(l))}`).join('<br>');   // one line each: TCGplayer, eBay sold (2026-11-24)
 const sellerNames = () => [...new Set(Object.values(S.prices).flatMap(r => Object.values(r).map(p => p.seller).filter(Boolean)))].sort();
 const cheapestOf = id => { const best = bestStores(id); return listingsOf(id).filter(l => best.has(l.key)).map(l => `${listLabel(l.st, l.seller)} ${fmt(l.st, l.p)}`).join(', ') || '-'; };
 
@@ -2974,7 +2974,7 @@ function renderDet() {
       <div><h2>${esc(x.name)}</h2>${tw ? `<p class="muted">Scan: ${esc((LANGS.find(([c]) => c === tw.lang) || [tw.lang, tw.lang])[1])} print (same art)</p>` : ''}${x.alt ? `<p class="muted">${esc(x.alt)}</p>` : ''}<p class="muted">${esc(x.set || '')}${x.number ? ' · ' + esc(x.number) : ''}</p>${metaLine(x)}${badge(x)}</div></div>
     <h3>Shops (${shopsOf(x.id).length})</h3>${x.owned && L ? '<p class="muted">Owned: these prices are kept as history.</p>' : ''}${L || '<p class="muted">No shops yet.</p>'}
     <button type="button" class="add-wide" data-act="addprice" data-card="${x.id}">+ Add shop or seller</button>
-    ${benchOf(x.id).length ? `<h3>Benchmark</h3>${benchOf(x.id).map(l => `<button type="button" class="li" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Market price, not a listing"><span class="who">${esc(l.st.name)}</span><span class="ven">market price · ${esc(fmt(l.st, l.p))}${l.p.date ? ' · ' + esc(l.p.date) : ''}</span><span class="p">${esc(benchRM(l))}</span></button>`).join('')}` : ''}
+    ${benchOf(x.id).length ? `<h3>Benchmark</h3>${benchOf(x.id).map(l => `<button type="button" class="li" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Benchmark, not a listing"><span class="who">${esc(l.st.name)}</span><span class="ven">${/poketrace/i.test(l.st.notes) ? 'sold median' + (l.p.note ? ' · ' + esc(l.p.note) : '') : 'market price'} · ${esc(fmt(l.st, l.p))}${l.p.date ? ' · ' + esc(l.p.date) : ''}</span><span class="p">${esc(benchRM(l))}</span></button>`).join('')}` : ''}
     ${o.length ? `<h3>Other languages</h3>${o.map(k => `<div class="ol" data-lang="${esc(k.lang)}"><span>${esc((LANGS.find(([c]) => c === k.lang) || [k.lang, k.lang])[1])}</span><span${k.best === low && low < own ? ' class="best"' : ''}>${k.best === Infinity ? 'no price' : rm(k.best)}</span></div>`).join('')}` : ''}
     ${u.length ? `${o.length ? '' : '<h3>Other languages</h3>'}${u.map((r, i) => `<div class="oln" data-lang="${esc(r.lang)}"><span>${(i ? u[i - 1].lang : o.length ? o[o.length - 1].lang : '') === r.lang ? '' : esc((LANGS.find(([c]) => c === r.lang) || [r.lang, r.lang])[1])}</span><span>${esc(r.set)} · ${esc(r.number)}${r.rarity ? ' · ' + esc(tierOf(r.rarity, r)) : ''} — not in your collections</span></div>`).join('')}` : ''}
     <label class="det-found"><input type="checkbox" data-found="${x.id}"${x.found ? ' checked' : ''}> Found / available</label>
@@ -3040,7 +3040,7 @@ function render() {
       const name = l.seller || l.st.name, sub = l.seller ? shopLabel(l.st) : (l.st.venue && l.st.venue !== l.st.name ? l.st.venue : '');
       return `<button type="button" class="chip${best.has(l.key) ? ' best' : ''}" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Edit this price"><span class="cw">${esc(name)}</span>${sub ? `<span class="muted" title="${esc(sub)}"> · ${esc(sub)}</span>` : ''}${hasPrice(l.p) ? `<b>${esc(fmt(l.st, l.p))}</b>` : '<i>no price</i>'}</button>`;
     }).join('');
-    const bch = benchOf(x.id).map(l => `<button type="button" class="chip benchc" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Benchmark (market price, not a listing)"><span class="cw">${esc(l.st.name)}</span><span class="muted"> · benchmark</span><b title="${esc(fmt(l.st, l.p))}">${esc(benchRM(l))}</b></button>`).join('');
+    const bch = benchOf(x.id).map(l => `<button type="button" class="chip benchc" data-act="price" data-card="${x.id}" data-store="${esc(l.key)}" title="Benchmark (not a listing)"><span class="cw">${esc(l.st.name)}</span><span class="muted"> · benchmark</span><b title="${esc(fmt(l.st, l.p))}">${esc(benchRM(l))}</b></button>`).join('');
     return `<div class="chips">${chips}${bch}<button type="button" class="chip add" data-act="addprice" data-card="${x.id}" aria-label="Add a shop for ${esc(x.name)}">+ Add shop</button></div>`;
   };
 
@@ -3064,7 +3064,7 @@ function render() {
       <td class="clang"><span class="pill p-lang l-${esc(lang)}">${esc(lang)}</span></td>
       <td class="crar">${x.rarity ? `<span class="pill p-rar r-${rarLetters(x.rarity)}" title="${esc(x.rarity)}">${esc(rarLetters(x.rarity))}</span>` : ''}</td>
       <td class="cfin">${finPill(x.variant)}</td>
-      <td class="num ccheap">${cheap ? `<b title="${esc((cheap.seller || cheap.st.name) + (cheap.seller ? ' · ' + shopLabel(cheap.st) : ''))}">${esc(fmt(cheap.st, cheap.p))}</b>` : '<span class="muted">—</span>'}${bl ? `<span class="bench" title="Benchmark (market price, not a listing): ${esc(benchOf(x.id).map(l => fmt(l.st, l.p)).join(', '))}">${bl}</span>` : ''}</td>
+      <td class="num ccheap">${cheap ? `<b title="${esc((cheap.seller || cheap.st.name) + (cheap.seller ? ' · ' + shopLabel(cheap.st) : ''))}">${esc(fmt(cheap.st, cheap.p))}</b>` : '<span class="muted">—</span>'}${bl ? `<span class="bench" title="Benchmark (not a listing): ${esc(benchOf(x.id).map(l => fmt(l.st, l.p)).join(', '))}">${bl}</span>` : ''}</td>
       <td class="num cshops">${n ? `<button type="button" class="linkish" data-act="shops" data-id="${x.id}" aria-expanded="${open}" aria-label="${n} shop${n === 1 ? '' : 's'} for ${who}">${n} ${open ? '▴' : '▾'}</button>` : `<button type="button" class="linkish" data-act="addprice" data-card="${x.id}" aria-label="Add a shop for ${who}">+</button>`}</td>
       <td class="acts"><button type="button" class="icon-btn" data-act="editcard" data-id="${x.id}" aria-label="Edit: ${who}" title="Edit card"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button><button type="button" class="icon-btn own${x.owned ? ' on' : ''}" data-act="own" data-id="${x.id}" aria-pressed="${!!x.owned}" aria-label="Owned: ${who}" title="${x.owned ? 'Owned. Click to undo' : 'I have this card: mark it owned (the row and its prices stay)'}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></button></td></tr>
       ${open ? `<tr class="exp"><td class="gap"></td><td colspan="9">${chipsFor(x)}</td></tr>` : ''}`;
