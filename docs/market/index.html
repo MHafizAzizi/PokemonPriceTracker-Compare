@@ -352,6 +352,7 @@ section { margin-bottom: 28px; }
       <button type="button" id="fopen" class="fopen">Filters</button></header>
     <section id="summary-s"><div id="summary"></div></section>
     <section id="cost-s"><h2 class="h2">Cost to complete<small id="costN"></small></h2><div class="selw"><table class="dt ct"><thead id="costHead"></thead><tbody id="costBody"></tbody></table></div><p class="note" id="costNote"></p></section>
+    <section id="buy-s" hidden><h2 class="h2">Good time to buy<small id="buyN"></small></h2><div class="selw"><table class="dt ct"><thead><tr><th>Card</th><th>Finish</th><th class="r">Now</th><th class="r">Usual</th><th class="r">vs usual</th></tr></thead><tbody id="buyBody"></tbody></table></div><p class="note" id="buyNote"></p></section>
     <section><h2 class="h2">Eras<small>click a row to filter</small></h2><div id="eraRows" class="eras2"></div></section>
     <section class="two">
       <div><h2 class="h2">Best deals<small id="dealsN"></small></h2><div id="dealList" class="its"></div></div>
@@ -368,7 +369,7 @@ section { margin-bottom: 28px; }
     <footer id="foot" class="foot"></footer>
   </main>
 </div>
-<script src="market_compare.js?v=935487eaef"></script>
+<script src="market_compare.js?v=e205aff9d3"></script>
 <script>
 // Market report · facet rail (2026-11-09; mock design-demos/market-2.html). One filter state drives every section: summary, eras, deals,
 // overpriced, sellers and the listings table. Listings over +CHECK% are tagged "Check" and kept out of the
@@ -508,7 +509,7 @@ function draw() {
   $('overN').textContent = over.length ? `top ${Math.min(8, over.length)} of ${n(over.length)}` : '';
   $('dealList').innerHTML = deals.slice(0, 8).map(line).join('') + (deals.length > 8 ? `<button type="button" class="linkish more" data-show="deal">Show all ${n(deals.length)} deals in the table</button>` : '') || '<p class="muted">No deals in this filter.</p>';
   $('overList').innerHTML = over.slice(0, 8).map(line).join('') + (over.length > 8 ? `<button type="button" class="linkish more" data-show="overpriced">Show all ${n(over.length)} overpriced in the table</button>` : '') || '<p class="muted">Nothing overpriced in this filter.</p>';
-  drawCost();
+  drawCost(); drawBuy();
   if (!COL.rows.length) {   // no shop listings yet: Cost to complete only
     document.querySelectorAll('#main > section:not(#cost-s)').forEach(x => { x.style.display = 'none'; });
     $('sub').textContent = 'No shop listings recorded yet'; return;
@@ -539,6 +540,22 @@ function drawCost() {
   $('costBody').innerHTML = tot.need ? Object.values(G).filter(g => g.need).sort((a, b) => ix(a.k) - ix(b.k) || b.need - a.need).map(g => row(g, esc(g.k))).join('') + row(tot, 'All', 'tot')
     : `<tr><td colspan="7" class="muted">${tot.all ? 'You own every card in this filter.' : 'No cards in this filter.'}</td></tr>`;
   $('costNote').textContent = `Market is TCGplayer for EN; JP is ${COL.jp_market || 'Mercari median (else Cardmarket), normal finish only'}; CN and KR have no market price. Local buy is the market price, but at least ${rm(TH.bulk_rm)} a card. Both total only the priced cards. Cheapest listed is the lowest shop price per card, with the card count. Shops vs market compares the cards that have both.`;
+}
+
+// Good time to buy (2026-11-26): unowned EN cards whose TCGplayer price now (30-day median of sale days) is BELOW% or more under
+// their 12-month median (PokeTrace history, poketrace_history.signal). Hits only: $15+ now (memory price-analysis-hits-only).
+const HIT_USD = 15;
+function drawBuy() {
+  const all = (COL.complete || []).filter(c => c.t && (!F.lang.length || F.lang.includes(c.lang)) && (!F.era.length || F.era.includes(c.era)) && (!F.set.length || F.set.includes(c.lang + '|' + c.set))
+    && (!F.rarity.length || F.rarity.includes(c.rarity)));
+  $('buy-s').hidden = !all.length;
+  if (!all.length) return;
+  const fx = MCS.fx.usd_myr, below = all.filter(c => c.t.tag === 'below'), hits = below.filter(c => c.t.now >= HIT_USD).sort((a, b) => a.t.pct - b.t.pct);
+  $('buyN').textContent = hits.length ? `${n(hits.length)} ${hits.length === 1 ? 'card' : 'cards'} under the usual price` : '';
+  $('buyBody').innerHTML = hits.length ? hits.map(c => `<tr><td>${esc(c.name)} <span class="muted">${esc(c.set)} ${esc(c.number)}</span>${c.t.near_low ? ' <span class="muted">· 12-month low</span>' : ''}</td>
+    <td>${esc(c.variant)}</td><td class="r"><b>${rm(c.t.now * fx)}</b></td><td class="r">${rm(c.t.usual * fx)}</td><td class="r dn">${pct(c.t.pct)}</td></tr>`).join('')
+    : `<tr><td colspan="5" class="muted">No unowned card worth $${HIT_USD}+ is under its usual price right now.</td></tr>`;
+  $('buyNote').textContent = `Now is the TCGplayer median of the last 30 days, usual the median of the last 12 months, counting only days with a sale (PokeTrace), both in RM at today's rate. Listed: unowned EN cards worth $${HIT_USD}+ that are 15% or more under usual. ${n(below.length - hits.length)} cheaper ${below.length - hits.length === 1 ? 'card is' : 'cards are'} under usual too; ${n(all.filter(c => c.t.tag === 'above').length)} of ${n(all.length)} unowned cards with history are 15% or more above usual.`;
 }
 
 function drawSellers(rows) {
