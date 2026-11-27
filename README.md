@@ -53,6 +53,12 @@ Prices on these pages are snapshots from the date shown on each page, not live p
 
 ## Updates
 
+**27 November 2026**
+- **Sealed**: new **Set type** filter: Main set, Special set, Deck, Promo, or No set (tins, collection boxes and
+  blisters with packs from many sets). The era chart follows it, so you can compare special sets with main sets.
+- **Cards**: **Select** in the list turns the Found ticks into select ticks, to mark owned or delete many cards at
+  once. **Delete these N** deletes every card in the filter. A copy is kept under Restore before every delete.
+
 **24 November 2026**
 - **Sealed**: new **MSRP** column (US launch retail price, with how far the fair price is above or below it;
   sortable) for the special sets from Sun & Moon on and the Mega Evolution sets. The fair price now follows a product
