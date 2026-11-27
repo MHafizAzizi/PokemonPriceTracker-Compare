@@ -415,7 +415,7 @@ section { margin-bottom: 28px; }
 </div>
 <button type="button" id="detScrim" aria-label="Close product" hidden></button>
 <div id="det" role="dialog" aria-modal="true" aria-labelledby="detH" hidden></div>
-<script src="sealed.js?v=c3001f0a73"></script>
+<script src="sealed.js?v=79efb913e8"></script>
 <script>
 // Sealed products page (2026-11-16, spec docs/superpowers/specs/2026-11-16-sealed-page-design.md): built for judging a local
 // shop price. Data: data/sealed.js from scripts/sealed_prices.py (weekly TCGplayer sold prices, last 52 weeks, USD).
@@ -467,8 +467,10 @@ const rows = () => ROWS || (ROWS = D.products.map(p => { const fairInfo = fairOf
 
 // ---------- filters ----------
 const ERA_ORDER = ['XY', 'Sun & Moon', 'Sword & Shield', 'Scarlet & Violet', 'Mega Evolution'];
-const FK = ['era', 'type', 'set', 'lang'];
-const F = { q: '', era: [], type: [], set: [], lang: [], sort: 'sold', dir: 'asc' };
+const K_ORDER = ['main', 'special', 'deck', 'promo', 'other'];
+const K_LABEL = { main: 'Main set', special: 'Special set', deck: 'Deck', promo: 'Promo', other: 'No set (mixed)' };
+const FK = ['era', 'k', 'type', 'set', 'lang'];
+const F = { q: '', era: [], k: [], type: [], set: [], lang: [], sort: 'sold', dir: 'asc' };
 const match = (r, skip) => FK.every(k => k === skip || !F[k].length || F[k].includes(r[k]))
   && (!F.q || F.q.split(/\s+/).every(w => (r.name + ' ' + r.set + ' ' + r.type + ' ' + r.era).toLowerCase().includes(w)));
 // sort keys: natural order first ('asc'); 'desc' flips it; products without the sort value stay last either way
@@ -482,6 +484,7 @@ function filtered() {
 }
 const FACETS = [
   ['era', 'Era', (a, b) => ERA_ORDER.indexOf(a) - ERA_ORDER.indexOf(b)],
+  ['k', 'Set type', (a, b) => K_ORDER.indexOf(a) - K_ORDER.indexOf(b), v => K_LABEL[v] || v],   // scripts/build_catalog.py set_kind (2026-11-27)
   ['type', 'Type', null],
   ['set', 'Set', (a, b) => a.localeCompare(b)],
   ['lang', 'Language', (a, b) => ['EN', 'JP'].indexOf(a) - ['EN', 'JP'].indexOf(b), v => ({ EN: 'English', JP: 'Japanese' }[v] || v)],
